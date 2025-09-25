@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <script src="cambiartexto.js"></script>
+</head>
+<body>
+    <h1 id="titulo">Titulo original</h1>
+    <p id="parrafo">CAmbiar este texto a h2</p>
+
+    <button onclick="cambiarTexto()">Pulsa para cambiar el texto</button>
+    <button onclick="cambiarParrafoAH2()">Cambiar p a h2</button>
+
+    <script>
+        function cambiarTexto() {
+            document.getElementById("titulo").innerText = "Titulo modificado desde javascript";
+        }
+        function cambiarParrafoAH2() {
+            document.getElementById("parrafo").innerHTML = "<h2 id='parrafo'>Cambiar este texto a h2</h2>";
+        }
+
+    </script>
+
+     <h1 id="titulo2">Titulo original</h1>
+    <p id="parrafo2">CAmbiar este texto a h2</p>
+
+    <button onclick="cambiarColor('titulo2', 'red')">Pulsa para cambiar el color</button>
+    <button onclick="cambiarFuente('parrafo2', 'Arial')">Cambiar fuente</button>
+
+    <div style="margin-top: 20px;">
+        <img id="imagen" style="display: none; max-width: 600px; margin-top: 10px;">
+        <div>
+            <button onclick="mostrarImagen1()">Franco bueno</button>
+            <button onclick="mostrarImagen2()">franco malo</button>
+        </div>
+    </div>
+</body>
+</html>
