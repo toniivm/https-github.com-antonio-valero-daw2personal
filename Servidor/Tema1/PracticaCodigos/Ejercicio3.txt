@@ -1,0 +1,9 @@
+/* Ejercicio 3
+Comentar qué es lo que hace el script siguiente
+*/
+
+<?php
+$Name = "Miguel";
+echo "Hola <b>$Name</b>, encantado de conocerte<br>";
+echo "Gracias por venir!";
+?>
