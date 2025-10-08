@@ -15,50 +15,27 @@
         <button type="submit">Calcular</button>
     </form>
     <?php
-// Función para calcular media, máxima y mínima
-function calcularNotas($notas): array {
-    // Convertir cada nota a float
-    $notas = array_map('floatval', $notas);
+    if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+        // Recoge las notas del formulario
+        $n1 = (float)$_POST['nota1'];
+        $n2 = (float)$_POST['nota2'];
+        $n3 = (float)$_POST['nota3'];
+        $n4 = (float)$_POST['nota4'];
+        $n5 = (float)$_POST['nota5'];
 
-    // Calcular media
-    $media = array_sum($notas) / count($notas);
+        // Calcula media, máxima y mínima
+        $media = ($n1 + $n2 + $n3 + $n4 + $n5) / 5;
+        $maxima = max($n1, $n2, $n3, $n4, $n5);
+        $minima = min($n1, $n2, $n3, $n4, $n5);
 
-    // Calcular máxima y mínima
-    $maxima = max($notas);
-    $minima = min($notas);
-
-    // Devolver resultados como array asociativ
-    return [
-        'media' => $media,
-        'maxima' => $maxima,
-        'minima' => $minima
-    ];
-}
-
-// Si el formulario se ha enviado
-$resultado = null;
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    // Recoger las notas del fomulario
-    $notas = [
-        $_POST['nota1'] ?? 0,
-        $_POST['nota2'] ?? 0,
-        $_POST['nota3'] ?? 0,
-        $_POST['nota4'] ?? 0,
-        $_POST['nota5'] ?? 0
-    ];
-
-    // Calcular resultado
-    $resultado = calcularNotas($notas);
-}
-?>
-
-    <?php if ($resultado): ?>
-        <h2>Resultados</h2>
-        <ul>
-            <li>Media: <?php echo number_format($resultado['media'], 2); ?></li>
-            <li>Nota máxima: <?php echo $resultado['maxima']; ?></li>
-            <li>Nota mínima: <?php echo $resultado['minima']; ?></li>
-        </ul>
-    <?php endif; ?>
+        // Muestra los resultados
+        echo "<h2>Resultados</h2>";
+        echo "<ul>";
+        echo "<li>Media: " . number_format($media, 2) . "</li>";
+        echo "<li>Nota máxima: $maxima</li>";
+        echo "<li>Nota mínima: $minima</li>";
+        echo "</ul>";
+    }
+    ?>
 </body>
 </html>
