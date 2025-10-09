@@ -1,26 +1,13 @@
-
-
-<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="UTF-8">
-    <title>Login Simulado</title>
-</head>
-<body>
-    <h2>Iniciar sesión</h2>
-    <?php if ($error) echo "<p style='color:red;'>$error</p>"; ?>
-    <form method="post">
-        Usuario: <input type="text" name="usuario" required><br>
-        Contraseña: <input type="password" name="contrasena" required><br>
-        <input type="submit" value="Entrar">
-    </form>
-    <?php
+<?php
 session_start();
+
+// Inicializar variable de error
+$error = "";
 
 // Array de usuarios y contraseñas
 $usuarios = [
-    "antonio" => "1234",
-    "adriana" => "abcd",
+    "paco" => "1234",
+    "juana" => "abcd",
     "juan" => "pass"
 ];
 
@@ -31,15 +18,23 @@ if (isset($_GET['logout'])) {
     exit;
 }
 
-// Si ya está logueado
+// Si ya está logueado mostramos bienvenida y link para cerrar sesión
 if (isset($_SESSION['usuario'])) {
-    echo "<h2>Bienvenido, " . htmlspecialchars($_SESSION['usuario']) . "!</h2>";
-    echo '<a href="?logout=1">Cerrar sesión</a>';
+    echo "<!DOCTYPE html>
+<html>
+<head>
+    <meta charset='UTF-8'>
+    <title>Bienvenido</title>
+</head>
+<body>
+    <h2>Bienvenido, " . htmlspecialchars($_SESSION['usuario']) . "!</h2>
+    <a href='?logout=1'>Cerrar sesión</a>
+</body>
+</html>";
     exit;
 }
 
 // Procesar formulario de login
-$error = "";
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $user = $_POST['usuario'] ?? '';
     $pass = $_POST['contrasena'] ?? '';
@@ -52,5 +47,20 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     }
 }
 ?>
+
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Login Simulado</title>
+</head>
+<body>
+    <h2>Iniciar sesión</h2>
+    <?php if (!empty($error)) echo "<p style='color:red;'>" . htmlspecialchars($error) . "</p>"; ?>
+    <form method="post">
+        Usuario: <input type="text" name="usuario" required><br>
+        Contraseña: <input type="password" name="contrasena" required><br>
+        <input type="submit" value="Entrar">
+    </form>
 </body>
 </html>
