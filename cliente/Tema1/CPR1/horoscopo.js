@@ -1,28 +1,40 @@
-  // Array con los signos del horóscopo chino en orden
   const signosChinos = [
     "Mono", "Gallo", "Perro", "Cerdo", "Rata", "Buey",
     "Tigre", "Conejo", "Dragón", "Serpiente", "Caballo", "Cabra"
   ];
 
-  // Al hacer clic en el botón "calcular"
-  document.getElementById('calcular').onclick = () => {
-    // Obtener el año introducido por el usuario
-    const anioNacimiento = +document.getElementById('anio').value;
-    const elementoResultado = document.getElementById('resultado');
-    const anioActual = new Date().getFullYear();
+  document.addEventListener('DOMContentLoaded', () => {
+    // Obtener elementos del DOM
+    const anio = document.getElementById('anio');
+    const mes = document.getElementById('mes');
+    const dia = document.getElementById('dia');
+    const calcular = document.getElementById('calcular');
+    const resultado = document.getElementById('resultado');
 
-    // Comprobar si el año es válido
-    if (anioNacimiento < 1900 || anioNacimiento > anioActual) {
-      elementoResultado.textContent = "Por favor, introduce un año válido.";
-      return;
-    }
+    // Establecer fecha actual
+    const hoy = new Date();
+    mes.value = hoy.getMonth() + 1;
+    dia.value = hoy.getDate();
+    anio.placeholder = hoy.getFullYear();
 
-    // Calcular la edad y el signo del horóscopo chino
-    const edad = anioActual - anioNacimiento;
-    const indiceSigno = (anioNacimiento - 1900) % 12;
-    const signoChino = signosChinos[indiceSigno];
+    // Calcular horóscopo al hacer clic
+    calcular.addEventListener('click', (e) => {
+      e.preventDefault();
+      
+      const añoIngresado = parseInt(anio.value);
+      
+      // Validación básica
+      if (!añoIngresado || añoIngresado < 1900 || añoIngresado > hoy.getFullYear()) {
+        resultado.textContent = 'Introduce un año válido';
+        return;
+      }
 
-    // Mostrar el resultado
-    elementoResultado.textContent =
-      `Tienes ${edad} años y tu horóscopo chino es: ${signoChino}.`;
-  };
+      // Calcular edad
+      let edad = hoy.getFullYear() - añoIngresado;
+      
+      // Calcular signo
+      const signo = signosChinos[((añoIngresado - 1900) % 12 + 12) % 12];
+      
+      resultado.textContent = `Tienes ${edad} años y tu horóscopo chino es: ${signo}`;
+    });
+  });
