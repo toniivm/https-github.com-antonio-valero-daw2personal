@@ -1,40 +1,18 @@
-  const signosChinos = [
-    "Mono", "Gallo", "Perro", "Cerdo", "Rata", "Buey",
-    "Tigre", "Conejo", "Dragón", "Serpiente", "Caballo", "Cabra"
-  ];
-
   document.addEventListener('DOMContentLoaded', () => {
-    // Obtener elementos del DOM
-    const anio = document.getElementById('anio');
-    const mes = document.getElementById('mes');
-    const dia = document.getElementById('dia');
-    const calcular = document.getElementById('calcular');
-    const resultado = document.getElementById('resultado');
-
-    // Establecer fecha actual
+    const signos = ["Rata","Buey","Tigre","Conejo","Dragón","Serpiente","Caballo","Cabra","Mono","Gallo","Perro","Cerdo"];
+    const a = document.getElementById('anio'), m = document.getElementById('mes'), d = document.getElementById('dia');
+    const btn = document.getElementById('calcular'), res = document.getElementById('resultado');
     const hoy = new Date();
-    mes.value = hoy.getMonth() + 1;
-    dia.value = hoy.getDate();
-    anio.placeholder = hoy.getFullYear();
+    m.value = hoy.getMonth() + 1; d.value = hoy.getDate(); a.placeholder = hoy.getFullYear();
 
-    // Calcular horóscopo al hacer clic
-    calcular.addEventListener('click', (e) => {
+    btn.addEventListener('click', e => {
       e.preventDefault();
-      
-      const añoIngresado = parseInt(anio.value);
-      
-      // Validación básica
-      if (!añoIngresado || añoIngresado < 1900 || añoIngresado > hoy.getFullYear()) {
-        resultado.textContent = 'Introduce un año válido';
-        return;
-      }
-
-      // Calcular edad
-      let edad = hoy.getFullYear() - añoIngresado;
-      
-      // Calcular signo
-      const signo = signosChinos[((añoIngresado - 1900) % 12 + 12) % 12];
-      
-      resultado.textContent = `Tienes ${edad} años y tu horóscopo chino es: ${signo}`;
+      const an = parseInt(a.value, 10), mes = parseInt(m.value, 10), dia = parseInt(d.value, 10);
+      if (!an || an < 1900 || an > hoy.getFullYear()) return void (res.textContent = 'Año inválido');
+      const diasMes = new Date(an, mes, 0).getDate();
+      if (!mes || mes < 1 || mes > 12 || !dia || dia < 1 || dia > diasMes) return void (res.textContent = 'Fecha inválida');
+      let edad = hoy.getFullYear() - an;
+      if (new Date(hoy.getFullYear(), mes - 1, dia) > hoy) edad--;
+      res.textContent = `Tienes ${edad} años y tu horóscopo chino es: ${signos[((an - 1900) % 12 + 12) % 12]}`;
     });
   });
