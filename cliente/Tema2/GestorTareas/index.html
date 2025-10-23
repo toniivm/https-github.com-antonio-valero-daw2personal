@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestor de Tareas: Tareando</title>
+
+    <!-- Fuentes medievales -->
+    <link href="https://fonts.googleapis.com/css2?family=UnifrakturCook:wght@700&family=MedievalSharp&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            /* Paleta de colores medieval */
+            --fondo: #f3e7d0;
+            --texto: #1a0e05;
+            --borde: #4b2e05;
+            --boton: #24427c;
+            --boton-hover: #315ba5;
+            --resalte: #d4a017;
+            --elemento-fondo: rgba(255, 250, 240, 0.85);
+        }
+
+        /* Fondo animado con capa de oscurecimiento */
+        body {
+            background: var(--fondo) url('https://media.giphy.com/media/uoZYpDR9kcqti/giphy.gif') center/cover fixed no-repeat;
+            color: var(--texto);
+            font-family: 'MedievalSharp', cursive;
+            text-align: center;
+            padding: 40px;
+            margin: 0;
+            min-height: 100vh;
+            position: relative;
+            overflow-x: hidden;
+            transition: background 0.5s;
+        }
+
+        /* Capa semitransparente para legibilidad */
+        .overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(240, 225, 200, 0.8);
+            z-index: -1;
+        }
+
+        body::before {
+            content: "";
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border: 25px solid var(--borde);
+            box-sizing: border-box;
+            pointer-events: none;
+            opacity: 0.9;
+        }
+
+        h1, h2 {
+            font-family: 'UnifrakturCook', cursive;
+            color: var(--boton);
+            text-shadow: 1px 1px 2px var(--resalte);
+        }
+
+        h1 {
+            font-size: 3em;
+            margin-bottom: 10px;
+        }
+
+        h2 {
+            font-size: 2em;
+            margin-top: 40px;
+            border-top: 3px solid var(--borde);
+            padding-top: 10px;
+        }
+
+        p {
+            font-size: 1.2em;
+            margin: 15px 0 5px;
+        }
+
+        input[type="text"], select {
+            padding: 10px;
+            width: 250px;
+            background: var(--elemento-fondo);
+            border: 2px solid var(--borde);
+            border-radius: 6px;
+            color: var(--texto);
+            font-size: 1em;
+            transition: all 0.3s;
+            font-family: 'MedievalSharp', cursive;
+        }
+
+        input[type="text"]:focus, select:focus {
+            outline: 2px solid var(--resalte);
+            background: #ffffff;
+        }
+
+        button {
+            background: var(--boton);
+            color: #fff;
+            border: 2px solid var(--borde);
+            border-radius: 6px;
+            padding: 10px 20px;
+            margin: 10px;
+            font-size: 1em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-family: 'MedievalSharp', cursive;
+        }
+
+        button:hover {
+            background: var(--boton-hover);
+            box-shadow: 0 0 8px var(--resalte);
+        }
+
+        #listaTareas {
+            list-style-type: none;
+            padding: 0;
+            max-width: 500px;
+            margin: 20px auto;
+            text-align: left;
+        }
+
+        #listaTareas li {
+            background: var(--elemento-fondo);
+            margin: 10px 0;
+            padding: 10px;
+            border-left: 6px solid var(--boton);
+            border-radius: 5px;
+            transition: transform 0.2s, background 0.2s;
+        }
+
+        #listaTareas li:hover {
+            transform: scale(1.03);
+            background: #faf3dc;
+        }
+
+        #tareasPendientes {
+            margin-top: 20px;
+            font-size: 1.3em;
+            color: var(--boton);
+        }
+
+        /* Botones de opciones */
+        #accesibilidadBtn, #animacionBtn {
+            position: fixed;
+            top: 15px;
+            right: 15px;
+            background: var(--resalte);
+            color: #000;
+            border: 2px solid var(--borde);
+            border-radius: 50%;
+            width: 45px;
+            height: 45px;
+            font-size: 1.5em;
+            cursor: pointer;
+            transition: 0.3s;
+            margin-left: 5px;
+        }
+
+        #accesibilidadBtn:hover, #animacionBtn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 0 10px var(--resalte);
+        }
+
+        #animacionBtn {
+            right: 70px;
+        }
+
+        body::after {
+            content: "⚜️";
+            display: block;
+            font-size: 2.5em;
+            position: fixed;
+            bottom: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            opacity: 0.3;
+            pointer-events: none;
+        }
+
+        ::-webkit-scrollbar {
+            width: 14px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background-color: var(--boton);
+            border-radius: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="overlay"></div>
+
+    <!-- Botones de accesibilidad -->
+    <button id="animacionBtn" title="Activar o desactivar fondo animado">🔥</button>
+    <button id="accesibilidadBtn" title="Alternar modo de alto contraste">👁️</button>
+
+    <h1>📜 Gestor de Tareas: Tareando 🏰</h1>
+
+    <p>Tarea:</p>
+    <input type="text" id="tareaInput" placeholder="Escribe una tarea...">
+
+    <p>Prioridad:</p>
+    <select id="prioridadSelect">
+        <option value="alta">Alta</option>
+        <option value="media">Media</option>
+        <option value="baja">Baja</option>
+    </select>
+
+    <br><br>
+    <button id="agregarTareaBtn" onclick="agregarTarea()">Agregar Tarea</button>
+    <button id="agregarTareaBtnVoz">Agregar Tarea por Voz</button>
+
+    <h2>📜 Lista de Tareas</h2>
+    <ul id="listaTareas">
+
+        
+    </ul>
+    <p id="tareasPendientes">Tareas Pendientes: 0</p>
+
+    <button>Exportar Tareas</button>
+
+
+    <script src="gestorTareas.js"></script>
+
+    <script>
+        const btnAccesibilidad = document.getElementById('accesibilidadBtn');
+        const btnAnimacion = document.getElementById('animacionBtn');
+
+        // Alternar modo de alto contraste
+        btnAccesibilidad.addEventListener('click', () => {
+            document.body.classList.toggle('alto-contraste');
+        });
+
+        // Alternar fondo animado
+        let animacionActiva = true;
+        btnAnimacion.addEventListener('click', () => {
+            animacionActiva = !animacionActiva;
+            if (animacionActiva) {
+                document.body.style.background = "url('https://media.giphy.com/media/uoZYpDR9kcqti/giphy.gif') center/cover fixed no-repeat";
+            } else {
+                document.body.style.background = "url('https://www.transparenttextures.com/patterns/aged-paper.png') center/cover fixed no-repeat";
+            }
+        });
+    </script>
+</body>
+</html>
