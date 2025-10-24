@@ -3,9 +3,10 @@ const listaTareasModelo = [];
 
 const listaTareasVista = document.getElementById('listaTareas');
 
-function actualizarVista() {
-
+function actualizarVista(nuevaTarea) {
+  console.log('Actualizando vista con la nueva tarea:', nuevaTarea);
 }
+actualizarVista(nuevaTareaObjeto);
 
 function agregarTarea() {
     let descripcionTarea = document.getElementById('tareaInput').value; // Obtiene la descripción de la tarea
@@ -17,8 +18,7 @@ function agregarTarea() {
     }
 
     let nuevaTarea = descripcionTarea;
-    let nuevaTareaObjeto = { descripcion: descripcionTarea,
-                            prioridad: prioridadTarea 
+    let nuevaTareaObjeto = { descripcion: descripcionTarea, prioridad: prioridadTarea 
     };
 
     listaTareasModelo.push(nuevaTareaObjeto);
