@@ -1,0 +1,6 @@
+:root{
+--map-height: calc(100vh - 110px);
+}
+body{ background:#f5f7fb; }
+#map{ height: var(--map-height); width:100%; }
+#spot-list{ max-height: calc(100vh - 220px); overflow:auto; }
