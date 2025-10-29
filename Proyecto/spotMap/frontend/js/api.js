@@ -1,7 +1,7 @@
 // api.js — Wrapper profesional para la API REST de SpotMap
-const API_BASE = window.location.hostname === 'localhost'
-  ? 'http://localhost:8000/api'
-  : '/api';
+
+const API_BASE = 'http://localhost/https-github.com-antonio-valero-daw2personal/Proyecto/spotMap/backend/public';
+
 
 /**
  * Realiza peticiones HTTP a la API.

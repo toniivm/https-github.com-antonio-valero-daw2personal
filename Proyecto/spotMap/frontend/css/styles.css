@@ -1,6 +1,70 @@
-:root{
---map-height: calc(100vh - 110px);
+html, body {
+  height: 100%;
+  margin: 0;
 }
-body{ background:#f5f7fb; }
-#map{ height: var(--map-height); width:100%; }
-#spot-list{ max-height: calc(100vh - 220px); overflow:auto; }
+
+.main-layout {
+  display: flex;
+  height: calc(100vh - 56px); /* Altura menos navbar */
+  overflow: hidden;
+}
+
+/* Sidebar (panel lateral) */
+.sidebar {
+  width: 320px;
+  background: #fff;
+  overflow-y: auto;
+  border-right: 1px solid #ddd;
+  transition: transform 0.3s ease;
+}
+
+/* Mapa */
+#map {
+  flex: 1;
+  height: 100%;
+}
+
+/* Modo móvil: sidebar se oculta */
+@media (max-width: 992px) {
+  .sidebar {
+    position: absolute;
+    z-index: 1000;
+    top: 56px;
+    left: 0;
+    width: 100%;
+    height: calc(100vh - 56px);
+    transform: translateY(-100%);
+  }
+
+  .sidebar.active {
+    transform: translateY(0);
+    background: rgba(255, 255, 255, 0.98);
+    backdrop-filter: blur(8px);
+  }
+
+  /* Botón para mostrar sidebar */
+  .navbar {
+    justify-content: space-between;
+  }
+
+  #btn-add-spot {
+    display: none; /* Opcional: esconder para móvil */
+  }
+}
+
+/* Detalles visuales */
+.list-group-item {
+  cursor: pointer;
+}
+
+.list-group-item:hover {
+  background-color: #f1f1f1;
+}
+
+.modal-content {
+  border-radius: 1rem;
+}
+
+.leaflet-container {
+  z-index: 1;
+}
