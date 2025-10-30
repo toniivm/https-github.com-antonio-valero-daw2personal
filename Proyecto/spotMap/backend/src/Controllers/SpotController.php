@@ -26,18 +26,26 @@ class SpotController
         $input = json_decode(file_get_contents('php://input'), true);
         if (!is_array($input)) $this->json(400, ['error'=>'Invalid JSON']);
 
-        $title = $input['title'] ?? '';
-        $lat = $input['lat'] ?? null;
-        $lng = $input['lng'] ?? null;
+        // Aceptar tanto 'name'/'title', 'latitude'/'lat', 'longitude'/'lng'
+        $title = $input['title'] ?? $input['name'] ?? '';
+        $lat = $input['lat'] ?? $input['latitude'] ?? null;
+        $lng = $input['lng'] ?? $input['longitude'] ?? null;
         $tags = isset($input['tags']) ? json_encode($input['tags']) : null;
         $category = $input['category'] ?? null;
         $description = $input['description'] ?? null;
 
-        if (!$title || !$lat || !$lng) $this->json(422, ['error'=>'title, lat and lng required']);
+        if (!$title || !$lat || !$lng) {
+            $this->json(422, ['error'=>'title/name, lat/latitude and lng/longitude required']);
+        }
 
         $stmt = $this->pdo->prepare('INSERT INTO spots (title, description, lat, lng, tags, category) VALUES (:title,:desc,:lat,:lng,:tags,:cat)');
         $stmt->execute([
-            ':title'=>$title, ':desc'=>$description, ':lat'=>$lat, ':lng'=>$lng, ':tags'=>$tags, ':cat'=>$category
+            ':title'=>$title, 
+            ':desc'=>$description, 
+            ':lat'=>$lat, 
+            ':lng'=>$lng, 
+            ':tags'=>$tags, 
+            ':cat'=>$category
         ]);
 
         $id = (int)$this->pdo->lastInsertId();
@@ -46,8 +54,8 @@ class SpotController
             'id'=>$id,
             'title'=>$title,
             'description'=>$description,
-            'lat'=>$lat,
-            'lng'=>$lng,
+            'lat'=>(float)$lat,
+            'lng'=>(float)$lng,
             'tags'=>$tags?json_decode($tags):[],
             'category'=>$category,
             'created_at'=>date('c')

@@ -19,6 +19,11 @@ Database::init();
 $uri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
 $method = $_SERVER['REQUEST_METHOD'];
 
+// Detectar automáticamente el base path
+$scriptName = dirname($_SERVER['SCRIPT_NAME']);
+$uri = str_replace($scriptName, '', $uri);
+$uri = trim($uri, '/');
+
 $parts = array_values(array_filter(explode('/', $uri)));
 
 // Simple router
@@ -48,3 +53,5 @@ if (isset($parts[0]) && $parts[0] === 'spots') {
 
 http_response_code(404);
 echo json_encode(['error'=>'Route not found']);
+
+
