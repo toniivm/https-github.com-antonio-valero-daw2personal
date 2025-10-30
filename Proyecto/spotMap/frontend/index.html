@@ -55,34 +55,47 @@
 
     <!-- Modal -->
     <div class="modal fade" id="modalAddSpot" tabindex="-1">
-      <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-          <form id="form-add-spot">
-            <div class="modal-header">
-              <h5 class="modal-title">Añadir nuevo spot</h5>
-              <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-              <div class="mb-3">
-                <label class="form-label">Título</label>
-                <input name="title" required class="form-control">
-              </div>
-              <div class="mb-3">
-                <label class="form-label">Descripción</label>
-                <textarea name="description" class="form-control" rows="3"></textarea>
-              </div>
-              <div class="mb-3">
-                <label class="form-label">Etiquetas (separadas por coma)</label>
-                <input name="tags" class="form-control" placeholder="ej: playa, atardecer">
-              </div>
-            </div>
-            <div class="modal-footer">
-              <button class="btn btn-primary" type="submit">Guardar</button>
-            </div>
-          </form>
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Añadir nuevo spot</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="spot-lat">
+        <input type="hidden" id="spot-lng">
+
+        <div class="mb-3">
+          <label class="form-label">Título</label>
+          <input id="spot-title" required class="form-control">
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Descripción</label>
+          <textarea id="spot-description" class="form-control" rows="3"></textarea>
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Foto del Spot</label>
+            <input id="spot-photo" class="form-control" type="file" accept="image/jpeg, image/png">
+            <small class="form-text text-muted">
+                Si la foto tiene GPS, se usarán sus coordenadas.
+            </small>
+        </div>
+        <div class="mb-3">
+            <button id="btn-use-location" class="btn btn-outline-secondary btn-sm w-100">
+                Usar mi ubicación actual
+            </button>
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Etiquetas (separadas por coma)</label>
+          <input id="spot-tags" class="form-control" placeholder="ej: playa, atardecer">
         </div>
       </div>
+      <div class="modal-footer">
+        <button id="btn-save-spot" class="btn btn-primary" type="button">Guardar</button>
+      </div>
     </div>
+  </div>
+</div>
 
     <!-- Scripts -->
     <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
