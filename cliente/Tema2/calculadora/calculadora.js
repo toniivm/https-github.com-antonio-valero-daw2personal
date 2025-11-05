@@ -23,3 +23,11 @@ function calcularResultado() {
 // Asignar eventos a los botones numéricos
 let botonIgual = document.getElementById('boton-igual');
 botonIgual.addEventListener('click', calcularResultado);
+
+let botones=document.querySelectorAll('button');
+
+botones.forEach((b)=>{
+    if(b.innerText != '=' && b.innerText !== '='){
+        b.addEventListener('click', ()=> agregarCifra(b.innerText));
+    }
+});
