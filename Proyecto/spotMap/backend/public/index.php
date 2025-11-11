@@ -9,22 +9,25 @@ use SpotMap\Controllers\SpotController;
 
 // CORS básico
 header("Access-Control-Allow-Origin: *");
-header("Access-Control-Allow-Methods: GET, POST, DELETE, OPTIONS");
+header("Access-Control-Allow-Methods: GET, POST, DELETE, OPTIONS, PUT");
 header("Access-Control-Allow-Headers: Content-Type, Authorization");
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') exit;
 
 // Inicializar DB
 Database::init();
 
+// Obtener la ruta (sin index.php)
 $uri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
 $method = $_SERVER['REQUEST_METHOD'];
 
-// Detectar automáticamente el base path
-$scriptName = dirname($_SERVER['SCRIPT_NAME']);
-$uri = str_replace($scriptName, '', $uri);
-$uri = trim($uri, '/');
+// Debug: Log de la petición
+error_log("Petición: $method $uri");
 
-$parts = array_values(array_filter(explode('/', $uri)));
+// Procesar la ruta
+// Si termina en /spots (con o sin params)
+if (preg_match('/\/spots(\/\d+)?(\/photo)?(\?.+)?$/', $uri, $matches)) {
+    $parts = array_filter(explode('/', trim($uri, '/')));
+    $parts = array_values($parts); // Re-indexar
 
 // Simple router
 if (isset($parts[0]) && $parts[0] === 'spots') {
@@ -47,6 +50,11 @@ if (isset($parts[0]) && $parts[0] === 'spots') {
 
     if ($method === 'DELETE' && count($parts) === 2) {
         $controller->destroy((int)$parts[1]);
+        exit;
+    }
+
+    if ($method === 'POST' && count($parts) === 3 && $parts[2] === 'photo') {
+        $controller->uploadPhoto((int)$parts[1]);
         exit;
     }
 }

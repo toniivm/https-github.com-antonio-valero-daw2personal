@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test API</title>
+</head>
+<body>
+    <h1>Test API SpotMap</h1>
+    <button onclick="testAPI()">Click para crear un test spot</button>
+    <pre id="result"></pre>
+    
+    <script>
+        async function testAPI() {
+            const data = {
+                title: "Test desde navegador",
+                lat: 43.363781,
+                lng: -5.877206,
+                description: "Test description",
+                category: "test",
+                tags: []
+            };
+            
+            console.log('Enviando:', data);
+            
+            try {
+                const response = await fetch(
+                    'http://localhost/https-github.com-antonio-valero-daw2personal/Proyecto/spotMap/backend/public/api.php?action=spots',
+                    {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(data)
+                    }
+                );
+                
+                console.log('Status:', response.status);
+                const text = await response.text();
+                console.log('Response:', text);
+                document.getElementById('result').textContent = text;
+            } catch (error) {
+                console.error('Error:', error);
+                document.getElementById('result').textContent = error.toString();
+            }
+        }
+    </script>
+</body>
+</html>
