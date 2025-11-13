@@ -5,7 +5,8 @@
 
 import { initMap } from './map.js';
 import { loadSpots, displaySpots, focusSpot } from './spots.js';
-import { setupUI, renderSpotList, updateCategoryFilter, enableAutoGeolocate } from './ui.js';
+import { setupUI, renderSpotList, updateCategoryFilter, enableAutoGeolocate, showSpotListLoading } from './ui.js';
+import { showToast } from './notifications.js';
 
 /**
  * Inicializar aplicación cuando el DOM esté listo
@@ -25,7 +26,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         // 3. Configurar interfaz de usuario
         setupUI();
 
-        // 4. Cargar spots
+        // 4. Mostrar skeleton y cargar spots
+        showSpotListLoading();
         const spots = await loadSpots();
         
         if (spots.length === 0) {
@@ -39,9 +41,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         updateCategoryFilter(spots);
 
         console.log('[MAIN] ✓ Aplicación inicializada correctamente');
+        showToast('Aplicación cargada correctamente', 'success', { autoCloseMs: 2500 });
 
     } catch (error) {
         console.error('[MAIN] Error inicializando aplicación:', error);
+        showToast('Error iniciando aplicación: ' + error.message, 'error');
         const mapDiv = document.getElementById('map');
         if (mapDiv) {
             mapDiv.innerHTML = `
@@ -59,5 +63,13 @@ window.debugInfo = {
     loadSpots,
     displaySpots
 };
+
+// Offline / Online feedback
+window.addEventListener('offline', () => {
+    showToast('⚠️ Has perdido la conexión. Funciones limitadas.', 'warning', { autoCloseMs: 5000 });
+});
+window.addEventListener('online', () => {
+    showToast('✅ Conexión restaurada', 'success');
+});
 
 console.log('[MAIN] SpotMap ES6 modules loaded. Use window.debugInfo for debugging.');

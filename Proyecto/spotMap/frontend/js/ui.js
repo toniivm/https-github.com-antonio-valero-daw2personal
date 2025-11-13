@@ -5,6 +5,7 @@
 
 import * as spotsModule from './spots.js';
 import * as mapModule from './map.js';
+import { showToast } from './notifications.js';
 
 /**
  * Configurar todos los event listeners de la UI
@@ -21,6 +22,20 @@ export function setupUI() {
             modal.show();
         });
     }
+
+    // Botón toggle sidebar (móvil)
+    const btnToggleSidebar = document.getElementById('btn-toggle-sidebar');
+    const sidebar = document.getElementById('sidebar');
+    if (btnToggleSidebar && sidebar) {
+        btnToggleSidebar.addEventListener('click', () => {
+            sidebar.classList.toggle('active');
+            const expanded = sidebar.classList.contains('active');
+            btnToggleSidebar.setAttribute('aria-expanded', expanded ? 'true' : 'false');
+        });
+    }
+
+    // Botones de cambio de vista
+    setupViewToggle();
 
     // Formulario de añadir spot
     const formAddSpot = document.getElementById('form-add-spot');
@@ -47,6 +62,41 @@ export function setupUI() {
     }
 
     console.log('[UI] ✓ Interfaz configurada');
+}
+
+/**
+ * Configurar toggle entre vista lista y grid
+ */
+function setupViewToggle() {
+    const btnViewList = document.getElementById('btn-view-list');
+    const btnViewGrid = document.getElementById('btn-view-grid');
+    const spotList = document.getElementById('spot-list');
+
+    if (!btnViewList || !btnViewGrid || !spotList) return;
+
+    btnViewList.addEventListener('click', () => {
+        btnViewList.classList.add('active');
+        btnViewGrid.classList.remove('active');
+        spotList.classList.remove('spot-grid-view');
+        spotList.classList.add('spot-list-view');
+        
+        // Re-renderizar con vista lista
+        spotsModule.loadSpots().then(spots => {
+            renderSpotList(spots);
+        });
+    });
+
+    btnViewGrid.addEventListener('click', () => {
+        btnViewGrid.classList.add('active');
+        btnViewList.classList.remove('active');
+        spotList.classList.remove('spot-list-view');
+        spotList.classList.add('spot-grid-view');
+        
+        // Re-renderizar con vista grid
+        spotsModule.loadSpots().then(spots => {
+            renderSpotList(spots);
+        });
+    });
 }
 
 /**
@@ -121,11 +171,11 @@ async function handleAddSpotSubmit(e) {
             mapModule.getMap().setView([newSpot.lat, newSpot.lng], 12);
         }
 
-        showNotification('✓ Spot creado correctamente', 'success');
+        showToast('✓ Spot creado correctamente', 'success');
 
     } catch (error) {
         console.error('[UI] Error creando spot:', error);
-        showNotification(`❌ Error: ${error.message}`, 'error');
+        showToast(`❌ Error: ${error.message}`, 'error');
     } finally {
         // Restaurar botón de envío
         const btnSubmit = document.getElementById('btn-save-spot');
@@ -204,6 +254,33 @@ function showValidationErrors(errors) {
     summaryDiv.scrollIntoView({ behavior: 'smooth', block: 'center' });
 }
 
+// Loading skeleton for spot list
+export function showSpotListLoading() {
+    const spotList = document.getElementById('spot-list');
+    if (!spotList) return;
+    
+    spotList.setAttribute('aria-busy', 'true');
+    const isGridView = spotList.classList.contains('spot-grid-view');
+    
+    if (isGridView) {
+        spotList.innerHTML = Array.from({ length: 6 }).map(() => `
+            <div class="skeleton-card">
+                <div class="skeleton-image"></div>
+                <div class="skeleton-text short"></div>
+            </div>
+        `).join('');
+    } else {
+        spotList.innerHTML = Array.from({ length: 4 }).map(() => `
+            <div class="skeleton-card">
+                <div class="skeleton-image"></div>
+                <div class="skeleton-text long"></div>
+                <div class="skeleton-text medium"></div>
+                <div class="skeleton-text short"></div>
+            </div>
+        `).join('');
+    }
+}
+
 /**
  * Manejar búsqueda de spots
  */
@@ -263,7 +340,7 @@ function handleGeolocate() {
             // Mover mapa a la ubicación
             mapModule.getMap().setView([lat, lng], 14);
 
-            showNotification('Ubicación obtenida correctamente', 'success');
+            showToast('Ubicación obtenida correctamente', 'success');
         },
         (error) => {
             console.error('[UI] Error de geolocalización:', error);
@@ -278,39 +355,95 @@ function handleGeolocate() {
  */
 export function renderSpotList(spots) {
     const spotList = document.getElementById('spot-list');
+    const spotCount = document.getElementById('spot-count');
+    
     if (!spotList) {
         console.warn('[UI] Elemento spot-list no encontrado');
         return;
     }
 
+    // Actualizar contador
+    if (spotCount) {
+        spotCount.textContent = spots ? spots.length : 0;
+    }
+
     if (!spots || spots.length === 0) {
-        spotList.innerHTML = '<p class="text-muted">No hay spots cercanos</p>';
+        spotList.innerHTML = '<p class="text-muted text-center py-4">No hay spots para mostrar</p>';
         return;
     }
 
-    spotList.innerHTML = spots.map(spot => `
-        <div class="list-group-item d-flex justify-content-between align-items-start">
-            <div style="flex: 1;">
-                <h6 class="mb-1">
-                    <a href="#" onclick="window.focusSpot(${spot.id}); return false;">
-                        ${escapeHtml(spot.title)}
-                    </a>
-                </h6>
-                <p class="mb-1 text-muted">
-                    <small>${escapeHtml(spot.description || 'Sin descripción')}</small>
-                </p>
-                <small class="text-secondary">
-                    ${spot.lat.toFixed(4)}, ${spot.lng.toFixed(4)}
-                </small>
-                ${spot.category ? `<br><span class="badge bg-info">${escapeHtml(spot.category)}</span>` : ''}
-            </div>
-            <button class="btn btn-sm btn-outline-danger ms-2" onclick="window.deleteSpot(${spot.id})">
-                🗑️
-            </button>
-        </div>
-    `).join('');
+    // Detectar vista activa
+    const isGridView = spotList.classList.contains('spot-grid-view');
+    
+    if (isGridView) {
+        spotList.innerHTML = spots.map(spot => renderSpotCardGrid(spot)).join('');
+    } else {
+        spotList.innerHTML = spots.map(spot => renderSpotCardList(spot)).join('');
+    }
 
     console.log(`[UI] ✓ Lista actualizada con ${spots.length} spots`);
+}
+
+/**
+ * Renderizar card de spot en vista lista
+ */
+function renderSpotCardList(spot) {
+    const imagePath = spot.image_path || '';
+    const imageHtml = imagePath 
+        ? `<img src="${escapeHtml(imagePath)}" alt="${escapeHtml(spot.title)}" class="spot-card-image" loading="lazy" onerror="this.style.display='none'">`
+        : '';
+    
+    return `
+        <div class="spot-card" onclick="window.focusSpot(${spot.id})">
+            ${imageHtml}
+            <div class="spot-card-content">
+                <div class="spot-card-actions">
+                    <button class="btn btn-delete" onclick="event.stopPropagation(); window.deleteSpot(${spot.id})" title="Eliminar">
+                        🗑️
+                    </button>
+                </div>
+                <h6 class="spot-card-title">
+                    ${escapeHtml(spot.title)}
+                </h6>
+                <p class="spot-card-description">
+                    ${escapeHtml(spot.description || 'Sin descripción')}
+                </p>
+                <div class="d-flex justify-content-between align-items-center">
+                    <small class="spot-card-meta">
+                        📍 ${spot.lat.toFixed(3)}, ${spot.lng.toFixed(3)}
+                    </small>
+                    ${spot.category ? `<span class="badge">${escapeHtml(spot.category)}</span>` : ''}
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+/**
+ * Renderizar card de spot en vista grid
+ */
+function renderSpotCardGrid(spot) {
+    const imagePath = spot.image_path || '';
+    const imageHtml = imagePath 
+        ? `<img src="${escapeHtml(imagePath)}" alt="${escapeHtml(spot.title)}" class="spot-card-image" loading="lazy" onerror="this.style.display='none'">`
+        : `<div class="spot-card-image"></div>`;
+    
+    return `
+        <div class="spot-card spot-card-grid" onclick="window.focusSpot(${spot.id})">
+            ${imageHtml}
+            <div class="spot-card-content">
+                <div class="spot-card-actions">
+                    <button class="btn btn-delete" onclick="event.stopPropagation(); window.deleteSpot(${spot.id})" title="Eliminar">
+                        🗑️
+                    </button>
+                </div>
+                <h6 class="spot-card-title mb-1">
+                    ${escapeHtml(spot.title)}
+                </h6>
+                ${spot.category ? `<span class="badge">${escapeHtml(spot.category)}</span>` : ''}
+            </div>
+        </div>
+    `;
 }
 
 /**
@@ -318,23 +451,7 @@ export function renderSpotList(spots) {
  * @param {string} message - Mensaje a mostrar
  * @param {string} type - Tipo: 'success', 'error', 'warning', 'info'
  */
-export function showNotification(message, type = 'info') {
-    const alertDiv = document.createElement('div');
-    alertDiv.className = `alert alert-${type} alert-dismissible fade show`;
-    alertDiv.role = 'alert';
-    alertDiv.innerHTML = `
-        ${escapeHtml(message)}
-        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-    `;
-
-    const container = document.querySelector('.container-fluid') || document.body;
-    container.insertBefore(alertDiv, container.firstChild);
-
-    // Auto-cerrar después de 4 segundos
-    setTimeout(() => {
-        alertDiv.remove();
-    }, 4000);
-}
+// showNotification deprecated -> use showToast from notifications.js
 
 /**
  * Actualizar categorías en el filtro
@@ -342,11 +459,14 @@ export function showNotification(message, type = 'info') {
  */
 export function updateCategoryFilter(spots) {
     const categoryFilter = document.getElementById('filter-category');
+    const categoryChips = document.getElementById('category-chips');
+    
     if (!categoryFilter) return;
 
     const categories = spotsModule.getCategories(spots);
     const currentValue = categoryFilter.value;
 
+    // Actualizar select
     const options = [
         '<option value="all">Todas las categorías</option>',
         ...categories.map(cat => `<option value="${escapeHtml(cat)}">${escapeHtml(cat)}</option>`)
@@ -354,7 +474,44 @@ export function updateCategoryFilter(spots) {
 
     categoryFilter.innerHTML = options.join('');
     categoryFilter.value = currentValue;
+
+    // Actualizar chips visuales
+    if (categoryChips && categories.length > 0) {
+        categoryChips.innerHTML = categories.slice(0, 5).map(cat => `
+            <button class="category-chip" data-category="${escapeHtml(cat)}" onclick="window.filterByChip('${escapeHtml(cat)}')">
+                ${escapeHtml(cat)}
+            </button>
+        `).join('');
+    }
 }
+
+/**
+ * Filtrar por chip de categoría
+ */
+window.filterByChip = async function(category) {
+    const categoryFilter = document.getElementById('filter-category');
+    const chips = document.querySelectorAll('.category-chip');
+    
+    // Actualizar estado visual de chips
+    chips.forEach(chip => {
+        if (chip.dataset.category === category) {
+            chip.classList.toggle('active');
+            const isActive = chip.classList.contains('active');
+            categoryFilter.value = isActive ? category : 'all';
+        } else {
+            chip.classList.remove('active');
+        }
+    });
+
+    // Filtrar spots
+    try {
+        const spots = await spotsModule.loadSpots();
+        const filtered = spotsModule.filterByCategory(spots, categoryFilter.value);
+        renderSpotList(filtered);
+    } catch (error) {
+        console.error('[UI] Error filtrando por chip:', error);
+    }
+};
 
 /**
  * Habilitar geolocalización automática al cargar
@@ -427,10 +584,10 @@ window.deleteSpot = async function(spotId) {
             await spotsModule.deleteSpot(spotId);
             const spots = await spotsModule.loadSpots();
             spotsModule.displaySpots(spots, renderSpotList);
-            showNotification('Spot eliminado', 'success');
+            showToast('Spot eliminado', 'success');
         }
     } catch (error) {
-        showNotification(`Error: ${error.message}`, 'error');
+        showToast(`Error: ${error.message}`, 'error');
     }
 };
 

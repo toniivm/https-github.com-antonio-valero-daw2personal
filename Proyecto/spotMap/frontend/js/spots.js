@@ -5,24 +5,31 @@
 
 import * as mapModule from './map.js';
 import { apiFetch } from './api.js';
+import { Cache } from './cache.js';
 
 /**
  * Cargar todos los spots de la API
  * @returns {Promise<Array>} Array de spots
  */
-export async function loadSpots() {
+export async function loadSpots({ forceRefresh = false } = {}) {
     try {
-        console.log('[SPOTS] Cargando spots...');
+        if (!forceRefresh) {
+            const cached = Cache.get('spots');
+            if (cached) {
+                console.log(`[SPOTS] Cache hit: ${cached.length} spots`);
+                return cached;
+            }
+        }
+
+        console.log('[SPOTS] Fetching spots from API...');
         const response = await apiFetch('/spots', { method: 'GET' });
-        
         if (!response || !response.data || !Array.isArray(response.data.spots)) {
             console.warn('[SPOTS] Respuesta inválida de API');
             return [];
         }
-
+        Cache.set('spots', response.data.spots, 30000); // 30s TTL
         console.log(`[SPOTS] ✓ ${response.data.spots.length} spots cargados`);
         return response.data.spots;
-
     } catch (error) {
         console.error('[SPOTS] Error cargando spots:', error);
         return [];
@@ -173,6 +180,7 @@ export async function deleteSpot(spotId) {
         // No validar response.success porque es 204 No Content
         
         mapModule.removeMarker(spotId);
+        Cache.remove('spots'); // invalidate cache
         console.log(`[SPOTS] ✓ Spot ${spotId} eliminado`);
         return true;
 
@@ -210,6 +218,7 @@ export async function uploadPhoto(spotId, photoFile) {
         }
 
         mapModule.updateMarker(spotId, response.data);
+        Cache.remove('spots');
         console.log(`[SPOTS] ✓ Foto subida correctamente para spot ${spotId}`);
         return response.data;
 

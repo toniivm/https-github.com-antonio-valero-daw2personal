@@ -46,6 +46,21 @@ class Security
         
         // Feature policy (ahora Permissions-Policy)
         header("Permissions-Policy: geolocation=(self), camera=()");
+
+        // Content Security Policy básica (permitir CDNs usados y self)
+        // Ajustar si se agregan más recursos externos
+        $csp = [
+            "default-src 'self'",
+            "script-src 'self' https://cdn.jsdelivr.net https://unpkg.com 'unsafe-inline'", // inline permitido por Bootstrap modal init
+            "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://unpkg.com",
+            "img-src 'self' data: https://unpkg.com https://raw.githubusercontent.com",
+            "font-src 'self' data:",
+            "connect-src 'self'",
+            "object-src 'none'",
+            "base-uri 'self'",
+            "frame-ancestors 'none'",
+        ];
+        header('Content-Security-Policy: ' . implode('; ', $csp));
     }
 
     /**

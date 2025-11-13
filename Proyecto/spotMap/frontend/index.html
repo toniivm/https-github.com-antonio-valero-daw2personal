@@ -21,53 +21,80 @@
 
   <body>
     <!-- Navbar -->
-    <nav class="navbar navbar-dark bg-dark px-3">
-      <a class="navbar-brand" href="#">📸 SpotMap</a>
-      <button id="btn-add-spot" class="btn btn-outline-light btn-sm">Añadir spot</button>
+    <nav class="navbar px-3" role="navigation" aria-label="Barra principal">
+      <a class="navbar-brand" href="#" aria-label="Inicio SpotMap">📸 SpotMap</a>
+      <div class="d-flex gap-2">
+        <button id="btn-toggle-sidebar" class="btn btn-sm d-lg-none" aria-controls="sidebar" aria-expanded="false" aria-label="Mostrar/Ocultar panel">☰ Menú</button>
+        <button id="btn-add-spot" class="btn btn-sm" aria-label="Añadir nuevo spot">+ Añadir Spot</button>
+      </div>
     </nav>
 
     <!-- Layout -->
     <main class="main-layout">
       <!-- Sidebar -->
-      <aside class="sidebar shadow-sm">
-        <div class="p-3">
-          <h5 class="mb-3">Filtrar spots</h5>
-          <input id="search-spot" class="form-control mb-2" placeholder="Buscar por nombre...">
-          <select id="filter-category" class="form-select mb-2">
+      <aside class="sidebar" id="sidebar" role="complementary" aria-label="Panel lateral de filtros y lista">
+        <div>
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <h5 class="mb-0">Explorar Spots</h5>
+            <div class="btn-group btn-group-sm" role="group" aria-label="Vista">
+              <button type="button" class="btn btn-outline-primary active" id="btn-view-list" title="Vista lista">
+                <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                  <path d="M2.5 12a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5zm0-4a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5zm0-4a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5z"/>
+                </svg>
+              </button>
+              <button type="button" class="btn btn-outline-primary" id="btn-view-grid" title="Vista cuadrícula">
+                <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                  <path d="M1 2.5A1.5 1.5 0 0 1 2.5 1h3A1.5 1.5 0 0 1 7 2.5v3A1.5 1.5 0 0 1 5.5 7h-3A1.5 1.5 0 0 1 1 5.5v-3zm8 0A1.5 1.5 0 0 1 10.5 1h3A1.5 1.5 0 0 1 15 2.5v3A1.5 1.5 0 0 1 13.5 7h-3A1.5 1.5 0 0 1 9 5.5v-3zm-8 8A1.5 1.5 0 0 1 2.5 9h3A1.5 1.5 0 0 1 7 10.5v3A1.5 1.5 0 0 1 5.5 15h-3A1.5 1.5 0 0 1 1 13.5v-3zm8 0A1.5 1.5 0 0 1 10.5 9h3a1.5 1.5 0 0 1 1.5 1.5v3a1.5 1.5 0 0 1-1.5 1.5h-3A1.5 1.5 0 0 1 9 13.5v-3z"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+          
+          <label for="search-spot" class="visually-hidden">Buscar spots</label>
+          <input id="search-spot" class="form-control mb-3" placeholder="🔍 Buscar lugares..." aria-label="Buscar spots por título, descripción o categoría">
+          
+          <div id="category-chips" class="category-chips mb-3"></div>
+          
+          <label for="filter-category" class="visually-hidden">Filtrar por categoría</label>
+          <select id="filter-category" class="form-select mb-3" aria-label="Filtrar por categoría">
             <option value="all">Todas las categorías</option>
           </select>
-          <button id="btn-geolocate" class="btn btn-secondary w-100">📍 Mi ubicación</button>
+          
+          <button id="btn-geolocate" class="btn btn-secondary w-100">📍 Mi Ubicación</button>
         </div>
 
-        <hr class="my-2">
-        <div class="p-3">
-          <h6>Spots cercanos</h6>
-          <div id="spot-list" class="list-group list-group-flush mt-2 small"></div>
+        <hr>
+        <div>
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <h6 class="mb-0">Descubre</h6>
+            <span class="badge bg-primary" id="spot-count">0</span>
+          </div>
+          <div id="spot-list" class="spot-list-view" aria-live="polite" aria-busy="false"></div>
         </div>
       </aside>
 
       <!-- Mapa -->
-      <section id="map"></section>
+      <section id="map" role="region" aria-label="Mapa interactivo de spots"></section>
     </main>
 
     <!-- Modal -->
     <div class="modal fade" id="modalAddSpot" tabindex="-1">
-      <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-dialog modal-dialog-centered modal-lg">
         <div class="modal-content">
-          <div class="modal-header bg-primary text-white">
-            <h5 class="modal-title">➕ Crear Nuevo Spot</h5>
-            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+          <div class="modal-header text-white">
+            <h5 class="modal-title">✨ Crear Nuevo Spot</h5>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
           </div>
           <form id="form-add-spot" novalidate>
             <div class="modal-body">
               <!-- Instrucción importante -->
-              <div class="alert alert-info mb-3" role="alert">
-                <strong>Campos requeridos:</strong> Título, Latitud y Longitud
+              <div class="alert alert-info mb-4" role="note">
+                <strong>✓ Campos requeridos:</strong> Título, Latitud y Longitud
               </div>
 
               <!-- SECCIÓN 1: INFORMACIÓN BÁSICA (REQUERIDO) -->
               <div class="mb-4">
-                <h6 class="text-primary mb-3">📍 Información Básica</h6>
+                <h6 class="mb-3" style="color: var(--color-primary); font-weight: 600;">📍 Información Básica</h6>
                 
                 <div class="mb-3">
                   <label class="form-label">
@@ -131,7 +158,7 @@
 
               <!-- SECCIÓN 2: DETALLES (OPCIONAL) -->
               <div class="mb-4">
-                <h6 class="text-secondary mb-3">📝 Detalles (Opcional)</h6>
+                <h6 class="mb-3" style="color: var(--color-text-secondary); font-weight: 600;">📝 Detalles (Opcional)</h6>
                 
                 <div class="mb-3">
                   <label class="form-label">Descripción</label>
@@ -171,7 +198,7 @@
 
               <!-- SECCIÓN 3: FOTO (OPCIONAL) -->
               <div class="mb-3">
-                <h6 class="text-secondary mb-3">📸 Foto del Spot (Opcional)</h6>
+                <h6 class="mb-3" style="color: var(--color-text-secondary); font-weight: 600;">📸 Foto del Spot (Opcional)</h6>
                 
                 <div class="mb-3">
                   <label class="form-label">Selecciona una imagen</label>
@@ -190,16 +217,16 @@
               </div>
 
               <!-- Resumen de validación -->
-              <div class="alert alert-warning mt-3" role="alert" id="validation-summary" style="display: none;">
+              <div class="alert alert-warning mt-3" role="alert" id="validation-summary" style="display: none;" aria-live="assertive">
                 <strong>⚠️ Verifica los datos:</strong>
                 <ul id="validation-list" class="mb-0 mt-2" style="list-style: none; padding-left: 0;"></ul>
               </div>
             </div>
 
-            <div class="modal-footer bg-light">
+            <div class="modal-footer">
               <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
               <button type="submit" class="btn btn-primary" id="btn-save-spot">
-                <strong>✓ Crear Spot</strong>
+                ✨ Crear Spot
               </button>
             </div>
           </form>

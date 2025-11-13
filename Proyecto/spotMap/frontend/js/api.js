@@ -1,6 +1,7 @@
 // api.js — Wrapper profesional para la API REST de SpotMap
-
-const API_BASE = 'http://localhost/https-github.com-antonio-valero-daw2personal/Proyecto/spotMap/backend/public/api.php';
+// Refactor: ahora usa index.php REST en lugar de api.php con parámetros action.
+// Utiliza detección dinámica del base path mediante config.js
+import { buildApiUrl, Config } from './config.js';
 
 
 /**
@@ -17,7 +18,7 @@ export async function apiFetch(endpoint, {
   method = 'GET',
   body = null,
   token = null,
-  timeout = 10000,
+  timeout = Config.timeoutMs,
   headers: customHeaders = {}
 } = {}) {
   const controller = new AbortController();
@@ -53,20 +54,8 @@ export async function apiFetch(endpoint, {
   }
 
   // Construir URL con parámetros
-  let url = API_BASE;
-  
-  // Parsear endpoint: /spots o /spots/1 o /spots/1/photo
-  if (endpoint === '/spots' && method === 'POST') {
-    url += '?action=spots';
-  } else if (endpoint === '/spots' && method === 'GET') {
-    url += '?action=spots';
-  } else if (endpoint.match(/^\/spots\/\d+$/)) {
-    const id = endpoint.split('/')[2];
-    url += `?action=spots&id=${id}`;
-  } else if (endpoint.match(/^\/spots\/\d+\/photo$/)) {
-    const id = endpoint.split('/')[2];
-    url += `?action=spots&id=${id}&sub=photo`;
-  }
+  // Construir URL completa (REST directo: index.php/spots...)
+  const url = buildApiUrl(endpoint);
 
   try {
     const response = await fetch(url, {

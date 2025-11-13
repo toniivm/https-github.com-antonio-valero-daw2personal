@@ -1,27 +1,45 @@
 <?php
 declare(strict_types=1);
 
+// Iniciar buffering para evitar que cualquier salida (BOM/avisos) rompa el JSON
+ob_start();
+
+require __DIR__ . '/../src/Config.php';
+require __DIR__ . '/../src/Logger.php';
 require __DIR__ . '/../src/Database.php';
+require __DIR__ . '/../src/SupabaseClient.php';
+require __DIR__ . '/../src/DatabaseAdapter.php';
 require __DIR__ . '/../src/ApiResponse.php';
 require __DIR__ . '/../src/Validator.php';
 require __DIR__ . '/../src/Security.php';
 require __DIR__ . '/../src/Controllers/SpotController.php';
 
 use SpotMap\Database;
+use SpotMap\DatabaseAdapter;
 use SpotMap\ApiResponse;
 use SpotMap\Security;
 use SpotMap\Controllers\SpotController;
 
+// Inicializar configuración para acceso a variables
+\SpotMap\Config::load();
+
 // Seguridad: Headers CORS, CSP y otros
 Security::setCORSHeaders(); // Usar * para desarrollo local
 Security::setSecurityHeaders();
+
+// Log inicio de petición
+\SpotMap\Logger::info('Nueva petición API', [
+    'method' => $_SERVER['REQUEST_METHOD'] ?? 'UNKNOWN',
+    'uri' => $_SERVER['REQUEST_URI'] ?? '',
+    'requestId' => \SpotMap\Logger::getRequestId(),
+]);
 
 // Content-Type JSON
 header("Content-Type: application/json");
 
 // Rate limiting: máx 100 requests por minuto
 if (!Security::checkRateLimit(100, 60)) {
-    ApiResponse::error('Too many requests', 429);
+    ApiResponse::error('Too many requests', 429, null, [ 'retryAfterSeconds' => 60 ]);
 }
 
 // Manejo de preflight CORS
@@ -30,8 +48,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     exit;
 }
 
-// Inicializar DB
-Database::init();
+// Inicializar DB local solo si no usamos Supabase
+if (!DatabaseAdapter::useSupabase()) {
+    Database::init();
+}
 
 $controller = new SpotController();
 $method = $_SERVER['REQUEST_METHOD'];
@@ -77,6 +97,7 @@ try {
     ApiResponse::notFound('Route not found');
 
 } catch (Exception $e) {
-    ApiResponse::serverError($e->getMessage());
+    \SpotMap\Logger::exception($e);
+    ApiResponse::serverError('Unexpected error', [ 'detail' => $e->getMessage() ]);
 }
 ?>

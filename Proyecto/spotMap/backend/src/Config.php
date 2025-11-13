@@ -1,0 +1,98 @@
+<?php
+namespace SpotMap;
+
+/**
+ * Gestiona la configuración centralizada del proyecto.
+ * Lee desde backend/.env en desarrollo y variables de entorno en producción.
+ */
+class Config
+{
+    private static array $config = [];
+    private static bool $loaded = false;
+
+    public static function load(): void
+    {
+        if (self::$loaded) return;
+
+        // Cargar .env si existe (desarrollo)
+        self::loadEnvFile(__DIR__ . '/../.env');
+
+        // Definir valores por defecto
+        $defaults = [
+            'ENV' => 'development',
+            'DEBUG' => true,
+            'DB_HOST' => '127.0.0.1',
+            'DB_PORT' => '3306',
+            'DB_DATABASE' => 'spotmap',
+            'DB_USERNAME' => 'root',
+            'DB_PASSWORD' => '',
+            'LOG_LEVEL' => 'INFO',
+            'RATE_LIMIT_ENABLED' => false,
+            'RATE_LIMIT_REQUESTS' => 100,
+            'RATE_LIMIT_WINDOW' => 3600,
+        ];
+
+        foreach ($defaults as $key => $defaultValue) {
+            self::$config[$key] = getenv($key) ?: $defaultValue;
+        }
+
+        self::$loaded = true;
+    }
+
+    private static function loadEnvFile(string $path): void
+    {
+        if (!file_exists($path)) return;
+
+        $lines = file($path, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+        foreach ($lines as $line) {
+            $line = trim($line);
+            if ($line === '' || $line[0] === '#') continue;
+            if (strpos($line, '=') === false) continue;
+
+            [$key, $value] = explode('=', $line, 2);
+            $key = trim($key);
+            $value = trim($value);
+            $value = preg_replace('/^(["\'])?(.*)\\1$/', '$2', $value);
+
+            putenv("$key=$value");
+            $_ENV[$key] = $value;
+                    self::$config[$key] = $value;
+        }
+    }
+
+    public static function get(string $key, $default = null)
+    {
+        if (!self::$loaded) self::load();
+        return self::$config[$key] ?? $default;
+    }
+
+    public static function has(string $key): bool
+    {
+        if (!self::$loaded) self::load();
+        return isset(self::$config[$key]);
+    }
+
+    public static function isDev(): bool
+    {
+        return self::get('ENV', 'development') === 'development';
+    }
+
+    public static function isProd(): bool
+    {
+        return self::get('ENV', 'development') === 'production';
+    }
+
+    public static function isDebug(): bool
+    {
+        return (bool)self::get('DEBUG', false);
+    }
+
+    public static function getAll(): array
+    {
+        if (!self::$loaded) self::load();
+        // No devolver valores sensibles (passwords) por seguridad
+        $safe = self::$config;
+        $safe['DB_PASSWORD'] = '***';
+        return $safe;
+    }
+}
