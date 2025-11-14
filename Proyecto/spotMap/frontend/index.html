@@ -3,10 +3,17 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="Discover and share amazing places around the world with SpotMap">
+    <meta name="theme-color" content="#0ea5e9">
     <title>📸 SpotMap — Descubre y comparte lugares</title>
+
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="icons/icon-192x192.png">
 
     <!-- Bootstrap -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.2/font/bootstrap-icons.css">
 
     <!-- Leaflet -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
@@ -17,59 +24,89 @@
     <!-- Scripts -->
     <script defer type="module" src="js/main.js"></script>
     <script defer type="module" src="js/api.js"></script>
+    <script defer type="module" src="js/auth.js"></script>
   </head>
 
   <body>
-    <!-- Navbar -->
+    <!-- Navbar con Auth -->
     <nav class="navbar px-3" role="navigation" aria-label="Barra principal">
-      <a class="navbar-brand" href="#" aria-label="Inicio SpotMap">📸 SpotMap</a>
-      <div class="d-flex gap-2">
-        <button id="btn-toggle-sidebar" class="btn btn-sm d-lg-none" aria-controls="sidebar" aria-expanded="false" aria-label="Mostrar/Ocultar panel">☰ Menú</button>
-        <button id="btn-add-spot" class="btn btn-sm" aria-label="Añadir nuevo spot">+ Añadir Spot</button>
+      <a class="navbar-brand" href="#" aria-label="Inicio SpotMap">📸 <span data-i18n="app.title">SpotMap</span></a>
+      <div class="d-flex gap-2 align-items-center">
+        <button id="btn-language-toggle" class="btn btn-sm btn-outline-light" title="Change language">🇪🇸 ES</button>
+        <button id="btn-theme-toggle" class="btn btn-sm btn-outline-light" title="Toggle theme">🌙</button>
+        <button id="btn-toggle-sidebar" class="btn btn-sm d-lg-none" data-bs-toggle="offcanvas" data-bs-target="#sidebar" aria-controls="sidebar"><span data-i18n="nav.menu">☰ Menú</span></button>
+        <button id="btn-add-spot" class="btn btn-sm" data-i18n="nav.addSpot">+ Añadir Spot</button>
+        
+        <!-- Auth buttons (when logged out) -->
+        <div id="auth-logged-out" class="d-flex gap-2">
+          <button id="btn-login" class="btn btn-sm btn-outline-light" data-bs-toggle="modal" data-bs-target="#modalLogin" data-i18n="nav.login">Iniciar Sesión</button>
+          <button id="btn-register" class="btn btn-sm" data-bs-toggle="modal" data-bs-target="#modalRegister" data-i18n="nav.register">Registrarse</button>
+        </div>
+        
+        <!-- User menu (when logged in) -->
+        <div id="auth-logged-in" class="dropdown" style="display: none;">
+          <button class="btn btn-sm dropdown-toggle d-flex align-items-center gap-2" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+            <img id="user-avatar" src="https://api.dicebear.com/7.x/avataaars/svg?seed=default" alt="Avatar" class="rounded-circle" style="width: 32px; height: 32px;">
+            <span id="user-name">Usuario</span>
+          </button>
+          <ul class="dropdown-menu dropdown-menu-end">
+            <li><a class="dropdown-item" href="#" id="btn-profile">👤 Mi Perfil</a></li>
+            <li><a class="dropdown-item" href="#" id="btn-my-spots">📍 Mis Spots</a></li>
+            <li><a class="dropdown-item" href="#" id="btn-favorites">⭐ Favoritos</a></li>
+            <li><hr class="dropdown-divider"></li>
+            <li><a class="dropdown-item" href="#" id="btn-settings">⚙️ Configuración</a></li>
+            <li><a class="dropdown-item text-danger" href="#" id="btn-logout">🚪 Cerrar Sesión</a></li>
+          </ul>
+        </div>
       </div>
     </nav>
 
     <!-- Layout -->
     <main class="main-layout">
-      <!-- Sidebar -->
-      <aside class="sidebar" id="sidebar" role="complementary" aria-label="Panel lateral de filtros y lista">
-        <div>
-          <div class="d-flex justify-content-between align-items-center mb-3">
-            <h5 class="mb-0">Explorar Spots</h5>
-            <div class="btn-group btn-group-sm" role="group" aria-label="Vista">
-              <button type="button" class="btn btn-outline-primary active" id="btn-view-list" title="Vista lista">
-                <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
-                  <path d="M2.5 12a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5zm0-4a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5zm0-4a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5z"/>
-                </svg>
-              </button>
-              <button type="button" class="btn btn-outline-primary" id="btn-view-grid" title="Vista cuadrícula">
-                <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
-                  <path d="M1 2.5A1.5 1.5 0 0 1 2.5 1h3A1.5 1.5 0 0 1 7 2.5v3A1.5 1.5 0 0 1 5.5 7h-3A1.5 1.5 0 0 1 1 5.5v-3zm8 0A1.5 1.5 0 0 1 10.5 1h3A1.5 1.5 0 0 1 15 2.5v3A1.5 1.5 0 0 1 13.5 7h-3A1.5 1.5 0 0 1 9 5.5v-3zm-8 8A1.5 1.5 0 0 1 2.5 9h3A1.5 1.5 0 0 1 7 10.5v3A1.5 1.5 0 0 1 5.5 15h-3A1.5 1.5 0 0 1 1 13.5v-3zm8 0A1.5 1.5 0 0 1 10.5 9h3a1.5 1.5 0 0 1 1.5 1.5v3a1.5 1.5 0 0 1-1.5 1.5h-3A1.5 1.5 0 0 1 9 13.5v-3z"/>
-                </svg>
-              </button>
-            </div>
-          </div>
-          
-          <label for="search-spot" class="visually-hidden">Buscar spots</label>
-          <input id="search-spot" class="form-control mb-3" placeholder="🔍 Buscar lugares..." aria-label="Buscar spots por título, descripción o categoría">
-          
-          <div id="category-chips" class="category-chips mb-3"></div>
-          
-          <label for="filter-category" class="visually-hidden">Filtrar por categoría</label>
-          <select id="filter-category" class="form-select mb-3" aria-label="Filtrar por categoría">
-            <option value="all">Todas las categorías</option>
-          </select>
-          
-          <button id="btn-geolocate" class="btn btn-secondary w-100">📍 Mi Ubicación</button>
+      <!-- Sidebar (responsive offcanvas en móvil, sidebar fijo en escritorio) -->
+      <aside class="offcanvas offcanvas-start sidebar" tabindex="-1" id="sidebar" aria-labelledby="sidebarLabel" role="complementary" aria-label="Panel lateral de filtros y lista">
+        <div class="offcanvas-header d-lg-none">
+          <h5 class="offcanvas-title mb-0" id="sidebarLabel">Explorar Spots</h5>
+          <button type="button" class="btn-close text-reset" data-bs-dismiss="offcanvas" aria-label="Cerrar"></button>
         </div>
 
-        <hr>
-        <div>
-          <div class="d-flex justify-content-between align-items-center mb-3">
-            <h6 class="mb-0">Descubre</h6>
-            <span class="badge bg-primary" id="spot-count">0</span>
+        <div class="offcanvas-body p-0">
+          <div class="p-3">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+              <h5 class="mb-0">Explorar Spots</h5>
+              <div class="btn-group btn-group-sm" role="group" aria-label="Vista">
+                <button type="button" class="btn btn-outline-primary active" id="btn-view-list" title="Vista lista">
+                  <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                    <path d="M2.5 12a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5zm0-4a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5zm0-4a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5z"/>
+                  </svg>
+                </button>
+                <button type="button" class="btn btn-outline-primary" id="btn-view-grid" title="Vista cuadrícula">
+                  <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                    <path d="M1 2.5A1.5 1.5 0 0 1 2.5 1h3A1.5 1.5 0 0 1 7 2.5v3A1.5 1.5 0 0 1 5.5 7h-3A1.5 1.5 0 0 1 1 5.5v-3zm8 0A1.5 1.5 0 0 1 10.5 1h3A1.5 1.5 0 0 1 15 2.5v3A1.5 1.5 0 0 1 13.5 7h-3A1.5 1.5 0 0 1 9 5.5v-3zm-8 8A1.5 1.5 0 0 1 2.5 9h3A1.5 1.5 0 0 1 7 10.5v3A1.5 1.5 0 0 1 5.5 15h-3A1.5 1.5 0 0 1 1 13.5v-3zm8 0A1.5 1.5 0 0 1 10.5 9h3a1.5 1.5 0 0 1 1.5 1.5v3a1.5 1.5 0 0 1-1.5 1.5h-3A1.5 1.5 0 0 1 9 13.5v-3z"/>
+                  </svg>
+                </button>
+              </div>
+            </div>
+            
+            <label for="search-spot" class="visually-hidden">Buscar spots</label>
+            <input id="search-spot" class="form-control mb-3" placeholder="🔍 Buscar lugares..." aria-label="Buscar spots por título, descripción o categoría">
+
+            <div id="category-chips" class="category-chips mb-3"></div>
+
+            <label for="filter-category" class="visually-hidden">Filtrar por categoría</label>
+            <select id="filter-category" class="form-select mb-3" aria-label="Filtrar por categoría">
+              <option value="all">Todas las categorías</option>
+            </select>
+
+            <button id="btn-geolocate" class="btn btn-secondary w-100 mb-3">📍 Mi Ubicación</button>
+
+            <hr>
+            <div class="d-flex justify-content-between align-items-center mb-3">
+              <h6 class="mb-0">Descubre</h6>
+              <span class="badge bg-primary" id="spot-count">0</span>
+            </div>
+            <div id="spot-list" class="spot-list-view" aria-live="polite" aria-busy="false"></div>
           </div>
-          <div id="spot-list" class="spot-list-view" aria-live="polite" aria-busy="false"></div>
         </div>
       </aside>
 
@@ -233,6 +270,166 @@
         </div>
       </div>
     </div>
+
+    <!-- Modal Login -->
+    <div class="modal fade" id="modalLogin" tabindex="-1" aria-labelledby="modalLoginLabel" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="modalLoginLabel">🔐 Iniciar Sesión</h5>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+          </div>
+          <form id="form-login">
+            <div class="modal-body">
+              <div class="mb-3">
+                <label for="login-email" class="form-label">Email</label>
+                <input type="email" class="form-control" id="login-email" required placeholder="tu@email.com">
+              </div>
+              <div class="mb-3">
+                <label for="login-password" class="form-label">Contraseña</label>
+                <input type="password" class="form-control" id="login-password" required placeholder="••••••••">
+              </div>
+              <div class="form-check mb-3">
+                <input class="form-check-input" type="checkbox" id="login-remember">
+                <label class="form-check-label" for="login-remember">
+                  Recordarme
+                </label>
+              </div>
+              <div class="text-center">
+                <a href="#" class="text-decoration-none" id="link-forgot-password">¿Olvidaste tu contraseña?</a>
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+              <button type="submit" class="btn btn-primary">Iniciar Sesión</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal Register -->
+    <div class="modal fade" id="modalRegister" tabindex="-1" aria-labelledby="modalRegisterLabel" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="modalRegisterLabel">✨ Crear Cuenta</h5>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+          </div>
+          <form id="form-register">
+            <div class="modal-body">
+              <div class="mb-3">
+                <label for="register-name" class="form-label">Nombre completo</label>
+                <input type="text" class="form-control" id="register-name" required placeholder="Tu nombre">
+              </div>
+              <div class="mb-3">
+                <label for="register-email" class="form-label">Email</label>
+                <input type="email" class="form-control" id="register-email" required placeholder="tu@email.com">
+              </div>
+              <div class="mb-3">
+                <label for="register-password" class="form-label">Contraseña</label>
+                <input type="password" class="form-control" id="register-password" required placeholder="Mínimo 6 caracteres">
+                <small class="form-text">Mínimo 6 caracteres</small>
+              </div>
+              <div class="mb-3">
+                <label for="register-password-confirm" class="form-label">Confirmar contraseña</label>
+                <input type="password" class="form-control" id="register-password-confirm" required placeholder="Repite tu contraseña">
+              </div>
+              <div class="form-check mb-3">
+                <input class="form-check-input" type="checkbox" id="register-terms" required>
+                <label class="form-check-label" for="register-terms">
+                  Acepto los <a href="#" class="text-decoration-none">Términos y Condiciones</a>
+                </label>
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+              <button type="submit" class="btn btn-primary">Crear Cuenta</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="app-footer">
+      <div class="container-fluid">
+        <div class="row g-4">
+          <!-- Columna 1: Sobre SpotMap -->
+          <div class="col-12 col-md-4">
+            <h5 class="footer-title">📸 SpotMap</h5>
+            <p class="footer-text">Descubre y comparte lugares increíbles. Conecta con una comunidad de exploradores.</p>
+            <div class="social-links">
+              <a href="https://instagram.com" target="_blank" aria-label="Instagram" class="social-link">
+                <i class="bi bi-instagram"></i>
+              </a>
+              <a href="https://twitter.com" target="_blank" aria-label="Twitter" class="social-link">
+                <i class="bi bi-twitter-x"></i>
+              </a>
+              <a href="https://facebook.com" target="_blank" aria-label="Facebook" class="social-link">
+                <i class="bi bi-facebook"></i>
+              </a>
+              <a href="https://youtube.com" target="_blank" aria-label="YouTube" class="social-link">
+                <i class="bi bi-youtube"></i>
+              </a>
+            </div>
+          </div>
+
+          <!-- Columna 2: Enlaces -->
+          <div class="col-6 col-md-2">
+            <h6 class="footer-subtitle">Explora</h6>
+            <ul class="footer-menu">
+              <li><a href="about.html">Acerca de</a></li>
+              <li><a href="faq.html">Cómo funciona</a></li>
+              <li><a href="blog.html">Blog</a></li>
+              <li><a href="#">Comunidad</a></li>
+            </ul>
+          </div>
+
+          <!-- Columna 3: Soporte -->
+          <div class="col-6 col-md-2">
+            <h6 class="footer-subtitle">Soporte</h6>
+            <ul class="footer-menu">
+              <li><a href="faq.html">Centro de ayuda</a></li>
+              <li><a href="faq.html">Preguntas frecuentes</a></li>
+              <li><a href="contact.html">Contacto</a></li>
+              <li><a href="contact.html">Reportar problema</a></li>
+            </ul>
+          </div>
+
+          <!-- Columna 4: Legal -->
+          <div class="col-6 col-md-2">
+            <h6 class="footer-subtitle">Legal</h6>
+            <ul class="footer-menu">
+              <li><a href="privacy.html">Privacidad</a></li>
+              <li><a href="terms.html">Términos de uso</a></li>
+              <li><a href="privacy.html#cookies">Cookies</a></li>
+              <li><a href="about.html#licenses">Licencias</a></li>
+            </ul>
+          </div>
+
+          <!-- Columna 5: Descarga -->
+          <div class="col-6 col-md-2">
+            <h6 class="footer-subtitle">Descarga</h6>
+            <ul class="footer-menu">
+              <li><a href="#" class="app-badge">
+                <i class="bi bi-apple"></i> App Store
+              </a></li>
+              <li><a href="#" class="app-badge">
+                <i class="bi bi-google-play"></i> Google Play
+              </a></li>
+            </ul>
+          </div>
+        </div>
+
+        <hr class="footer-divider">
+
+        <div class="footer-bottom">
+          <p class="mb-0">© 2025 SpotMap. Todos los derechos reservados.</p>
+          <p class="mb-0 text-muted small">Hecho con ❤️ para exploradores</p>
+        </div>
+      </div>
+    </footer>
 
     <!-- Scripts -->
     <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>

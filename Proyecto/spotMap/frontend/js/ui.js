@@ -393,13 +393,21 @@ function renderSpotCardList(spot) {
         ? `<img src="${escapeHtml(imagePath)}" alt="${escapeHtml(spot.title)}" class="spot-card-image" loading="lazy" onerror="this.style.display='none'">`
         : '';
     
+    const isLiked = window.isSpotLiked ? window.isSpotLiked(spot.id) : false;
+    
     return `
-        <div class="spot-card" onclick="window.focusSpot(${spot.id})">
+        <div class="spot-card" onclick="window.openSpotDetails(${JSON.stringify(spot).replace(/"/g, '&quot;')})">
             ${imageHtml}
             <div class="spot-card-content">
                 <div class="spot-card-actions">
-                    <button class="btn btn-delete" onclick="event.stopPropagation(); window.deleteSpot(${spot.id})" title="Eliminar">
-                        🗑️
+                    <button class="btn-social btn-like ${isLiked ? 'liked' : ''}" data-spot-id="${spot.id}" title="Me gusta" onclick="event.stopPropagation()">
+                        <span class="like-icon">${isLiked ? '❤️' : '🤍'}</span>
+                    </button>
+                    <button class="btn-social btn-share" data-spot-id="${spot.id}" title="Compartir" onclick="event.stopPropagation()">
+                        <i class="bi bi-share-fill"></i>
+                    </button>
+                    <button class="btn-social btn-delete" onclick="event.stopPropagation(); window.deleteSpot(${spot.id})" title="Eliminar">
+                        <i class="bi bi-trash3"></i>
                     </button>
                 </div>
                 <h6 class="spot-card-title">
@@ -428,13 +436,21 @@ function renderSpotCardGrid(spot) {
         ? `<img src="${escapeHtml(imagePath)}" alt="${escapeHtml(spot.title)}" class="spot-card-image" loading="lazy" onerror="this.style.display='none'">`
         : `<div class="spot-card-image"></div>`;
     
+    const isLiked = window.isSpotLiked ? window.isSpotLiked(spot.id) : false;
+    
     return `
-        <div class="spot-card spot-card-grid" onclick="window.focusSpot(${spot.id})">
+        <div class="spot-card spot-card-grid" onclick="window.openSpotDetails(${JSON.stringify(spot).replace(/"/g, '&quot;')})">
             ${imageHtml}
             <div class="spot-card-content">
                 <div class="spot-card-actions">
-                    <button class="btn btn-delete" onclick="event.stopPropagation(); window.deleteSpot(${spot.id})" title="Eliminar">
-                        🗑️
+                    <button class="btn-social btn-like ${isLiked ? 'liked' : ''}" data-spot-id="${spot.id}" title="Me gusta" onclick="event.stopPropagation()">
+                        <span class="like-icon">${isLiked ? '❤️' : '🤍'}</span>
+                    </button>
+                    <button class="btn-social btn-share" data-spot-id="${spot.id}" title="Compartir" onclick="event.stopPropagation()">
+                        <i class="bi bi-share-fill"></i>
+                    </button>
+                    <button class="btn-social btn-delete" onclick="event.stopPropagation(); window.deleteSpot(${spot.id})" title="Eliminar">
+                        <i class="bi bi-trash3"></i>
                     </button>
                 </div>
                 <h6 class="spot-card-title mb-1">
