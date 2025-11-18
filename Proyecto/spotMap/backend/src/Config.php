@@ -30,6 +30,19 @@ class Config
             'RATE_LIMIT_ENABLED' => false,
             'RATE_LIMIT_REQUESTS' => 100,
             'RATE_LIMIT_WINDOW' => 3600,
+            // Seguridad / CSP
+            'CSP_DEFAULT' => "'self'",
+            'CSP_SCRIPT' => "'self' https://cdn.jsdelivr.net https://unpkg.com",
+            'CSP_STYLE' => "'self' 'unsafe-inline' https://cdn.jsdelivr.net https://unpkg.com",
+            'CSP_IMG' => "'self' data: https://unpkg.com https://raw.githubusercontent.com",
+            'CSP_FONT' => "'self' data:",
+            'CSP_CONNECT' => "'self'",
+            'CSP_OBJECT' => "'none'",
+            'CSP_BASE' => "'self'",
+            'CSP_FRAME_ANCESTORS' => "'none'",
+            // Ownership & Metrics
+            'OWNERSHIP_ENABLED' => false,
+            'METRICS_ENABLED' => false,
         ];
 
         foreach ($defaults as $key => $defaultValue) {

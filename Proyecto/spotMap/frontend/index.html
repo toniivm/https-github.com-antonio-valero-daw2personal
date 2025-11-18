@@ -21,7 +21,8 @@
     <!-- Estilos propios -->
     <link rel="stylesheet" href="css/styles.css">
 
-    <!-- Scripts -->
+    <!-- Supabase y App Scripts -->
+    <script defer type="module" src="js/supabaseClient.js"></script>
     <script defer type="module" src="js/main.js"></script>
     <script defer type="module" src="js/api.js"></script>
     <script defer type="module" src="js/auth.js"></script>
@@ -63,6 +64,17 @@
 
     <!-- Layout -->
     <main class="main-layout">
+      <!-- Panel Moderación (oculto si no moderador) -->
+      <div id="moderation-panel" class="moderation-panel card shadow-sm" style="display:none; position:absolute; top:70px; right:10px; z-index:1000; width:320px; max-height:60vh; overflow:auto;">
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <strong>🛡️ Moderación</strong>
+          <button id="btn-close-moderation" class="btn btn-sm btn-outline-secondary">✖</button>
+        </div>
+        <div class="card-body p-2">
+          <div id="pending-count" class="small text-muted mb-2">Pending: ...</div>
+          <div id="pending-list" class="list-group small"></div>
+        </div>
+      </div>
       <!-- Sidebar (responsive offcanvas en móvil, sidebar fijo en escritorio) -->
       <aside class="offcanvas offcanvas-start sidebar" tabindex="-1" id="sidebar" aria-labelledby="sidebarLabel" role="complementary" aria-label="Panel lateral de filtros y lista">
         <div class="offcanvas-header d-lg-none">
@@ -434,5 +446,11 @@
     <!-- Scripts -->
     <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+      // Registro Service Worker PWA
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('service-worker.js').catch(err => console.warn('[SW] Error registro', err));
+      }
+    </script>
   </body>
 </html>

@@ -7,6 +7,7 @@ namespace SpotMap;
  */
 class Security
 {
+    private static ?string $nonce = null;
     /**
      * Configurar headers CORS
      * @param string $allowedOrigin - Origin permitido (ej: http://localhost)
@@ -47,20 +48,22 @@ class Security
         // Feature policy (ahora Permissions-Policy)
         header("Permissions-Policy: geolocation=(self), camera=()");
 
-        // Content Security Policy básica (permitir CDNs usados y self)
-        // Ajustar si se agregan más recursos externos
+        // Content Security Policy dinámica basada en Config
+        \SpotMap\Config::load();
+        $nonce = self::getNonce();
         $csp = [
-            "default-src 'self'",
-            "script-src 'self' https://cdn.jsdelivr.net https://unpkg.com 'unsafe-inline'", // inline permitido por Bootstrap modal init
-            "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://unpkg.com",
-            "img-src 'self' data: https://unpkg.com https://raw.githubusercontent.com",
-            "font-src 'self' data:",
-            "connect-src 'self'",
-            "object-src 'none'",
-            "base-uri 'self'",
-            "frame-ancestors 'none'",
+            'default-src ' . \SpotMap\Config::get('CSP_DEFAULT', "'self'"),
+            'script-src ' . \SpotMap\Config::get('CSP_SCRIPT', "'self'") . " 'nonce-$nonce'",
+            'style-src ' . \SpotMap\Config::get('CSP_STYLE', "'self'"),
+            'img-src ' . \SpotMap\Config::get('CSP_IMG', "'self'"),
+            'font-src ' . \SpotMap\Config::get('CSP_FONT', "'self'"),
+            'connect-src ' . \SpotMap\Config::get('CSP_CONNECT', "'self'"),
+            'object-src ' . \SpotMap\Config::get('CSP_OBJECT', "'none'"),
+            'base-uri ' . \SpotMap\Config::get('CSP_BASE', "'self'"),
+            'frame-ancestors ' . \SpotMap\Config::get('CSP_FRAME_ANCESTORS', "'none'"),
         ];
         header('Content-Security-Policy: ' . implode('; ', $csp));
+        header('X-CSP-Nonce: ' . $nonce);
     }
 
     /**
@@ -137,6 +140,9 @@ class Security
         if (count($data['requests']) >= $maxRequests) {
             header("HTTP/1.1 429 Too Many Requests");
             header("Retry-After: " . $timeWindow);
+            header("X-RateLimit-Limit: $maxRequests");
+            header("X-RateLimit-Remaining: 0");
+            header("X-RateLimit-Reset: " . ($now + $timeWindow));
             return false;
         }
 
@@ -145,6 +151,11 @@ class Security
 
         // Guardar cache
         file_put_contents($cacheFile, json_encode($data));
+
+        // Headers informativos
+        header("X-RateLimit-Limit: $maxRequests");
+        header("X-RateLimit-Remaining: " . max(0, $maxRequests - count($data['requests'])));
+        header("X-RateLimit-Reset: " . ($now + $timeWindow));
 
         return true;
     }
@@ -170,7 +181,7 @@ class Security
      */
     public static function generateNonce()
     {
-        return bin2hex(random_bytes(32));
+        return bin2hex(random_bytes(16));
     }
 
     /**
@@ -183,6 +194,17 @@ class Security
         // TODO: Implementar validación con sesiones
         // Por ahora es un placeholder
         return strlen($nonce) === 64;
+    }
+
+    /**
+     * Obtener (o crear) nonce usado en CSP del request actual
+     */
+    public static function getNonce(): string
+    {
+        if (self::$nonce === null) {
+            self::$nonce = self::generateNonce();
+        }
+        return self::$nonce;
     }
 
     /**

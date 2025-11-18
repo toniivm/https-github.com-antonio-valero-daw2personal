@@ -69,6 +69,15 @@ class ApiResponse
         self::error($message, 404);
     }
 
+    public static function notModified(string $etag = null, $lastModified = null)
+    {
+        if (ob_get_level() > 0) { ob_clean(); }
+        http_response_code(304);
+        if ($etag && !headers_sent()) header('ETag: ' . $etag);
+        if ($lastModified && !headers_sent()) header('Last-Modified: ' . gmdate('D, d M Y H:i:s', $lastModified) . ' GMT');
+        exit;
+    }
+
     public static function unauthorized($message = 'Unauthorized')
     {
         self::error($message, 401);

@@ -13,7 +13,9 @@ class DatabaseAdapter
     {
         if (self::$useSupabase === null) {
             $url = Config::get('SUPABASE_URL');
-            $key = Config::get('SUPABASE_KEY');
+            $service = Config::get('SUPABASE_SERVICE_KEY');
+            $anon = Config::get('SUPABASE_ANON_KEY');
+            $key = $service ?: $anon;
             self::$useSupabase = !empty($url) && !empty($key);
         }
         return self::$useSupabase;
@@ -30,10 +32,10 @@ class DatabaseAdapter
         return Database::pdo();
     }
 
-    public static function getAllSpots(int $limit = 100, int $offset = 0): array
+    public static function getAllSpots(int $limit = 100, int $offset = 0, array $filters = []): array
     {
         if (self::useSupabase()) {
-            $spots = self::getClient()->getAllSpots($limit, $offset);
+            $spots = self::getClient()->getAllSpots($limit, $offset, $filters);
             $total = count($spots);
             
             // Parsear tags JSONB
@@ -43,6 +45,35 @@ class DatabaseAdapter
                 }
             });
             
+            // Popularity: if requested, enrich with aggregate popularity view (basic join by id)
+            if (!empty($filters['popularity'])) {
+                $pop = self::getClient()->getPopularity();
+                $popIndex = [];
+                foreach ($pop as $p) { $popIndex[$p['spot_id']] = $p; }
+                foreach ($spots as &$s) {
+                    $pid = $s['id'] ?? null;
+                    if ($pid && isset($popIndex[$pid])) {
+                        $s['popularity'] = $popIndex[$pid];
+                    }
+                }
+            }
+            // Distance filtering post-fetch (Haversine) if center + max_distance provided
+            if (isset($filters['center_lat'], $filters['center_lng'], $filters['max_distance_km'])) {
+                $clat = (float)$filters['center_lat'];
+                $clng = (float)$filters['center_lng'];
+                $maxD = (float)$filters['max_distance_km'];
+                $spots = array_values(array_filter($spots, function($s) use ($clat,$clng,$maxD) {
+                    if (!isset($s['lat'],$s['lng'])) return false;
+                    $lat1 = deg2rad($clat); $lon1 = deg2rad($clng);
+                    $lat2 = deg2rad((float)$s['lat']); $lon2 = deg2rad((float)$s['lng']);
+                    $dlat = $lat2 - $lat1; $dlon = $lon2 - $lon1;
+                    $a = sin($dlat/2)**2 + cos($lat1)*cos($lat2)*sin($dlon/2)**2;
+                    $c = 2 * atan2(sqrt($a), sqrt(1-$a));
+                    $distance = 6371 * $c;
+                    return $distance <= $maxD;
+                }));
+                $total = count($spots);
+            }
             return ['spots' => $spots, 'total' => $total];
         } else {
             $pdo = self::getClient();
@@ -62,7 +93,7 @@ class DatabaseAdapter
                 $spot['tags'] = $spot['tags'] ? json_decode($spot['tags']) : [];
             });
             
-            return ['spots' => $spots, 'total' => $total];
+            return ['spots' => $spots, 'total' => $total]; // Filters not implemented for local DB
         }
     }
 
@@ -144,5 +175,66 @@ class DatabaseAdapter
             $success = $stmt->execute([':id' => $id]);
             return $success ? ['success' => true] : ['error' => 'Delete failed'];
         }
+    }
+
+    /* ===== Extended Features (Supabase only) ===== */
+    public static function favorite(string $userId, int $spotId): array
+    {
+        if (!self::useSupabase()) return ['error' => 'Favorites unsupported'];
+        self::getClient()->favoriteSpot($userId, $spotId);
+        return ['success' => true];
+    }
+    public static function unfavorite(string $userId, int $spotId): array
+    {
+        if (!self::useSupabase()) return ['error' => 'Favorites unsupported'];
+        self::getClient()->unfavoriteSpot($userId, $spotId);
+        return ['success' => true];
+    }
+    public static function favoritesOf(int $spotId): array
+    {
+        if (!self::useSupabase()) return [];
+        return self::getClient()->listFavorites($spotId);
+    }
+    public static function commentsOf(int $spotId): array
+    {
+        if (!self::useSupabase()) return [];
+        return self::getClient()->listComments($spotId);
+    }
+    public static function addComment(string $userId, int $spotId, string $body): array
+    {
+        if (!self::useSupabase()) return ['error' => 'Comments unsupported'];
+        return self::getClient()->addComment($userId, $spotId, $body);
+    }
+    public static function deleteComment(int $commentId): array
+    {
+        if (!self::useSupabase()) return ['error' => 'Comments unsupported'];
+        self::getClient()->deleteComment($commentId);
+        return ['success' => true];
+    }
+    public static function rate(string $userId, int $spotId, int $score): array
+    {
+        if (!self::useSupabase()) return ['error' => 'Ratings unsupported'];
+        return self::getClient()->rateSpot($userId, $spotId, $score);
+    }
+    public static function ratingAggregate(int $spotId): array
+    {
+        if (!self::useSupabase()) return ['count' => 0, 'average' => 0];
+        return self::getClient()->getRatingAggregate($spotId);
+    }
+    public static function report(string $userId, int $spotId, string $reason): array
+    {
+        if (!self::useSupabase()) return ['error' => 'Reports unsupported'];
+        return self::getClient()->reportSpot($userId, $spotId, $reason);
+    }
+    public static function listReports(string $status = 'pending'): array
+    {
+        if (!self::useSupabase()) return [];
+        return self::getClient()->listReports($status);
+    }
+    public static function moderateReport(int $reportId, string $newStatus, string $moderatorId, ?string $note = null): array
+    {
+        if (!self::useSupabase()) return ['error' => 'Reports unsupported'];
+        self::getClient()->moderateReport($reportId, $newStatus, $moderatorId, $note);
+        return ['success' => true];
     }
 }

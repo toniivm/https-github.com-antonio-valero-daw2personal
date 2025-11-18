@@ -1,0 +1,57 @@
+version: '3.8'
+
+services:
+  spotmap-web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: spotmap-app
+    restart: unless-stopped
+    ports:
+      - "8080:80"
+    environment:
+      - APACHE_DOCUMENT_ROOT=/var/www/html/frontend
+      - PHP_MEMORY_LIMIT=256M
+      - PHP_MAX_EXECUTION_TIME=60
+      - TZ=Europe/Madrid
+    volumes:
+      - ./backend/public/uploads:/var/www/html/backend/public/uploads
+      - ./backend/.env:/var/www/html/backend/.env:ro
+      - ./frontend/js/supabaseConfig.js:/var/www/html/frontend/js/supabaseConfig.js:ro
+    healthcheck:
+      # Se usa endpoint simple api.php?health para evitar rutas largas
+      test: ["CMD", "curl", "-f", "http://localhost/backend/public/api.php?health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - spotmap-network
+
+  # Opcional: Nginx como reverse proxy (producción)
+  spotmap-nginx:
+    image: nginx:alpine
+    container_name: spotmap-nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./ssl:/etc/nginx/ssl:ro
+    depends_on:
+      - spotmap-web
+    networks:
+      - spotmap-network
+    profiles:
+      - production
+
+networks:
+  spotmap-network:
+    driver: bridge
+
+# Para desarrollo local sin nginx:
+# docker-compose up spotmap-web
+
+# Para producción con nginx:
+# docker-compose --profile production up -d

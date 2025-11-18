@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 // Iniciar buffering para evitar que cualquier salida (BOM/avisos) rompa el JSON
 ob_start();
+$__req_start = microtime(true);
 
 require __DIR__ . '/../src/Config.php';
 require __DIR__ . '/../src/Database.php';
@@ -13,6 +14,16 @@ require __DIR__ . '/../src/Validator.php';
 require __DIR__ . '/../src/SupabaseClient.php';
 require __DIR__ . '/../src/DatabaseAdapter.php';
 require __DIR__ . '/../src/Controllers/SpotController.php';
+require __DIR__ . '/../src/Metrics.php';
+require __DIR__ . '/../src/Cache.php';
+require __DIR__ . '/../src/Auth.php';
+require __DIR__ . '/../src/Roles.php';
+require __DIR__ . '/../src/Controllers/FavoritesController.php';
+require __DIR__ . '/../src/Controllers/CommentsController.php';
+require __DIR__ . '/../src/Controllers/RatingsController.php';
+require __DIR__ . '/../src/Controllers/ReportsController.php';
+require __DIR__ . '/../src/Controllers/AdminController.php';
+require __DIR__ . '/../src/Controllers/AccountController.php';
 
 use SpotMap\Config;
 use SpotMap\Database;
@@ -20,6 +31,15 @@ use SpotMap\DatabaseAdapter;
 use SpotMap\Logger;
 use SpotMap\RateLimiter;
 use SpotMap\Controllers\SpotController;
+use SpotMap\Metrics;
+use SpotMap\Cache;
+use SpotMap\Auth;
+use SpotMap\Controllers\FavoritesController;
+use SpotMap\Controllers\CommentsController;
+use SpotMap\Controllers\RatingsController;
+use SpotMap\Controllers\ReportsController;
+use SpotMap\Controllers\AdminController;
+use SpotMap\Controllers\AccountController;
 
 // Inicializar configuración
 Config::load();
@@ -61,6 +81,7 @@ if (!RateLimiter::check($_SERVER['REMOTE_ADDR'] ?? 'unknown')) {
 
 // Logging
 Logger::info("Petición: $method $uri", ['ip' => $_SERVER['REMOTE_ADDR'] ?? 'unknown']);
+Metrics::inc('requests_total');
 
 // Endpoint rápido para comprobar conexión a la base de datos
 if ($uri === '/ping-db') {
@@ -115,33 +136,97 @@ if (isset($parts[0]) && $parts[0] === 'spots') {
     $controller = new SpotController();
 
     if ($method === 'GET' && count($parts) === 1) {
+        Metrics::inc('requests_spots_list');
         $controller->index();
         exit;
     }
 
     if ($method === 'POST' && count($parts) === 1) {
+        Metrics::inc('requests_spots_create');
         $controller->store();
         exit;
     }
 
     if ($method === 'GET' && count($parts) === 2) {
+        Metrics::inc('requests_spots_show');
         $controller->show((int)$parts[1]);
         exit;
     }
 
+    if ($method === 'PUT' && count($parts) === 2) {
+        $controller->update((int)$parts[1]);
+        exit;
+    }
+
     if ($method === 'DELETE' && count($parts) === 2) {
+        Metrics::inc('requests_spots_delete');
         $controller->destroy((int)$parts[1]);
         exit;
     }
 
     if ($method === 'POST' && count($parts) === 3 && $parts[2] === 'photo') {
+        Metrics::inc('requests_spots_upload');
         $controller->uploadPhoto((int)$parts[1]);
+        exit;
+    }
+
+    // Favorites
+    if ($method === 'POST' && count($parts) === 3 && $parts[2] === 'favorite') {
+        $fav = new FavoritesController();
+        $fav->favorite((int)$parts[1]);
+        exit;
+    }
+    if ($method === 'DELETE' && count($parts) === 3 && $parts[2] === 'favorite') {
+        $fav = new FavoritesController();
+        $fav->unfavorite((int)$parts[1]);
+        exit;
+    }
+    if ($method === 'GET' && count($parts) === 3 && $parts[2] === 'favorites') {
+        $fav = new FavoritesController();
+        $fav->list((int)$parts[1]);
+        exit;
+    }
+
+    // Comments
+    if ($method === 'GET' && count($parts) === 3 && $parts[2] === 'comments') {
+        $com = new CommentsController();
+        $com->list((int)$parts[1]);
+        exit;
+    }
+    if ($method === 'POST' && count($parts) === 3 && $parts[2] === 'comments') {
+        $com = new CommentsController();
+        $com->add((int)$parts[1]);
+        exit;
+    }
+    if ($method === 'DELETE' && count($parts) === 4 && $parts[2] === 'comments') {
+        $com = new CommentsController();
+        $com->delete((int)$parts[3]);
+        exit;
+    }
+
+    // Ratings
+    if ($method === 'POST' && count($parts) === 3 && $parts[2] === 'rate') {
+        $rat = new RatingsController();
+        $rat->rate((int)$parts[1]);
+        exit;
+    }
+    if ($method === 'GET' && count($parts) === 3 && $parts[2] === 'rating') {
+        $rat = new RatingsController();
+        $rat->aggregate((int)$parts[1]);
+        exit;
+    }
+
+    // Reports
+    if ($method === 'POST' && count($parts) === 3 && $parts[2] === 'report') {
+        $rep = new ReportsController();
+        $rep->report((int)$parts[1]);
         exit;
     }
 }
 
 // Endpoint: Estado de salud de la API
-if ($uri === '/api/status') {
+// Health / status endpoint (aceptar variantes con prefijos)
+if ($uri === '/api/status' || str_ends_with($uri, '/api/status')) {
     try {
         if (DatabaseAdapter::useSupabase()) {
             $dbConnected = true; // Supabase credenciales cargadas correctamente
@@ -178,8 +263,95 @@ if ($uri === '/api/status') {
     exit;
 }
 
+// Metrics endpoint (simple JSON) if enabled
+if ($uri === '/api/metrics') {
+    if (!Config::get('METRICS_ENABLED')) {
+        http_response_code(404);
+        header('Content-Type: application/json');
+        echo json_encode(['error' => 'Metrics disabled']);
+        exit;
+    }
+    $stats = Cache::stats();
+    $metrics = array_merge([
+        'generated_at' => time(),
+        'env' => Config::get('ENV'),
+    ], $stats, Metrics::all());
+    header('Content-Type: application/json');
+    echo json_encode($metrics);
+    exit;
+}
+
+// Prometheus plaintext metrics
+if ($uri === '/api/metrics/prometheus') {
+    if (!Config::get('METRICS_ENABLED')) {
+        http_response_code(404);
+        header('Content-Type: text/plain');
+        echo "metrics_disabled 1";
+        exit;
+    }
+    $stats = Cache::stats();
+    $all = Metrics::all();
+    header('Content-Type: text/plain');
+    echo "# HELP spotmap_requests_total Total requests\n";
+    echo "# TYPE spotmap_requests_total counter\n";
+    echo "spotmap_requests_total {$all['requests_total']}\n";
+    foreach ($all as $k=>$v) {
+        if (strpos($k,'requests_')===0 && $k!=='requests_total') {
+            echo "spotmap_{$k} {$v}\n";
+        }
+    }
+    echo "spotmap_latency_count {$all['latency_count']}\n";
+    echo "spotmap_latency_sum_ms {$all['latency_sum_ms']}\n";
+    echo "spotmap_latency_avg_ms {$all['latency_avg_ms']}\n";
+    echo "spotmap_latency_max_ms {$all['latency_max_ms']}\n";
+    echo "spotmap_latency_min_ms {$all['latency_min_ms']}\n";
+    echo "spotmap_cache_hits {$stats['hits']}\n";
+    echo "spotmap_cache_misses {$stats['misses']}\n";
+    exit;
+}
+
+// Admin reports listing
+if ($uri === '/api/admin/reports' && $method === 'GET') {
+    $rep = new ReportsController();
+    $rep->list();
+    exit;
+}
+// Admin report moderation
+if ($method === 'POST' && preg_match('#^/api/admin/reports/(\d+)$#', $uri)) {
+    $reportId = (int)preg_replace('#^/api/admin/reports/(\d+)$#', '$1', $uri);
+    $rep = new ReportsController();
+    $rep->moderate($reportId);
+    exit;
+}
+// Account export
+if ($uri === '/api/account/export' && $method === 'GET') {
+    Metrics::inc('requests_account_export');
+    $acc = new AccountController();
+    $acc->export();
+    exit;
+}
+// Account delete
+if ($uri === '/api/account/delete' && $method === 'POST') {
+    Metrics::inc('requests_account_delete');
+    $acc = new AccountController();
+    $acc->delete();
+    exit;
+}
+// Admin global stats
+if ($uri === '/api/admin/stats' && $method === 'GET') {
+    $adm = new AdminController();
+    $adm->stats();
+    exit;
+}
+
 http_response_code(404);
 header('Content-Type: application/json');
 echo json_encode(['error'=>'Route not found']);
+
+// Latency recording on shutdown
+register_shutdown_function(function() use ($__req_start) {
+    $elapsed = (microtime(true) - $__req_start) * 1000.0; // ms
+    \SpotMap\Metrics::recordDuration($elapsed);
+});
 
 

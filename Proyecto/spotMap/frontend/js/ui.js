@@ -152,6 +152,10 @@ async function handleAddSpotSubmit(e) {
         // Crear spot (sin pasar headers, dejar que spots.js maneje)
         const newSpot = await spotsModule.createSpot(spotData, photoFile);
 
+        if (newSpot.status === 'pending') {
+            showToast('Spot creado y pendiente de aprobación', 'info');
+        }
+
         console.log('[UI] ✓ Spot creado exitosamente:', newSpot);
 
         // Limpiar formulario

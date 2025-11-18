@@ -6,6 +6,7 @@
 import * as mapModule from './map.js';
 import { apiFetch } from './api.js';
 import { Cache } from './cache.js';
+import { getApproved, createSpotRecord } from './supabaseSpots.js';
 
 /**
  * Cargar todos los spots de la API
@@ -20,16 +21,11 @@ export async function loadSpots({ forceRefresh = false } = {}) {
                 return cached;
             }
         }
-
-        console.log('[SPOTS] Fetching spots from API...');
-        const response = await apiFetch('/spots', { method: 'GET' });
-        if (!response || !response.data || !Array.isArray(response.data.spots)) {
-            console.warn('[SPOTS] Respuesta inválida de API');
-            return [];
-        }
-        Cache.set('spots', response.data.spots, 30000); // 30s TTL
-        console.log(`[SPOTS] ✓ ${response.data.spots.length} spots cargados`);
-        return response.data.spots;
+        console.log('[SPOTS] Fetching spots (Supabase/API)...');
+        const spots = await getApproved({});
+        Cache.set('spots', spots, 30000);
+        console.log(`[SPOTS] ✓ ${spots.length} spots cargados`);
+        return spots;
     } catch (error) {
         console.error('[SPOTS] Error cargando spots:', error);
         return [];
@@ -67,79 +63,26 @@ export function displaySpots(spots, renderListCallback) {
  * @returns {Promise<Object>} Spot creado
  */
 export async function createSpot(spotData, photoFile = null) {
-    try {
-        // Validación básica en cliente
-        if (!spotData.title || !spotData.title.trim()) {
-            throw new Error('El título es requerido');
-        }
-        if (isNaN(spotData.lat) || isNaN(spotData.lng)) {
-            throw new Error('Latitud y longitud inválidas');
-        }
-        if (spotData.lat < -90 || spotData.lat > 90) {
-            throw new Error('Latitud debe estar entre -90 y 90');
-        }
-        if (spotData.lng < -180 || spotData.lng > 180) {
-            throw new Error('Longitud debe estar entre -180 y 180');
-        }
-
-        console.log('[SPOTS] Creando nuevo spot:', spotData.title);
-
-        // Si hay foto, usar FormData
-        let body;
-        let headers = {};
-
-        if (photoFile) {
-            // Validar archivo
-            const maxSize = 5 * 1024 * 1024; // 5MB
-            if (photoFile.size > maxSize) {
-                throw new Error('La foto no puede exceder 5MB');
-            }
-
-            const validTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
-            if (!validTypes.includes(photoFile.type)) {
-                throw new Error('Formato de foto no válido. Use: JPEG, PNG, WebP o GIF');
-            }
-
-            const formData = new FormData();
-            formData.append('title', spotData.title);
-            formData.append('description', spotData.description || '');
-            formData.append('lat', spotData.lat);
-            formData.append('lng', spotData.lng);
-            formData.append('category', spotData.category || '');
-            formData.append('tags', JSON.stringify(spotData.tags || []));
-            formData.append('photo', photoFile);
-
-            body = formData;
-            // No establecer Content-Type para FormData, el navegador lo hace automáticamente
-        } else {
-            // Sin foto, enviar objeto (apiFetch se encargará de serializar)
-            body = spotData;
-            headers['Content-Type'] = 'application/json';
-        }
-
-        const response = await apiFetch('/spots', {
-            method: 'POST',
-            headers: headers,
-            body: body
-        });
-
-        if (!response || !response.success) {
-            // Mejorar mensaje de error
-            if (response?.errors) {
-                // Si hay errores de validación específicos
-                const errorMessages = Object.values(response.errors).flat();
-                throw new Error(errorMessages.join(', '));
-            }
-            throw new Error(response?.message || 'Error creando spot');
-        }
-
-        console.log('[SPOTS] ✓ Spot creado:', response.data);
-        return response.data;
-
-    } catch (error) {
-        console.error('[SPOTS] Error creando spot:', error);
-        throw error;
+  try {
+    if (!spotData.title || !spotData.title.trim()) throw new Error('El título es requerido');
+    if (isNaN(spotData.lat) || isNaN(spotData.lng)) throw new Error('Latitud y longitud inválidas');
+    if (spotData.lat < -90 || spotData.lat > 90) throw new Error('Latitud debe estar entre -90 y 90');
+    if (spotData.lng < -180 || spotData.lng > 180) throw new Error('Longitud debe estar entre -180 y 180');
+    if (photoFile) {
+      const maxSize = 5 * 1024 * 1024;
+      if (photoFile.size > maxSize) throw new Error('La foto no puede exceder 5MB');
+      const validTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+      if (!validTypes.includes(photoFile.type)) throw new Error('Formato de foto no válido');
     }
+    console.log('[SPOTS] Creando spot (Supabase/API):', spotData.title);
+    const created = await createSpotRecord(spotData, photoFile);
+    if (!created) throw new Error('Error creando spot');
+    Cache.remove('spots');
+    return created;
+  } catch (error) {
+    console.error('[SPOTS] Error creando spot:', error);
+    throw error;
+  }
 }
 
 /**

@@ -1,0 +1,74 @@
+name: Frontend CI + Vercel Deploy
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Validate directory structure
+        run: |
+          test -d frontend || (echo 'frontend directory missing' && exit 1)
+          test -f frontend/index.html || (echo 'index.html missing' && exit 1)
+
+      - name: Basic lint (HTML link check)
+        uses: urlstechie/urlchecker-action@0.0.33
+        with:
+          file_types: '.html'
+          url_timeout: 5
+          retries: 1
+          print_all: false
+          exclude_patterns: 'mailto:'
+        continue-on-error: true
+
+      - name: Security grep (quick scan for TODO secrets)
+        run: |
+          if grep -R "SERVICE_KEY" -n frontend; then echo 'Potential secret reference found'; fi
+          echo 'Scan complete'
+
+      - name: Upload artifact (static frontend)
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-static
+          path: frontend
+
+      - name: Deploy to Vercel (Production on push to main only)
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        uses: vercel/action@v3
+        with:
+          vercel-token: ${{ secrets.VERCEL_TOKEN }}
+          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
+          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
+          working-directory: ./frontend
+          prod: true
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+
+  preview-deploy:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Deploy Preview to Vercel
+        uses: vercel/action@v3
+        with:
+          vercel-token: ${{ secrets.VERCEL_TOKEN }}
+          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
+          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
+          working-directory: ./frontend
+          prod: false
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}

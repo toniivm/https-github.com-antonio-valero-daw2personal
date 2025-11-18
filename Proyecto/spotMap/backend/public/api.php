@@ -20,6 +20,15 @@ use SpotMap\ApiResponse;
 use SpotMap\Security;
 use SpotMap\Controllers\SpotController;
 
+// Health check endpoint
+if (isset($_GET['health']) || (isset($_SERVER['PATH_INFO']) && $_SERVER['PATH_INFO'] === '/health')) {
+    ob_clean();
+    http_response_code(200);
+    header('Content-Type: application/json');
+    echo json_encode(['status' => 'ok', 'timestamp' => time(), 'service' => 'spotmap-api', 'version' => '1.2']);
+    exit;
+}
+
 // Inicializar configuración para acceso a variables
 \SpotMap\Config::load();
 
