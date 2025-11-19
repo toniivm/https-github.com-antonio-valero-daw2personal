@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Calculadora de Edad</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 40px;
+    }
+    input, button {
+      margin: 5px 0;
+      padding: 8px;
+      font-size: 1em;
+    }
+    button {
+      cursor: pointer;
+    }
+    p {
+      font-weight: bold;
+      margin-top: 15px;
+    }
+  </style>
+</head>
+<body>
+
+  <h2>Calculadora de Edad</h2>
+
+  <label for="dia">Día de nacimiento:</label><br>
+  <input type="number" id="dia" placeholder="Ej: 15"><br>
+
+  <label for="mes">Mes de nacimiento:</label><br>
+  <input type="number" id="mes" placeholder="Ej: 6"><br>
+
+  <label for="anio">Año de nacimiento:</label><br>
+  <input type="number" id="anio" placeholder="Ej: 1995"><br>
+
+  <button onclick="calcularEdad()">Calcular Edad</button>
+
+  <p id="resultado"></p>
+
+  <script>
+    function calcularEdad() {
+      // Obtener valores del formulario
+      const dia = parseInt(document.getElementById("dia").value);
+      const mes = parseInt(document.getElementById("mes").value);
+      const anio = parseInt(document.getElementById("anio").value);
+
+      // Validar que los campos no estén vacíos
+      if (isNaN(dia) || isNaN(mes) || isNaN(anio)) {
+        document.getElementById("resultado").innerText = "Por favor ingresa una fecha válida.";
+        return;
+      }
+
+      // Fecha actual
+      const hoy = new Date();
+      let edad = hoy.getFullYear() - anio;
+
+      // Ajustar según el mes y día actuales
+      if (
+        mes > (hoy.getMonth() + 1) || 
+        (mes === (hoy.getMonth() + 1) && dia > hoy.getDate())
+      ) {
+        edad--;
+      }
+
+      document.getElementById("resultado").innerText = `Tu edad es: ${edad} años.`;
+    }
+  </script>
+
+</body>
+</html>

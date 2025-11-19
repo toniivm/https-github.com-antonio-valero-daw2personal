@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cambiar Texto</title>
+    
+</head>
+<body>
+    <h1 id="miTexto1">Texto original</h1>
+    <p id="miTexto2">Haz clic en el segundo botón para cambiar el texto y tipo de texto.</p>
+
+    <button onclick="cambiarTexto1()">Cambiar Texto 1</button>
+    <button onclick="cambiarTexto2()">Cambiar Texto 2</button>
+
+    <script>
+        function cambiarTexto1() {
+            document.getElementById("miTexto1").innerText = "Texto cambiado con magia negra";
+        }
+
+        function cambiarTexto2() {
+            document.getElementById("miTexto2").innerHTML = "<h2>Texto cambiado ho</h2>";
+        }
+
+    </script>
+</body>
+</html>

@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <h1>Area y Longitud</h1>
+    <p>Calcula el área y la longitud de un círculo dado su radio.</p>
+    <label for="radio">Radio:</label>
+    <input type="number" id="radio" name="radio" min="0" step="any">
+    <button id="calcular" onclick="calcular(document.getElementById('radio').value)">Calcular</button>
+
+
+    <p id="resultadoArea"></p>
+    <p id="resultadoLongitud"></p>
+    <script src="areaLongitud.js"></script>
+</body>
+</html>

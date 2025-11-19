@@ -1,0 +1,26 @@
+<!DOCTYPE html> 
+<html lang="es">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Calculadora de Edad</title>
+    </head>
+    <body>
+        <h1>Calculadora de Edad</h1>
+        <label for="yearOfBirth">Año de Nacimiento:</label>
+        <input type="number" id="yearOfBirth" placeholder="Año de Nacimiento">
+        <br>
+        <label for="monthOfBirth">Mes de Nacimiento:</label>
+        <input type="number" id="monthOfBirth" placeholder="Mes de Nacimiento">
+        <br>
+        <label for="dayOfBirth">Día de Nacimiento:</label>
+        <input type="number" id="dayOfBirth" placeholder="Día de Nacimiento">
+        <br>
+        <button onclick="calculateAge()">Calcular Edad</button>
+        <p id="result"></p>
+
+        <input type="date" id="dateOfBirth" />
+
+        <script src="calculadoraEdad.js"></script>
+    </body>
+</html>

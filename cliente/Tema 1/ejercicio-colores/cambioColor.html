@@ -1,0 +1,44 @@
+<html>
+
+<head>
+    <style>
+        body {
+            background-color: #f7f1f6;
+            color: #0f0f0ff3;
+            padding: 20px;
+            font: 18px Arial, Tahoma;
+        }
+        div {
+            width: 80px;
+            height: 80px;
+            border: 1px solid #FFFFFF;
+        }
+    </style>
+</head>
+
+<body>
+    <p>Da click en un recuadro para cambiar el fondo de la página</p>
+
+    <!--- Divs que cambian el color de fondo al hacer click 
+    <div id="1" style="background-color: green" 
+          onclick="document.body.style.backgroundColor = 'green'"></div>
+    <div id="2" style="background-color: blue" 
+          onclick="document.body.style.backgroundColor = 'blue'"></div>
+    <div id="3" style="background-color: red" 
+          onclick="document.body.style.backgroundColor = 'red'"></div>
+     -->
+    <div id="1" style="background-color: green" 
+          onclick="cambiarColor('1')"></div>
+    <div id="2" style="background-color: blue" 
+          onclick="cambiarColor('2')"></div>
+    <div id="3" style="background-color: red" 
+          onclick="cambiarColor('3')"></div>
+     
+    <div id="4" style="background-color: rgb(255, 225, 0)" 
+          onclick="cambiarColor('4')"></div>
+
+    <script src="cambioColor.js"></script>
+</body>
+
+
+</html>
