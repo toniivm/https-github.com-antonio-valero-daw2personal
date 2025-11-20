@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <defs>
+    <radialGradient id="g" cx="50" cy="50" r="50" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#ffe66d"/>
+      <stop offset="60%" stop-color="#ff9900"/>
+      <stop offset="100%" stop-color="#cc5500"/>
+    </radialGradient>
+  </defs>
+  <circle cx="50" cy="50" r="46" fill="url(#g)" stroke="#fff" stroke-width="6"/>
+  <text x="50" y="58" font-size="34" font-family="Poppins, sans-serif" fill="#fff" font-weight="700" text-anchor="middle">W</text>
+</svg>

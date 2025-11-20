@@ -1,0 +1,1484 @@
+/* ===== ESTILOS BASE ===== */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    background: linear-gradient(135deg, #0f2027 0%, #203a43 50%, #2c5364 100%);
+    color: white;
+    font-family: 'Poppins', sans-serif;
+    height: 100vh;
+    overflow: hidden;
+    position: relative;
+    margin: 0;
+    padding: 0;
+    /* Optimización para rendimiento */
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+}
+
+.container-fluid {
+    height: 100vh;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 5px;
+    /* Scroll más fluido */
+    scroll-behavior: smooth;
+    -webkit-overflow-scrolling: touch;
+}
+
+/* ===== EFECTO DE NIEVE ===== */
+.snowflakes {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 9999;
+}
+
+.snowflake {
+    position: absolute;
+    top: -10px;
+    color: #fff;
+    font-size: 1.5em;
+    opacity: 0.8;
+    animation: fall linear infinite;
+    text-shadow: 0 0 10px rgba(255, 255, 255, 0.8);
+}
+
+@keyframes fall {
+    0% {
+        transform: translateY(0) rotate(0deg);
+        opacity: 1;
+    }
+    100% {
+        transform: translateY(100vh) rotate(360deg);
+        opacity: 0.3;
+    }
+}
+
+/* Optimización de animaciones para mejor rendimiento */
+.snowflake {
+    will-change: transform, opacity;
+}
+
+.snowflake:nth-child(1) { left: 10%; animation-duration: 10s; animation-delay: 0s; }
+.snowflake:nth-child(2) { left: 20%; animation-duration: 12s; animation-delay: 1s; font-size: 2em; }
+.snowflake:nth-child(3) { left: 30%; animation-duration: 8s; animation-delay: 2s; }
+.snowflake:nth-child(4) { left: 40%; animation-duration: 14s; animation-delay: 0.5s; font-size: 1.8em; }
+.snowflake:nth-child(5) { left: 50%; animation-duration: 11s; animation-delay: 1.5s; }
+.snowflake:nth-child(6) { left: 60%; animation-duration: 9s; animation-delay: 3s; font-size: 2.2em; }
+.snowflake:nth-child(7) { left: 70%; animation-duration: 13s; animation-delay: 0s; }
+.snowflake:nth-child(8) { left: 80%; animation-duration: 10s; animation-delay: 2s; font-size: 1.6em; }
+.snowflake:nth-child(9) { left: 90%; animation-duration: 12s; animation-delay: 1s; }
+.snowflake:nth-child(10) { left: 15%; animation-duration: 11s; animation-delay: 2.5s; }
+.snowflake:nth-child(11) { left: 85%; animation-duration: 10s; animation-delay: 0.5s; font-size: 2em; }
+.snowflake:nth-child(12) { left: 55%; animation-duration: 9s; animation-delay: 1.8s; }
+
+/* ===== LUCES NAVIDEÑAS ===== */
+.christmas-lights {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 20px;
+    display: flex;
+    justify-content: space-around;
+    z-index: 9998;
+    background: rgba(0, 0, 0, 0.3);
+}
+
+.light {
+    width: 15px;
+    height: 15px;
+    border-radius: 50%;
+    margin-top: 5px;
+    animation: blink 1.5s infinite;
+    box-shadow: 0 0 20px currentColor;
+}
+
+.light.red { 
+    background: #ff0000; 
+    animation-delay: 0s; 
+}
+.light.green { 
+    background: #00ff00; 
+    animation-delay: 0.3s; 
+}
+.light.blue { 
+    background: #0000ff; 
+    animation-delay: 0.6s; 
+}
+.light.yellow { 
+    background: #ffff00; 
+    animation-delay: 0.9s; 
+}
+
+@keyframes blink {
+    0%, 50%, 100% { opacity: 1; transform: scale(1); }
+    25%, 75% { opacity: 0.3; transform: scale(0.8); }
+}
+
+/* ===== TÍTULO NAVIDEÑO ===== */
+.christmas-title {
+    font-family: 'Mountains of Christmas', cursive;
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: #fff;
+    text-shadow: 
+        0 0 10px #ff0000,
+        0 0 20px #ff0000,
+        0 0 30px #00ff00,
+        0 0 40px #00ff00,
+        2px 2px 4px rgba(0, 0, 0, 0.8);
+    animation: titleGlow 2s ease-in-out infinite alternate;
+    margin: 5px 0;
+    padding: 0;
+}
+
+@keyframes titleGlow {
+    0% {
+        text-shadow: 
+            0 0 10px #ff0000,
+            0 0 20px #ff0000,
+            0 0 30px #00ff00,
+            2px 2px 4px rgba(0, 0, 0, 0.8);
+    }
+    100% {
+        text-shadow: 
+            0 0 20px #ff0000,
+            0 0 30px #ff0000,
+            0 0 40px #00ff00,
+            0 0 50px #00ff00,
+            2px 2px 8px rgba(0, 0, 0, 0.8);
+    }
+}
+
+/* ===== MÁQUINA TRAGAPERRAS ===== */
+.slot-machine {
+    background: linear-gradient(135deg, #c31432 0%, #240b36 100%);
+    border-radius: 20px;
+    padding: 15px;
+    box-shadow: 
+        0 0 50px rgba(195, 20, 50, 0.6),
+        0 0 100px rgba(36, 11, 54, 0.4),
+        inset 0 0 50px rgba(255, 255, 255, 0.1);
+    border: 4px solid #ffd700;
+    position: relative;
+    overflow: hidden;
+    animation: fadeInScale 0.8s ease-out forwards;
+    max-width: 100%;
+    margin: 0 auto;
+}
+
+@keyframes fadeInScale {
+    0% { 
+        opacity: 0; 
+        transform: scale(0.9) translateY(20px);
+    }
+    100% { 
+        opacity: 1; 
+        transform: scale(1) translateY(0);
+    }
+}
+
+.slot-machine::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: linear-gradient(
+        45deg,
+        transparent,
+        rgba(255, 215, 0, 0.1),
+        transparent
+    );
+    animation: shine 3s infinite;
+}
+
+@keyframes shine {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.slot-machine-header {
+    margin-bottom: 20px;
+    position: relative;
+    z-index: 1;
+}
+
+.slot-title {
+    font-family: 'Mountains of Christmas', cursive;
+    font-size: 2.5rem;
+    color: #ffd700;
+    text-shadow: 
+        0 0 10px #ff0000,
+        0 0 20px #ff0000,
+        2px 2px 4px rgba(0, 0, 0, 0.8);
+    margin: 0;
+    animation: slotTitlePulse 2s ease-in-out infinite;
+}
+
+@keyframes slotTitlePulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+}
+
+/* ===== DISPLAY DEL JACKPOT ===== */
+.jackpot-display {
+    background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%);
+    color: #1a1a1a;
+    padding: 20px;
+    border-radius: 15px;
+    margin: 20px 0;
+    box-shadow: 
+        0 0 30px rgba(255, 215, 0, 0.8),
+        inset 0 0 20px rgba(255, 255, 255, 0.3);
+    border: 3px solid #ff6b6b;
+    animation: jackpotPulse 2s ease-in-out infinite;
+    position: relative;
+    z-index: 1;
+}
+
+@keyframes jackpotPulse {
+    0%, 100% { 
+        transform: scale(1);
+        box-shadow: 0 0 30px rgba(255, 215, 0, 0.8);
+    }
+    50% { 
+        transform: scale(1.02);
+        box-shadow: 0 0 50px rgba(255, 215, 0, 1);
+    }
+}
+
+.jackpot-label {
+    font-size: 1.2rem;
+    font-weight: 600;
+    margin-bottom: 10px;
+}
+
+.jackpot-amount {
+    font-size: 3rem;
+    font-weight: 700;
+    font-family: 'Mountains of Christmas', cursive;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+/* ===== CONTENEDOR DE SLOTS ===== */
+.slots-container {
+    background: rgba(0, 0, 0, 0.6);
+    padding: 20px;
+    border-radius: 20px;
+    margin: 15px 0;
+    box-shadow: 
+        inset 0 0 30px rgba(0, 0, 0, 0.8),
+        0 0 20px rgba(255, 215, 0, 0.3);
+    position: relative;
+    z-index: 1;
+    border: 3px solid rgba(255, 215, 0, 0.3);
+}
+
+.slots {
+    display: grid;
+    grid-template-columns: repeat(5, 100px);
+    grid-template-rows: repeat(3, 100px);
+    gap: 8px;
+    justify-content: center;
+    perspective: 1000px;
+}
+
+.slot {
+    width: 100%;
+    height: 100%;
+    position: relative;
+    transform-style: preserve-3d;
+    transition: all 0.2s ease;
+    /* Optimización GPU */
+    will-change: transform;
+    backface-visibility: hidden;
+}
+
+.slot-inner {
+    width: 100%;
+    height: 100%;
+    border: 4px solid #ffd700;
+    border-radius: 20px;
+    display: flex;
+    /* Optimización GPU */
+    will-change: transform;
+    backface-visibility: hidden;
+    transform: translateZ(0);
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+    box-shadow: 
+        0 0 20px rgba(255, 215, 0, 0.5),
+        inset 0 0 20px rgba(0, 0, 0, 0.5);
+    position: relative;
+    overflow: hidden;
+    transform-style: preserve-3d;
+    transition: all 0.2s ease;
+}
+
+.slot-inner::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(
+        90deg,
+        transparent,
+        rgba(255, 255, 255, 0.3),
+        transparent
+    );
+    transition: left 0.5s;
+}
+
+.slot:hover .slot-inner {
+    transform: scale(1.05) rotateY(5deg);
+    box-shadow: 
+        0 0 30px rgba(255, 215, 0, 0.8),
+        inset 0 0 20px rgba(0, 0, 0, 0.5);
+}
+
+.slot:hover .slot-inner::before {
+    left: 100%;
+}
+
+.slot-inner img {
+    max-width: 90%;
+    max-height: 90%;
+    width: auto;
+    height: auto;
+    filter: drop-shadow(0 0 10px rgba(255, 215, 0, 0.6));
+    animation: symbolFloat 2s ease-in-out infinite;
+}
+
+.slot-number {
+    font-size: 4rem;
+    font-weight: 900;
+    font-family: 'Poppins', sans-serif;
+    color: #ffd700;
+    text-shadow: 
+        0 0 20px #ffd700,
+        0 0 40px #ff6b00,
+        3px 3px 10px rgba(0, 0, 0, 0.8);
+    animation: symbolFloat 2s ease-in-out infinite;
+}
+
+@keyframes symbolFloat {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-5px); }
+}
+
+.slot.spinning .slot-inner {
+    animation: spin 0.08s linear infinite;
+    /* Optimización GPU para animación más fluida */
+    transform: translateZ(0);
+}
+
+@keyframes spin {
+    0% { 
+        transform: rotateX(0deg) translateZ(0); 
+    }
+    100% { 
+        transform: rotateX(360deg) translateZ(0); 
+    }
+}
+
+.slot.winner .slot-inner {
+    animation: winnerPulse 0.5s ease-in-out 3;
+    border-color: #00ff00;
+    box-shadow: 
+        0 0 40px rgba(0, 255, 0, 1),
+        inset 0 0 20px rgba(0, 255, 0, 0.3);
+}
+
+/* Sticky scatter resaltado en bonus */
+.slot.sticky-scatter .slot-inner {
+    border-color: #ff00ff !important;
+    box-shadow: 0 0 25px rgba(255,0,255,0.9), inset 0 0 20px rgba(255,0,255,0.4);
+    animation: stickyPulse 1.2s ease-in-out infinite;
+}
+
+@keyframes stickyPulse {
+    0%,100% { transform: scale(1); }
+    50% { transform: scale(1.08); }
+}
+
+@keyframes winnerPulse {
+    0%, 100% { 
+        transform: scale(1); 
+        border-color: #ffd700;
+    }
+    50% { 
+        transform: scale(1.15); 
+        border-color: #00ff00;
+    }
+}
+
+/* ===== PANEL DE CONTROL ===== */
+.control-panel {
+    margin-top: 20px;
+    position: relative;
+    z-index: 1;
+}
+
+.bet-selector-container {
+    margin-bottom: 20px;
+    text-align: center;
+    background: rgba(255, 255, 255, 0.05);
+    padding: 15px;
+    border-radius: 15px;
+    border: 2px solid rgba(255, 215, 0, 0.3);
+}
+
+.bet-label {
+    display: block;
+    color: #ffd700;
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-bottom: 10px;
+    text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+}
+
+.bet-selector {
+    width: 100%;
+    max-width: 300px;
+    padding: 12px 20px;
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: #fff;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border: 3px solid #ffd700;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+    text-align: center;
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    background-size: 20px;
+    padding-right: 40px;
+}
+
+.bet-selector:hover {
+    transform: scale(1.05);
+    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.6);
+}
+
+.bet-selector:focus {
+    outline: none;
+    border-color: #00ff00;
+    box-shadow: 0 0 20px rgba(0, 255, 0, 0.5);
+}
+
+.bet-selector option {
+    background-color: #2c3e50;
+    color: #fff;
+    padding: 10px;
+    font-size: 1.1rem;
+}
+
+.btn-group-custom {
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+    align-items: center;
+}
+
+.btn-custom {
+    background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+    color: white;
+    border: none;
+    padding: 15px 30px;
+    border-radius: 15px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    box-shadow: 0 5px 20px rgba(17, 153, 142, 0.4);
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+    min-width: 130px;
+    /* Optimización GPU */
+    will-change: transform;
+    backface-visibility: hidden;
+}
+
+.btn-custom::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.3);
+    transform: translate(-50%, -50%);
+    transition: width 0.6s, height 0.6s;
+}
+
+.btn-custom:hover::before {
+    width: 300px;
+    height: 300px;
+}
+
+.btn-custom:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 30px rgba(17, 153, 142, 0.6);
+}
+
+.btn-custom:active {
+    transform: translateY(0);
+}
+
+.btn-custom:disabled {
+    background: linear-gradient(135deg, #666 0%, #999 100%);
+    cursor: not-allowed;
+    opacity: 0.5;
+}
+
+.btn-custom.btn-green {
+    background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+}
+
+.btn-custom.btn-gold {
+    background: linear-gradient(135deg, #f7971e 0%, #ffd200 100%);
+    box-shadow: 0 5px 20px rgba(247, 151, 30, 0.4);
+}
+
+.btn-custom.btn-gold:hover {
+    box-shadow: 0 8px 30px rgba(247, 151, 30, 0.6);
+}
+
+.btn-custom.btn-red {
+    background: linear-gradient(135deg, #eb3349 0%, #f45c43 100%);
+    box-shadow: 0 5px 20px rgba(235, 51, 73, 0.4);
+}
+
+.btn-custom.btn-red:hover {
+    box-shadow: 0 8px 30px rgba(235, 51, 73, 0.6);
+}
+
+.btn-custom.btn-spin-main {
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    box-shadow: 0 8px 30px rgba(245, 87, 108, 0.6);
+    font-size: 1.3rem;
+    padding: 20px 40px;
+    min-width: 200px;
+    animation: pulse 2s infinite;
+}
+
+.btn-custom.btn-spin-main:hover {
+    transform: scale(1.1) translateY(-3px);
+    box-shadow: 0 12px 40px rgba(245, 87, 108, 0.8);
+}
+
+@keyframes pulse {
+    0%, 100% {
+        box-shadow: 0 8px 30px rgba(245, 87, 108, 0.6);
+    }
+    50% {
+        box-shadow: 0 8px 40px rgba(245, 87, 108, 1);
+    }
+}
+
+.btn-custom.btn-micro {
+    background: linear-gradient(135deg, #a8e6cf 0%, #56ab91 100%);
+    box-shadow: 0 5px 20px rgba(86, 171, 145, 0.4);
+}
+
+.btn-custom.btn-micro:hover {
+    box-shadow: 0 8px 30px rgba(86, 171, 145, 0.6);
+}
+
+.btn-custom.btn-mini {
+    background: linear-gradient(135deg, #84fab0 0%, #8fd3f4 100%);
+    box-shadow: 0 5px 20px rgba(132, 250, 176, 0.4);
+}
+
+.btn-custom.btn-mini:hover {
+    box-shadow: 0 8px 30px rgba(132, 250, 176, 0.6);
+}
+
+.btn-custom.btn-small {
+    background: linear-gradient(135deg, #a1c4fd 0%, #c2e9fb 100%);
+    box-shadow: 0 5px 20px rgba(161, 196, 253, 0.4);
+}
+
+.btn-custom.btn-small:hover {
+    box-shadow: 0 8px 30px rgba(161, 196, 253, 0.6);
+}
+
+.btn-custom.btn-blue {
+    background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+    box-shadow: 0 5px 20px rgba(79, 172, 254, 0.4);
+}
+
+.btn-custom.btn-blue:hover {
+    box-shadow: 0 8px 30px rgba(79, 172, 254, 0.6);
+}
+
+.btn-custom.btn-auto {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+    width: 100%;
+}
+
+.btn-custom.btn-auto:hover {
+    box-shadow: 0 8px 30px rgba(102, 126, 234, 0.6);
+}
+
+.btn-custom.btn-auto.active {
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    animation: pulse 1s ease-in-out infinite;
+}
+
+.btn-custom.btn-stop {
+    background: linear-gradient(135deg, #ff416c 0%, #ff4b2b 100%);
+    box-shadow: 0 5px 20px rgba(255, 65, 108, 0.4);
+    animation: pulse 1s ease-in-out infinite;
+}
+
+.btn-custom.btn-stop:hover {
+    box-shadow: 0 8px 30px rgba(255, 65, 108, 0.6);
+    transform: translateY(-3px) scale(1.05);
+}
+
+.btn-custom i {
+    font-size: 1.5rem;
+}
+
+.btn-custom small {
+    font-size: 0.8rem;
+    opacity: 0.9;
+}
+
+/* ===== AUTO-SPIN CONTROL ===== */
+.auto-spin-control {
+    text-align: center;
+    padding: 10px;
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 12px;
+}
+
+.auto-spin-select {
+    width: 100%;
+    padding: 8px;
+    background: rgba(255, 255, 255, 0.1);
+    border: 2px solid #ffd700;
+    border-radius: 8px;
+    color: white;
+    font-size: 0.9rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.auto-spin-select:focus {
+    outline: none;
+    background: rgba(255, 255, 255, 0.2);
+    box-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+}
+
+.auto-spin-select option {
+    background: #2c3e50;
+    color: white;
+}
+
+.auto-spin-status {
+    padding: 8px;
+    background: rgba(102, 126, 234, 0.3);
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: bold;
+    color: #ffd700;
+    text-shadow: 0 0 10px rgba(255, 215, 0, 0.8);
+    animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { 
+        opacity: 1; 
+        transform: scale(1);
+    }
+    50% { 
+        opacity: 0.8; 
+        transform: scale(1.05);
+    }
+}
+
+/* ===== DISPLAY DE MENSAJES ===== */
+.message-display {
+    margin-top: 20px;
+    padding: 15px;
+    background: rgba(0, 0, 0, 0.5);
+    border-radius: 10px;
+    min-height: 50px;
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: #ffd700;
+    text-shadow: 0 0 10px rgba(255, 215, 0, 0.8);
+    animation: messageGlow 1.5s ease-in-out infinite;
+    position: relative;
+    z-index: 1;
+}
+
+/* Contador de Free Spins */
+.bonus-counter {
+    margin-top: 10px;
+    padding: 12px;
+    background: linear-gradient(135deg,#1e3c72,#2a5298);
+    border: 3px solid #ffd700;
+    border-radius: 12px;
+    font-size: 1rem;
+    font-weight: 700;
+    text-align: center;
+    box-shadow: 0 0 20px rgba(255,215,0,0.6);
+    animation: bonusCounterPulse 2s ease-in-out infinite;
+}
+
+@keyframes bonusCounterPulse {
+    0%,100% { box-shadow: 0 0 15px rgba(255,215,0,0.6); }
+    50% { box-shadow: 0 0 30px rgba(255,215,0,0.9); }
+}
+
+@keyframes messageGlow {
+    0%, 100% { opacity: 0.8; }
+    50% { opacity: 1; }
+}
+
+.winning-lines-info {
+    margin-top: 15px;
+    text-align: center;
+    position: relative;
+    z-index: 1;
+}
+
+/* ===== PANEL DE ESTADÍSTICAS ===== */
+.stats-panel {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    padding: 12px;
+    border-radius: 15px;
+    box-shadow: 
+        0 0 30px rgba(102, 126, 234, 0.5),
+        inset 0 0 30px rgba(255, 255, 255, 0.1);
+    border: 3px solid #ffd700;
+}
+
+.stats-panel h3 {
+    font-family: 'Mountains of Christmas', cursive;
+    font-size: 1.4rem;
+    color: #ffd700;
+    margin-bottom: 10px;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+.stat-item {
+    background: rgba(0, 0, 0, 0.3);
+    padding: 8px;
+    border-radius: 8px;
+    margin-bottom: 6px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.3s ease;
+    font-size: 0.9rem;
+}
+
+.stat-item:hover {
+    background: rgba(0, 0, 0, 0.5);
+    transform: translateX(5px);
+}
+
+.stat-item i {
+    font-size: 1.5rem;
+    color: #ffd700;
+}
+
+.stat-item span {
+    flex: 1;
+    font-size: 1rem;
+}
+
+.stat-item strong {
+    color: #ffed4e;
+    font-size: 1.2rem;
+}
+
+.jackpot-stat {
+    background: linear-gradient(135deg, #f7971e 0%, #ffd200 100%);
+    color: #1a1a1a;
+    font-weight: 600;
+    animation: jackpotStatPulse 2s ease-in-out infinite;
+}
+
+@keyframes jackpotStatPulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+}
+
+.jackpot-stat i {
+    color: #1a1a1a;
+}
+
+.jackpot-stat strong {
+    color: #c31432;
+}
+
+/* ===== PANEL DE CRÉDITO ===== */
+.credit-container {
+    background: linear-gradient(135deg, #2c3e50 0%, #3498db 100%);
+    padding: 12px;
+    border-radius: 15px;
+    box-shadow: 
+        0 0 30px rgba(52, 152, 219, 0.5),
+        inset 0 0 30px rgba(255, 255, 255, 0.1);
+    border: 3px solid #ffd700;
+}
+
+.credit-container h3 {
+    font-family: 'Mountains of Christmas', cursive;
+    font-size: 1.8rem;
+    color: #ffd700;
+    margin-bottom: 20px;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+.credit-display {
+    background: rgba(0, 0, 0, 0.4);
+    padding: 15px;
+    border-radius: 10px;
+    font-size: 1.3rem;
+    font-weight: 600;
+    color: #ffd700;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    justify-content: center;
+}
+
+.credit-display i {
+    font-size: 1.5rem;
+}
+
+.credit-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.credit-button {
+    background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+    color: white;
+    border: none;
+    padding: 12px 20px;
+    border-radius: 10px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 3px 15px rgba(17, 153, 142, 0.4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.credit-button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 20px rgba(17, 153, 142, 0.6);
+    background: linear-gradient(135deg, #0e8074 0%, #2dd36f 100%);
+}
+
+.credit-button:active {
+    transform: translateY(0);
+}
+
+/* ===== PANEL DE PREMIOS ===== */
+.prizes-panel {
+    background: linear-gradient(135deg, #eb3349 0%, #f45c43 100%);
+    padding: 12px;
+    border-radius: 15px;
+    box-shadow: 
+        0 0 30px rgba(235, 51, 73, 0.5),
+        inset 0 0 30px rgba(255, 255, 255, 0.1);
+    border: 3px solid #ffd700;
+}
+
+.prizes-panel h3 {
+    font-family: 'Mountains of Christmas', cursive;
+    font-size: 1.4rem;
+    color: #ffd700;
+    margin-bottom: 10px;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+.prize-item {
+    background: rgba(0, 0, 0, 0.3);
+    padding: 8px;
+    border-radius: 8px;
+    margin-bottom: 6px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.3s ease;
+    font-size: 0.9rem;
+}
+
+.prize-item:hover {
+    background: rgba(0, 0, 0, 0.5);
+    transform: scale(1.05);
+}
+
+.prize-item img {
+    width: 30px;
+    height: 30px;
+    filter: drop-shadow(0 0 5px rgba(255, 215, 0, 0.6));
+}
+
+.prize-item span {
+    flex: 1;
+    font-size: 1rem;
+    font-weight: 500;
+}
+
+.prize-item .prize-value {
+    color: #ffed4e;
+    font-size: 1.1rem;
+    font-weight: 700;
+}
+
+.prize-item.special {
+    background: linear-gradient(135deg, #f7971e 0%, #ffd200 100%);
+    color: #1a1a1a;
+    font-weight: 600;
+    animation: specialPrize 2s ease-in-out infinite;
+}
+
+@keyframes specialPrize {
+    0%, 100% { 
+        transform: scale(1);
+        box-shadow: 0 0 20px rgba(255, 215, 0, 0.8);
+    }
+    50% { 
+        transform: scale(1.05);
+        box-shadow: 0 0 40px rgba(255, 215, 0, 1);
+    }
+}
+
+.prize-item.special .prize-value {
+    color: #c31432;
+}
+
+.multiplier-info {
+    text-align: center;
+    font-size: 0.9rem;
+}
+
+/* ===== FUEGOS ARTIFICIALES ===== */
+#fireworks-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 10000;
+}
+
+.firework {
+    position: absolute;
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    animation: explode 1s ease-out forwards;
+}
+
+@keyframes explode {
+    0% {
+        transform: translate(0, 0) scale(1);
+        opacity: 1;
+    }
+    100% {
+        transform: translate(var(--tx), var(--ty)) scale(0);
+        opacity: 0;
+    }
+}
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 768px) {
+    .christmas-title {
+        font-size: 2.5rem;
+    }
+    
+    .slot-title {
+        font-size: 1.8rem;
+    }
+    
+    .slots {
+        grid-template-columns: repeat(5, 70px);
+        grid-template-rows: repeat(3, 70px);
+        gap: 8px;
+    }
+    
+    .slot {
+        width: 70px;
+        height: 70px;
+    }
+    
+    .slot-inner img {
+        max-width: 50px;
+        max-height: 50px;
+    }
+    
+    .jackpot-amount {
+        font-size: 2rem;
+    }
+    
+    .btn-custom {
+        padding: 12px 20px;
+        font-size: 1rem;
+        min-width: 110px;
+    }
+}
+
+@media (max-width: 576px) {
+    .christmas-title {
+        font-size: 1.3rem;
+        margin: 3px 0;
+    }
+    
+    .slots {
+        grid-template-columns: repeat(5, 55px);
+        grid-template-rows: repeat(3, 55px);
+        gap: 5px;
+    }
+    
+    .slot {
+        width: 55px;
+        height: 55px;
+    }
+    
+    .slot-inner img {
+        max-width: 85%;
+        max-height: 85%;
+    }
+    
+    .btn-custom {
+        padding: 8px 12px;
+        font-size: 0.8rem;
+        min-width: 80px;
+    }
+    
+    .btn-custom i {
+        font-size: 1rem;
+    }
+    
+    .stat-item, .prize-item {
+        padding: 5px;
+        font-size: 0.8rem;
+        margin-bottom: 4px;
+    }
+    
+    .stats-panel h3, .prizes-panel h3, .credit-container h3 {
+        font-size: 1.1rem;
+        margin-bottom: 8px;
+    }
+    
+    .jackpot-display {
+        padding: 8px;
+    }
+    
+    .jackpot-label {
+        font-size: 0.9rem;
+    }
+    
+    .jackpot-amount {
+        font-size: 1.5rem;
+    }
+}
+
+/* Media query para pantallas muy pequeñas */
+@media (max-width: 400px) {
+    .container-fluid {
+        padding: 2px;
+    }
+    
+    .christmas-title {
+        font-size: 1.1rem;
+    }
+    
+    .slots {
+        grid-template-columns: repeat(5, 50px);
+        grid-template-rows: repeat(3, 50px);
+        gap: 4px;
+    }
+    
+    .slot-machine {
+        padding: 10px;
+        border-radius: 15px;
+    }
+    
+    .stats-panel, .credit-container, .prizes-panel {
+        padding: 8px;
+    }
+}
+
+/* Media query para optimizar altura en pantallas */
+@media (max-height: 800px) {
+    .christmas-title {
+        font-size: 2rem;
+        margin: 3px 0;
+    }
+    
+    .slots {
+        grid-template-columns: repeat(5, 75px);
+        grid-template-rows: repeat(3, 75px);
+        gap: 6px;
+    }
+    
+    .jackpot-display {
+        padding: 10px;
+        margin: 10px 0;
+    }
+    
+    .jackpot-amount {
+        font-size: 2rem;
+    }
+    
+    .control-panel {
+        margin: 10px 0;
+    }
+    
+    .stats-panel, .credit-container, .prizes-panel {
+        padding: 10px;
+    }
+    
+    .stat-item, .prize-item {
+        padding: 6px;
+        margin-bottom: 4px;
+        font-size: 0.85rem;
+    }
+}
+
+@media (max-height: 650px) {
+    .christmas-title {
+        font-size: 1.5rem;
+        margin: 2px 0;
+    }
+    
+    .slots {
+        grid-template-columns: repeat(5, 60px);
+        grid-template-rows: repeat(3, 60px);
+        gap: 5px;
+    }
+    
+    .jackpot-display {
+        padding: 8px;
+        margin: 8px 0;
+    }
+    
+    .jackpot-label {
+        font-size: 0.8rem;
+    }
+    
+    .jackpot-amount {
+        font-size: 1.5rem;
+    }
+    
+    .btn-custom {
+        padding: 8px 15px;
+        font-size: 0.85rem;
+    }
+    
+    .stats-panel h3, .prizes-panel h3, .credit-container h3 {
+        font-size: 1.2rem;
+        margin-bottom: 6px;
+    }
+}
+
+/* Indicador de líneas ganadoras */
+.paylines-indicator {
+    text-align: center;
+    margin-top: 15px;
+    padding: 10px;
+    background: rgba(255, 215, 0, 0.2);
+    border-radius: 10px;
+    border: 2px solid #ffd700;
+}
+
+.paylines-indicator small {
+    font-size: 1rem;
+    font-weight: 600;
+    text-shadow: 0 0 10px rgba(255, 215, 0, 0.8);
+}
+
+/* ===== OVERLAY DE PREMIOS ===== */
+.win-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.95);
+    display: none;
+    justify-content: center;
+    align-items: center;
+    z-index: 99999;
+    animation: fadeIn 0.3s ease-out;
+}
+
+.win-overlay.show {
+    display: flex;
+}
+
+.win-content {
+    text-align: center;
+    position: relative;
+    animation: scaleIn 0.5s ease-out;
+}
+
+.win-icon {
+    font-size: 8rem;
+    margin-bottom: 20px;
+    animation: bounceIn 0.8s ease-out;
+}
+
+.win-title {
+    font-family: 'Mountains of Christmas', cursive;
+    font-size: 4rem;
+    font-weight: 700;
+    margin-bottom: 30px;
+    text-transform: uppercase;
+    letter-spacing: 3px;
+}
+
+.win-amount {
+    font-size: 5rem;
+    font-weight: 900;
+    margin-bottom: 30px;
+    font-family: 'Poppins', sans-serif;
+}
+
+.win-close {
+    font-size: 1.2rem;
+    opacity: 0.7;
+    margin-top: 30px;
+    animation: blink 2s ease-in-out infinite;
+}
+
+/* Estilos para BIG WIN */
+.win-overlay.big-win .win-title {
+    color: #ffd700;
+    text-shadow: 
+        0 0 20px #ffd700,
+        0 0 40px #ffd700,
+        0 0 60px #ff6b00,
+        0 0 80px #ff6b00;
+    animation: bigWinGlow 0.5s ease-in-out infinite alternate;
+}
+
+.win-overlay.big-win .win-amount {
+    color: #fff;
+    text-shadow: 
+        0 0 30px #ffd700,
+        0 0 60px #ff6b00,
+        3px 3px 8px rgba(0, 0, 0, 0.8);
+    animation: bigWinPulse 1s ease-in-out infinite;
+}
+
+.win-overlay.big-win .win-icon {
+    filter: drop-shadow(0 0 30px #ffd700) drop-shadow(0 0 50px #ff6b00);
+}
+
+/* Estilos para MEGA WIN */
+.win-overlay.mega-win .win-title {
+    background: linear-gradient(45deg, #ff0000, #ff7700, #ffdd00, #00ff00, #0099ff, #9900ff, #ff0099);
+    background-size: 400% 400%;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    animation: rainbowGlow 2s ease infinite, megaWinShake 0.5s ease-in-out infinite;
+    font-size: 5rem;
+}
+
+.win-overlay.mega-win .win-amount {
+    color: #fff;
+    text-shadow: 
+        0 0 40px #ff0000,
+        0 0 80px #ff00ff,
+        0 0 120px #00ffff,
+        5px 5px 15px rgba(0, 0, 0, 0.9);
+    animation: megaWinScale 0.8s ease-in-out infinite;
+    font-size: 6rem;
+}
+
+.win-overlay.mega-win .win-icon {
+    filter: drop-shadow(0 0 50px #ff0000) 
+            drop-shadow(0 0 80px #ff00ff) 
+            drop-shadow(0 0 100px #00ffff);
+    animation: megaWinRotate 2s linear infinite;
+}
+
+/* Animaciones */
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes scaleIn {
+    from { 
+        transform: scale(0.3);
+        opacity: 0;
+    }
+    to { 
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+@keyframes bounceIn {
+    0% { transform: scale(0); }
+    50% { transform: scale(1.2); }
+    100% { transform: scale(1); }
+}
+
+@keyframes blink {
+    0%, 50%, 100% { opacity: 0.7; }
+    25%, 75% { opacity: 0.3; }
+}
+
+@keyframes bigWinGlow {
+    0% { 
+        text-shadow: 
+            0 0 20px #ffd700,
+            0 0 40px #ffd700,
+            0 0 60px #ff6b00,
+            0 0 80px #ff6b00;
+    }
+    100% { 
+        text-shadow: 
+            0 0 30px #ffd700,
+            0 0 60px #ffd700,
+            0 0 90px #ff6b00,
+            0 0 120px #ff6b00;
+    }
+}
+
+@keyframes bigWinPulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+}
+
+/* ===== PREMIO NORMAL ===== */
+.win-overlay.normal-win .win-title {
+    background: linear-gradient(135deg, #00ff00 0%, #00cc00 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    animation: normalWinBounce 0.6s ease-in-out;
+    font-size: 3rem;
+    text-shadow: 0 0 30px rgba(0, 255, 0, 0.5);
+}
+
+.win-overlay.normal-win .win-amount {
+    color: #ffd700;
+    text-shadow: 
+        0 0 20px #ffd700,
+        0 0 40px #00ff00;
+    animation: normalWinPulse 0.8s ease-in-out 2;
+    font-size: 2.5rem;
+}
+
+.win-overlay.normal-win .win-icon {
+    filter: drop-shadow(0 0 20px #00ff00) 
+            drop-shadow(0 0 30px #ffd700);
+    animation: normalWinSpin 1s ease-in-out;
+}
+
+@keyframes normalWinBounce {
+    0%, 100% { transform: translateY(0); }
+    25% { transform: translateY(-20px); }
+    50% { transform: translateY(-10px); }
+    75% { transform: translateY(-15px); }
+}
+
+@keyframes normalWinPulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.15); }
+}
+
+@keyframes normalWinSpin {
+    0% { transform: rotate(0deg) scale(0.5); opacity: 0; }
+    50% { transform: rotate(180deg) scale(1.2); }
+    100% { transform: rotate(360deg) scale(1); opacity: 1; }
+}
+
+/* ===== PARTÍCULAS DE PREMIO ===== */
+.win-particle {
+    position: absolute;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    pointer-events: none;
+    animation: particleFall 2s ease-out forwards;
+    box-shadow: 0 0 10px currentColor;
+}
+
+@keyframes particleFall {
+    0% {
+        top: 0;
+        opacity: 1;
+        transform: translateY(0) rotate(0deg) scale(1);
+    }
+    100% {
+        top: 100%;
+        opacity: 0;
+        transform: translateY(50px) rotate(720deg) scale(0.3);
+    }
+}
+
+@keyframes rainbowGlow {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}
+
+@keyframes megaWinShake {
+    0%, 100% { transform: translateX(0) rotate(-2deg); }
+    25% { transform: translateX(-5px) rotate(2deg); }
+    50% { transform: translateX(5px) rotate(-2deg); }
+    75% { transform: translateX(-5px) rotate(2deg); }
+}
+
+@keyframes megaWinScale {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.15); }
+}
+
+@keyframes megaWinRotate {
+    0% { transform: rotate(0deg) scale(1); }
+    25% { transform: rotate(5deg) scale(1.05); }
+    50% { transform: rotate(0deg) scale(1.1); }
+    75% { transform: rotate(-5deg) scale(1.05); }
+    100% { transform: rotate(0deg) scale(1); }
+}

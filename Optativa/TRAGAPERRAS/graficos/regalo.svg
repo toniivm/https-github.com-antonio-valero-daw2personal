@@ -1,0 +1,5 @@
+<!-- Placeholder para regalo.png - Reemplazar con imagen real -->
+<svg width="100" height="100" xmlns="http://www.w3.org/2000/svg">
+  <rect x="10" y="10" width="80" height="80" fill="#FF0000"/>
+  <text x="50" y="65" font-size="50" text-anchor="middle" fill="#FFF">🎁</text>
+</svg>

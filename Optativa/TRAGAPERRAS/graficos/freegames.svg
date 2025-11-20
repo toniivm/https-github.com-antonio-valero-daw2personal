@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <rect x="8" y="18" width="84" height="64" rx="12" ry="12" fill="#4a90e2" stroke="#fff" stroke-width="5"/>
+  <rect x="18" y="28" width="64" height="44" rx="8" ry="8" fill="#6ec6ff"/>
+  <text x="50" y="56" font-size="22" font-family="Poppins, sans-serif" fill="#fff" font-weight="700" text-anchor="middle">FREE</text>
+  <circle cx="82" cy="20" r="10" fill="#ff2d55" stroke="#fff" stroke-width="3"/>
+  <text x="82" y="25" font-size="12" font-family="Poppins, sans-serif" fill="#fff" font-weight="700" text-anchor="middle">10</text>
+</svg>
