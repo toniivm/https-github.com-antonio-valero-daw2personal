@@ -1,24 +1,37 @@
 // ===== CONFIGURACIÓN DEL JUEGO =====
-// Total definitivo: 7 símbolos (5 base + Scatter + FreeGames)
-// Se elimina "arbol.svg" para cumplir requisito (antes había 6 base).
+// Total: 12 símbolos (9 base + Scatter + FreeGames + Santa)
 const symbols = [
-    "graficos/campana.svg",   // 🔔 Muy frecuente
+    "graficos/cereza.png",    // 🍒 Muy frecuente (fruta básica)
+    "graficos/limon.png",     // 🍋 Muy frecuente (fruta básica)
+    "graficos/naranja.png",   // 🍊 Muy frecuente (fruta básica)
+    "graficos/platano.png",   // 🍌 Muy frecuente (fruta básica)
+    "graficos/campana.svg",   // 🔔 Frecuente
     "graficos/bola.svg",      // 🎄 Frecuente
-    "graficos/regalo.svg",    // 🎁 Media
+    "graficos/arbol.svg",     // 🎄 Media
+    "graficos/regalo.svg",    // 🎁 Media-Alta
     "graficos/estrella.svg",  // ⭐ Alta
     "graficos/santa.svg",     // 🎅 JACKPOT
     "graficos/scatter.svg",   // 🌀 Scatter (WILD) sustituye cualquiera excepto FreeGames
     "graficos/freegames.svg"  // 🎮 FreeGames (3+ dispara bonus)
 ];
 
-// Multiplicadores base (se multiplican por la apuesta)
+// Multiplicadores base (se multiplican por la apuesta Y bonusFactor)
+// Con 3 símbolos (bonusFactor=1): base | 4 símbolos (×2.5) | 5 símbolos (×5)
 const prizeMultipliers = {
-    "graficos/campana.svg": 1.5,    // Reducido de 2 → 1.5
-    "graficos/bola.svg": 3,          // Reducido de 5 → 3
-    "graficos/regalo.svg": 8,        // Reducido de 10 → 8
-    "graficos/estrella.svg": 50,
-    "graficos/santa.svg": 200,
-    "graficos/scatter.svg": 40,      // Si forma línea propia (sin sustituir)
+    // Frutas básicas - Premios bajos pero frecuentes
+    "graficos/cereza.png": 1.5,      // 3: ×1.5 (recuperas + 0.5x)
+    "graficos/limon.png": 1.5,       // 3: ×1.5
+    "graficos/naranja.png": 2,       // 3: ×2 (recuperas + 1x)
+    "graficos/platano.png": 2,       // 3: ×2
+    // Símbolos navideños - Premios medios
+    "graficos/campana.svg": 3,       // 3: ×3 (recuperas + 2x)
+    "graficos/bola.svg": 5,          // 3: ×5 (recuperas + 4x)
+    "graficos/arbol.svg": 8,         // 3: ×8
+    "graficos/regalo.svg": 12,       // 3: ×12
+    // Símbolos premium
+    "graficos/estrella.svg": 60,     // 3: ×60
+    "graficos/santa.svg": 250,       // 3: ×250 JACKPOT
+    "graficos/scatter.svg": 50,      // Si forma línea propia
     "graficos/freegames.svg": 0      // Solo activa bonus
 };
 
@@ -29,6 +42,9 @@ let totalSpins = 0;
 let totalWins = 0;
 let maxPrize = 0;
 let currentBet = 1; // Apuesta por defecto
+let totalWagered = 0; // Total apostado
+let totalWon = 0; // Total ganado
+let netBalance = 0; // Balance neto (ganancias - pérdidas)
 // Estado de bonus (free games)
 let inBonusMode = false;
 let remainingFreeSpins = 0;
@@ -65,22 +81,33 @@ function buyBonus() {
     let currentCredit = parseFloat(creditoElement.textContent);
     const cost = currentBet * BONUS_PURCHASE_FACTOR;
     if (currentCredit < cost) {
-        showMessage("❌ Crédito insuficiente para comprar bonus", "error");
+        showMessage(`❌ Necesitas ${cost.toFixed(2)}€ para comprar bonus (tienes ${currentCredit.toFixed(2)}€)`, "error");
         return;
     }
+    
+    // Confirmación antes de comprar
+    if (!confirm(`¿Comprar BONUS por ${cost.toFixed(2)}€?\n\n✨ Obtendrás 10 FREE SPINS\n🎯 Con scatters pegajosos\n💰 ¡Grandes premios te esperan!`)) {
+        showMessage("⚠️ Compra cancelada", "info");
+        return;
+    }
+    
     currentCredit = parseFloat((currentCredit - cost).toFixed(2));
     creditoElement.textContent = currentCredit;
     updateCreditDisplay();
+    totalWagered += cost; // Contabilizar compra de bonus
+    
     inBonusMode = true;
     remainingFreeSpins = 10;
     stickyScatterPositions.clear();
-    showMessage(`🎮 BONUS COMPRADO: 10 FREE SPINS`, "success");
+    showMessage(`🎮 ¡BONUS ACTIVADO! 10 FREE SPINS con apuesta ${currentBet.toFixed(2)}€`, "success");
     updateBonusUI();
     // Deshabilitar botón compra durante bonus
     const btn = document.getElementById('buyBonusButton');
     if (btn) btn.disabled = true;
     // Lanzar inmediatamente la primera free spin para feedback
-    spinSlot(currentBet, document.getElementById('spinButton'));
+    setTimeout(() => {
+        spinSlot(currentBet, document.getElementById('spinButton'));
+    }, 1000);
 }
 
 // Variables de auto-spin
@@ -112,7 +139,17 @@ function updateStats() {
     document.getElementById("total-wins").textContent = totalWins;
     const winRate = totalSpins > 0 ? Math.round((totalWins / totalSpins) * 100) : 0;
     document.getElementById("win-rate").textContent = winRate + "%";
-    document.getElementById("max-prize").textContent = maxPrize + "€";
+    document.getElementById("max-prize").textContent = maxPrize.toFixed(2) + "€";
+    
+    // Actualizar balance neto
+    const balanceElement = document.getElementById("net-balance");
+    if (balanceElement) {
+        netBalance = totalWon - totalWagered;
+        const balanceText = netBalance.toFixed(2);
+        const balanceColor = netBalance >= 0 ? "text-success" : "text-danger";
+        const balanceIcon = netBalance >= 0 ? "↑" : "↓";
+        balanceElement.innerHTML = `<span class="${balanceColor}">${balanceIcon} ${balanceText}€</span>`;
+    }
 }
 
 function resetStats() {
@@ -121,6 +158,9 @@ function resetStats() {
         totalWins = 0;
         maxPrize = 0;
         bonos = 0;
+        totalWagered = 0;
+        totalWon = 0;
+        netBalance = 0;
         document.getElementById("bonos").textContent = bonos;
         updateStats();
         showMessage("📊 Estadísticas reiniciadas", "info");
@@ -400,6 +440,8 @@ function spinSlot(cost, spinButton) {
         currentCredit = parseFloat((currentCredit - cost).toFixed(2));
         creditoElement.textContent = currentCredit;
         updateCreditDisplay();
+        // Contabilizar apuesta
+        totalWagered += cost;
     } else {
         showMessage(`🆓 FREE SPIN (${remainingFreeSpins} restantes)`, "info");
     }
@@ -411,9 +453,9 @@ function spinSlot(cost, spinButton) {
     }
 
     // Generar resultados aleatorios para matriz 5x3 (15 slots)
-    // Distribución más dura: más símbolos comunes, menos especiales
-    // Campana 50% | Bola 28% | Regalo 10% | Estrella 6% | Scatter 2% | FreeGames 1% | Santa 3%
-    // Total = 100%
+    // Distribución: Frutas muy frecuentes, símbolos navideños medios, premium raros
+    // Cereza 18% | Limón 18% | Naranja 15% | Plátano 15% | Campana 12% | Bola 10%
+    // Árbol 5% | Regalo 3% | Estrella 2% | Scatter 1% | FreeGames 0.5% | Santa 0.5%
     const results = [];
     for (let i = 0; i < 15; i++) {
         if (inBonusMode && stickyScatterPositions.has(i)) {
@@ -423,13 +465,18 @@ function spinSlot(cost, spinButton) {
         }
         const random = Math.random() * 100;
         let symbol;
-        if (random < 50) symbol = symbols[0];            // Campana 50%
-        else if (random < 78) symbol = symbols[1];       // Bola 28%
-        else if (random < 88) symbol = symbols[2];       // Regalo 10%
-        else if (random < 94) symbol = symbols[3];       // Estrella 6%
-        else if (random < 96) symbol = symbols[5];       // Scatter 2% (muy raro)
-        else if (random < 97) symbol = symbols[6];       // FreeGames 1%
-        else symbol = symbols[4];                        // Santa 3%
+        if (random < 18) symbol = symbols[0];            // Cereza 18%
+        else if (random < 36) symbol = symbols[1];       // Limón 18%
+        else if (random < 51) symbol = symbols[2];       // Naranja 15%
+        else if (random < 66) symbol = symbols[3];       // Plátano 15%
+        else if (random < 78) symbol = symbols[4];       // Campana 12%
+        else if (random < 88) symbol = symbols[5];       // Bola 10%
+        else if (random < 93) symbol = symbols[6];       // Árbol 5%
+        else if (random < 96) symbol = symbols[7];       // Regalo 3%
+        else if (random < 98) symbol = symbols[8];       // Estrella 2%
+        else if (random < 99) symbol = symbols[10];      // Scatter 1%
+        else if (random < 99.5) symbol = symbols[11];    // FreeGames 0.5%
+        else symbol = symbols[9];                        // Santa 0.5%
         results.push(symbol);
         // Si estamos en bonus y el símbolo es scatter nuevo, se vuelve pegajoso
         if (inBonusMode && symbol === "graficos/scatter.svg") {
@@ -511,7 +558,12 @@ function spinSlot(cost, spinButton) {
                     winningIndices.push(linea[i]);
                 }
                 const symbolMultiplier = prizeMultipliers[baseSymbol] || 0;
-                const bonusFactor = consecutivos - 2; // 3->1,4->2,5->3
+                // Nuevo bonusFactor: 3->1x, 4->2.5x, 5->5x (mucho más generoso)
+                let bonusFactor;
+                if (consecutivos === 3) bonusFactor = 1;
+                else if (consecutivos === 4) bonusFactor = 2.5;
+                else bonusFactor = 5; // 5 símbolos
+                
                 premioTotal += symbolMultiplier * bonusFactor;
                 if (baseSymbol === "graficos/santa.svg") isJackpot = true;
             }
@@ -529,8 +581,15 @@ function spinSlot(cost, spinButton) {
         winningIndices = [...new Set(winningIndices)];
 
         let mensajeTexto = "";
-        // Calcular premio final: multiplicador total * apuesta (sin duplicar)
-        const finalPremioNum = parseFloat((premioTotal * cost).toFixed(2));
+        // Calcular premio final: multiplicador total * apuesta
+        let finalPremioNum = parseFloat((premioTotal * cost).toFixed(2));
+        
+        // VALIDACIÓN CRÍTICA: Si hay premio, garantizar que sea al menos igual a la apuesta
+        if (hayPremio && finalPremioNum < cost) {
+            console.warn(`Premio ajustado: ${finalPremioNum}€ -> ${cost}€ (mínimo = apuesta)`);
+            finalPremioNum = cost; // Garantizar que al menos recuperas tu apuesta
+        }
+        
         const finalPremio = finalPremioNum.toFixed(2);
         
         if (hayPremio) {
@@ -543,29 +602,48 @@ function spinSlot(cost, spinButton) {
             currentCreditNow = (currentCreditNow + finalPremioNum).toFixed(2);
             creditoElement.textContent = currentCreditNow;
             
+            // Contabilizar ganancia
+            totalWon += finalPremioNum;
+            
             // Clasificar el tipo de premio basado en multiplicador de apuesta
             let winType = 'normal';
             const multiplierRatio = finalPremioNum / cost; // Cuántas veces la apuesta
             
-            if (isJackpot || multiplierRatio >= 50) {
+            if (isJackpot || multiplierRatio >= 100) {
                 winType = 'mega';
                 createFireworks();
                 bonos += 5;
                 bonosDisplay.textContent = bonos;
-            } else if (multiplierRatio >= 15) {
+                mensajeTexto = `🎅 ¡¡¡MEGA WIN!!! +${finalPremio}€ (×${multiplierRatio.toFixed(1)} tu apuesta)`;
+            } else if (multiplierRatio >= 20) {
                 winType = 'big';
+                mensajeTexto = `🎁 ¡¡BIG WIN!! +${finalPremio}€ (×${multiplierRatio.toFixed(1)} tu apuesta)`;
+            } else {
+                mensajeTexto = `💰 ¡Ganaste! +${finalPremio}€ (×${multiplierRatio.toFixed(1)} tu apuesta)`;
             }
             
             // Mostrar overlay de premio
             showWinOverlay(finalPremio, winType);
+            
+            // Mostrar mensaje descriptivo
+            if (mensajeTexto) {
+                showMessage(mensajeTexto, isJackpot ? "jackpot" : "success");
+            }
             
             // Actualizar premio máximo
             if (finalPremioNum > maxPrize) {
                 maxPrize = finalPremioNum;
             }
         } else {
-            mensajeTexto = "❌ No hay premio esta vez. ¡Sigue intentando!";
-            showMessage(mensajeTexto, "error");
+            const motivationalMessages = [
+                "🎄 ¡Casi! La próxima será la buena",
+                "❄️ Sigue intentando, el premio está cerca",
+                "🎁 ¡No te rindas! La suerte está de tu lado",
+                "⭐ ¡El siguiente giro puede ser el grande!",
+                "🔔 ¡Persiste! Los premios navideños te esperan"
+            ];
+            mensajeTexto = motivationalMessages[Math.floor(Math.random() * motivationalMessages.length)];
+            showMessage(mensajeTexto, "info");
         }
 
         // Actualizar estadísticas
@@ -672,12 +750,12 @@ function executeAutoSpin() {
     }
     
     const creditoElement = document.getElementById("credito");
-    let currentCredit = parseInt(creditoElement.textContent);
+    let currentCredit = parseFloat(creditoElement.textContent);
     
-    // Verificar si hay crédito suficiente
-    if (currentCredit < 1) {
+    // Verificar si hay crédito suficiente para la apuesta actual
+    if (currentCredit < currentBet) {
         stopAutoSpin();
-        showMessage("❌ Crédito insuficiente para continuar Auto-Spin", "error");
+        showMessage(`❌ Crédito insuficiente (necesitas ${currentBet.toFixed(2)}€). Auto-Spin detenido tras ${autoSpinCount} tiradas`, "error");
         return;
     }
     

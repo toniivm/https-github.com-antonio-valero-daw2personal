@@ -824,6 +824,17 @@ body {
     font-size: 1.2rem;
 }
 
+/* Colores para balance neto */
+.text-success {
+    color: #00ff00 !important;
+    font-weight: bold;
+}
+
+.text-danger {
+    color: #ff4444 !important;
+    font-weight: bold;
+}
+
 .jackpot-stat {
     background: linear-gradient(135deg, #f7971e 0%, #ffd200 100%);
     color: #1a1a1a;
@@ -932,6 +943,20 @@ body {
     text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
 }
 
+.prize-section-header {
+    background: linear-gradient(135deg, #c31432 0%, #240b36 100%);
+    color: #ffd700;
+    padding: 6px 10px;
+    border-radius: 8px;
+    margin: 10px 0 6px 0;
+    font-weight: 700;
+    font-size: 0.85rem;
+    text-align: center;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    box-shadow: 0 2px 10px rgba(255, 215, 0, 0.3);
+}
+
 .prize-item {
     background: rgba(0, 0, 0, 0.3);
     padding: 8px;
@@ -942,6 +967,24 @@ body {
     gap: 8px;
     transition: all 0.3s ease;
     font-size: 0.9rem;
+}
+
+.prize-item.small {
+    padding: 5px 8px;
+    font-size: 0.8rem;
+}
+
+.prize-item.small img {
+    width: 25px !important;
+    height: 25px !important;
+}
+
+.prize-item.small span {
+    font-size: 0.85rem;
+}
+
+.prize-item.small .prize-value {
+    font-size: 0.9rem !important;
 }
 
 .prize-item:hover {

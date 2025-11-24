@@ -76,6 +76,10 @@
                         <i class="fas fa-coins"></i>
                         <span>Mayor Premio: <strong id="max-prize">0€</strong></span>
                     </div>
+                    <div class="stat-item">
+                        <i class="fas fa-chart-line"></i>
+                        <span>Balance Neto: <strong id="net-balance">0.00€</strong></span>
+                    </div>
                     <div class="stat-item jackpot-stat">
                         <i class="fas fa-star"></i>
                         <span>🎁 Bonos Regalo: <strong id="bonos">0</strong></span>
@@ -221,7 +225,9 @@
                     <div class="winning-lines-info">
                         <small class="text-muted">
                             <i class="fas fa-info-circle"></i> 
-                            15 líneas ganadoras | 3 filas × 5 columnas de pura emoción navideña
+                            15 líneas ganadoras | 3 filas × 5 columnas | 12 símbolos | RTP: ~95%
+                            <br><i class="fas fa-lightbulb"></i> 
+                            <strong>Consejo:</strong> Frutas = premios frecuentes | 4-5 símbolos = grandes multiplicadores
                         </small>
                     </div>
                 </div>
@@ -233,46 +239,80 @@
                     <h3 class="text-center mb-3">
                         <i class="fas fa-gift"></i> Tabla de Premios
                     </h3>
-                    <div class="prize-item">
-                        <img src="graficos/campana.svg" alt="campana" width="40">
-                        <span>3+ Campanas</span>
+                    <div class="prize-section-header">🍒 FRUTAS CLÁSICAS</div>
+                    <div class="prize-item small">
+                        <img src="graficos/cereza.png" alt="cereza" width="30">
+                        <span>3+ Cerezas</span>
                         <strong class="prize-value">×1.5</strong>
                     </div>
+                    <div class="prize-item small">
+                        <img src="graficos/limon.png" alt="limon" width="30">
+                        <span>3+ Limones</span>
+                        <strong class="prize-value">×1.5</strong>
+                    </div>
+                    <div class="prize-item small">
+                        <img src="graficos/naranja.png" alt="naranja" width="30">
+                        <span>3+ Naranjas</span>
+                        <strong class="prize-value">×2</strong>
+                    </div>
+                    <div class="prize-item small">
+                        <img src="graficos/platano.png" alt="platano" width="30">
+                        <span>3+ Plátanos</span>
+                        <strong class="prize-value">×2</strong>
+                    </div>
+                    
+                    <div class="prize-section-header">🎄 SÍMBOLOS NAVIDEÑOS</div>
                     <div class="prize-item">
-                        <img src="graficos/bola.svg" alt="bola" width="40">
-                        <span>3+ Bolas</span>
+                        <img src="graficos/campana.svg" alt="campana" width="35">
+                        <span>3+ Campanas</span>
                         <strong class="prize-value">×3</strong>
                     </div>
                     <div class="prize-item">
-                        <img src="graficos/regalo.svg" alt="regalo" width="40">
-                        <span>3+ Regalos</span>
+                        <img src="graficos/bola.svg" alt="bola" width="35">
+                        <span>3+ Bolas</span>
+                        <strong class="prize-value">×5</strong>
+                    </div>
+                    <div class="prize-item">
+                        <img src="graficos/arbol.svg" alt="arbol" width="35">
+                        <span>3+ Árboles</span>
                         <strong class="prize-value">×8</strong>
                     </div>
-                    <!-- Actualizada tabla de premios (7 símbolos) -->
                     <div class="prize-item">
-                        <img src="graficos/estrella.svg" alt="estrella" width="40">
+                        <img src="graficos/regalo.svg" alt="regalo" width="35">
+                        <span>3+ Regalos</span>
+                        <strong class="prize-value">×12</strong>
+                    </div>
+                    
+                    <div class="prize-section-header">⭐ SÍMBOLOS PREMIUM</div>
+                    <div class="prize-item">
+                        <img src="graficos/estrella.svg" alt="estrella" width="35">
                         <span>3+ Estrellas</span>
-                        <strong class="prize-value">×50</strong>
+                        <strong class="prize-value">×60</strong>
                     </div>
                     <div class="prize-item special">
-                        <img src="graficos/santa.svg" alt="santa" width="40">
+                        <img src="graficos/santa.svg" alt="santa" width="35">
                         <span>3+ Santa Claus</span>
-                        <strong class="prize-value">🎅 ×200 MEGA</strong>
+                        <strong class="prize-value">🎅 ×250 MEGA</strong>
+                    </div>
+                    
+                    <div class="prize-section-header">🎁 ESPECIALES</div>
+                    <div class="prize-item">
+                        <img src="graficos/scatter.svg" alt="scatter" width="35">
+                        <span>Scatter (WILD)</span>
+                        <strong class="prize-value">×50 | Sustituye</strong>
                     </div>
                     <div class="prize-item">
-                        <img src="graficos/scatter.svg" alt="scatter" width="40">
-                        <span>3+ Scatter (línea propia)</span>
-                        <strong class="prize-value">×40</strong>
-                    </div>
-                    <div class="prize-item">
-                        <img src="graficos/freegames.svg" alt="freegames" width="40">
+                        <img src="graficos/freegames.svg" alt="freegames" width="35">
                         <span>3+ FreeGames</span>
-                        <strong class="prize-value">🎮 BONUS 10 FS</strong>
+                        <strong class="prize-value">🎮 10 FS</strong>
                     </div>
                     <div class="multiplier-info mt-3 p-2 bg-dark rounded">
                         <small>
-                            <i class="fas fa-times"></i> Premios × apuesta | Scatter sustituye cualquier símbolo (menos FreeGames).
-                            <br><i class="fas fa-ticket"></i> FreeGames inicia 10 tiradas gratis con scatters pegajosos.
+                            <i class="fas fa-info-circle"></i> <strong>12 símbolos diferentes</strong>
+                            <br><i class="fas fa-coins"></i> 3 símb. = base | 4 = ×2.5 | 5 = ×5
+                            <br><i class="fas fa-star"></i> Scatter (WILD) sustituye todos excepto FreeGames
+                            <br><i class="fas fa-ticket"></i> 3+ FreeGames = 10 FS con scatters pegajosos
+                            <br><i class="fas fa-fire"></i> Frutas: frecuentes y bajos | Navidad: medios | Premium: altos
                         </small>
                     </div>
                 </div>
