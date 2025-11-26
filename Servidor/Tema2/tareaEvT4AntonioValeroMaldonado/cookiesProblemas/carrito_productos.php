@@ -1,267 +1,152 @@
 <?php
-/**
- * Ejercicio 4: Carrito de compras simple - Página de Productos
- * Muestra una lista de productos que se pueden agregar al carrito.
- */
+// Ejercicio 4: Carrito de compras
 
-// Función para obtener el carrito desde las cookies
-function obtenerCarrito() {
+// Obtener carrito
+function getCarrito() {
     if (isset($_COOKIE['carrito'])) {
         return json_decode($_COOKIE['carrito'], true);
     }
-    return [];
+    return array();
 }
 
-// Función para guardar el carrito en cookies
-function guardarCarrito($carrito) {
-    setcookie('carrito', json_encode($carrito), time() + (86400 * 7), "/"); // 7 días
+// Guardar carrito
+function saveCarrito($carr) {
+    setcookie('carrito', json_encode($carr), time() + 604800, "/");
 }
 
-// Productos disponibles
-$productos = [
-    1 => ['nombre' => 'Laptop HP', 'precio' => 799.99, 'imagen' => '💻'],
-    2 => ['nombre' => 'Mouse Inalámbrico', 'precio' => 29.99, 'imagen' => '🖱️'],
-    3 => ['nombre' => 'Teclado Mecánico', 'precio' => 89.99, 'imagen' => '⌨️'],
-    4 => ['nombre' => 'Monitor 24"', 'precio' => 199.99, 'imagen' => '🖥️'],
-    5 => ['nombre' => 'Auriculares Bluetooth', 'precio' => 59.99, 'imagen' => '🎧'],
-    6 => ['nombre' => 'Webcam HD', 'precio' => 49.99, 'imagen' => '📷'],
-    7 => ['nombre' => 'Disco Duro 1TB', 'precio' => 69.99, 'imagen' => '💾'],
-    8 => ['nombre' => 'USB 64GB', 'precio' => 19.99, 'imagen' => '🔌']
-];
+// Lista de productos
+$prods = array(
+    1 => array('nom' => 'Laptop', 'precio' => 799.99),
+    2 => array('nom' => 'Mouse', 'precio' => 29.99),
+    3 => array('nom' => 'Teclado', 'precio' => 89.99),
+    4 => array('nom' => 'Monitor', 'precio' => 199.99)
+);
 
-// Procesar agregar al carrito
-if (isset($_POST['agregar'])) {
-    $id_producto = intval($_POST['id_producto']);
+$msg = '';
+
+// Agregar producto
+if (isset($_POST['add'])) {
+    $id = intval($_POST['id']);
     
-    if (isset($productos[$id_producto])) {
-        $carrito = obtenerCarrito();
+    if (isset($prods[$id])) {
+        $carr = getCarrito();
         
-        // Si el producto ya está en el carrito, incrementar cantidad
-        if (isset($carrito[$id_producto])) {
-            $carrito[$id_producto]['cantidad']++;
+        if (isset($carr[$id])) {
+            $carr[$id]['cant']++;
         } else {
-            // Agregar nuevo producto
-            $carrito[$id_producto] = [
-                'nombre' => $productos[$id_producto]['nombre'],
-                'precio' => $productos[$id_producto]['precio'],
-                'cantidad' => 1
-            ];
+            $carr[$id] = array(
+                'nom' => $prods[$id]['nom'],
+                'precio' => $prods[$id]['precio'],
+                'cant' => 1
+            );
         }
         
-        guardarCarrito($carrito);
-        $mensaje = "✓ Producto agregado al carrito";
+        saveCarrito($carr);
+        $msg = 'Producto agregado';
     }
 }
 
-// Obtener carrito actual para mostrar el contador
-$carrito = obtenerCarrito();
-$total_items = 0;
-foreach ($carrito as $item) {
-    $total_items += $item['cantidad'];
+// Contar items
+$carr = getCarrito();
+$items = 0;
+foreach ($carr as $it) {
+    if(isset($it['cant'])) {
+        $items += $it['cant'];
+    }
 }
 ?>
 
 <!DOCTYPE html>
-<html lang="es">
+<html>
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tienda - Carrito de Compras</title>
+    <title>Tienda</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
+            font-family: Arial, sans-serif;
+            background-color: #f5f5f5;
             padding: 20px;
         }
-        
-        .navbar {
+        .header {
             background: white;
-            padding: 20px 30px;
-            border-radius: 15px;
-            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.2);
-            margin-bottom: 30px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 5px;
             display: flex;
             justify-content: space-between;
             align-items: center;
         }
-        
-        .navbar h1 {
-            color: #333;
-            font-size: 28px;
+        h2 {
+            margin: 0;
         }
-        
-        .carrito-link {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            padding: 12px 25px;
-            background: #667eea;
+        .vercarrito {
+            background-color: #007bff;
             color: white;
+            padding: 10px 20px;
             text-decoration: none;
-            border-radius: 8px;
-            font-weight: 600;
-            transition: all 0.3s;
-            position: relative;
+            border-radius: 5px;
         }
-        
-        .carrito-link:hover {
-            background: #5568d3;
-            transform: translateY(-2px);
-        }
-        
-        .badge {
-            position: absolute;
-            top: -8px;
-            right: -8px;
-            background: #f44336;
-            color: white;
-            width: 24px;
-            height: 24px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 12px;
-            font-weight: bold;
-        }
-        
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-        }
-        
-        .mensaje {
-            background: #4caf50;
-            color: white;
-            padding: 15px;
-            border-radius: 8px;
-            margin-bottom: 20px;
-            text-align: center;
-            font-weight: 600;
-            animation: slideDown 0.3s ease;
-        }
-        
-        @keyframes slideDown {
-            from {
-                opacity: 0;
-                transform: translateY(-20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-        
-        .productos-grid {
+        .productos {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-            gap: 25px;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
         }
-        
-        .producto-card {
-            background: white;
-            padding: 25px;
-            border-radius: 15px;
-            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
-            text-align: center;
-            transition: transform 0.3s;
-        }
-        
-        .producto-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
-        }
-        
-        .producto-imagen {
-            font-size: 70px;
-            margin-bottom: 15px;
-        }
-        
-        .producto-nombre {
-            color: #333;
-            font-size: 18px;
-            font-weight: 600;
-            margin-bottom: 10px;
-        }
-        
-        .producto-precio {
-            color: #667eea;
-            font-size: 24px;
-            font-weight: bold;
-            margin-bottom: 15px;
-        }
-        
-        .btn-agregar {
-            width: 100%;
-            padding: 12px;
-            background: #4caf50;
-            color: white;
-            border: none;
-            border-radius: 8px;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s;
-        }
-        
-        .btn-agregar:hover {
-            background: #45a049;
-            transform: scale(1.05);
-        }
-        
-        .info {
+        .prod {
             background: white;
             padding: 20px;
-            border-radius: 15px;
-            margin-top: 30px;
+            border-radius: 5px;
             text-align: center;
-            color: #666;
+        }
+        .prod h3 {
+            color: #333;
+            margin: 10px 0;
+        }
+        .precio {
+            color: #28a745;
+            font-size: 20px;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+        button {
+            background-color: #28a745;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .msg {
+            background-color: #d4edda;
+            color: #155724;
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 20px;
         }
     </style>
 </head>
 <body>
-    <div class="navbar">
-        <h1>🛒 Tienda Online</h1>
-        <a href="carrito_ver.php" class="carrito-link">
-            🛍️ Ver Carrito
-            <?php if ($total_items > 0): ?>
-                <span class="badge"><?php echo $total_items; ?></span>
-            <?php endif; ?>
+    <div class="header">
+        <h2>Tienda Online</h2>
+        <a href="carrito_ver.php" class="vercarrito">
+            Ver Carrito (<?php echo $items; ?>)
         </a>
     </div>
     
-    <div class="container">
-        <?php if (isset($mensaje)): ?>
-            <div class="mensaje"><?php echo $mensaje; ?></div>
-        <?php endif; ?>
-        
-        <div class="productos-grid">
-            <?php foreach ($productos as $id => $producto): ?>
-                <div class="producto-card">
-                    <div class="producto-imagen"><?php echo $producto['imagen']; ?></div>
-                    <div class="producto-nombre"><?php echo $producto['nombre']; ?></div>
-                    <div class="producto-precio">$<?php echo number_format($producto['precio'], 2); ?></div>
-                    <form method="POST">
-                        <input type="hidden" name="id_producto" value="<?php echo $id; ?>">
-                        <button type="submit" name="agregar" class="btn-agregar">
-                            ➕ Agregar al carrito
-                        </button>
-                    </form>
-                </div>
-            <?php endforeach; ?>
-        </div>
-        
-        <div class="info">
-            <strong>ℹ️ Ejercicio 4 - Carrito de Compras con Cookies</strong><br>
-            Los productos que agregues se guardarán en cookies y permanecerán durante 7 días.
-        </div>
+    <?php if ($msg != ''): ?>
+        <div class="msg"><?php echo $msg; ?></div>
+    <?php endif; ?>
+    
+    <div class="productos">
+        <?php foreach ($prods as $id => $p): ?>
+            <div class="prod">
+                <h3><?php echo $p['nom']; ?></h3>
+                <div class="precio">$<?php echo number_format($p['precio'], 2); ?></div>
+                <form method="POST">
+                    <input type="hidden" name="id" value="<?php echo $id; ?>">
+                    <button type="submit" name="add">Agregar</button>
+                </form>
+            </div>
+        <?php endforeach; ?>
     </div>
 </body>
 </html>

@@ -1,54 +1,29 @@
 <?php
-/**
- * Ejercicio 4: Carrito de compras simple - Ver Carrito
- * Muestra los productos agregados al carrito y permite gestionar cantidades.
- */
+// Ejercicio 4: Ver carrito
 
-// Función para obtener el carrito desde las cookies
-function obtenerCarrito() {
+// Obtener carrito
+function getCarrito() {
     if (isset($_COOKIE['carrito'])) {
         return json_decode($_COOKIE['carrito'], true);
     }
-    return [];
+    return array();
 }
 
-// Función para guardar el carrito en cookies
-function guardarCarrito($carrito) {
-    setcookie('carrito', json_encode($carrito), time() + (86400 * 7), "/"); // 7 días
+// Guardar carrito
+function saveCarrito($carr) {
+    setcookie('carrito', json_encode($carr), time() + 604800, "/");
 }
 
-// Procesar acciones del carrito
-if (isset($_POST['accion'])) {
-    $carrito = obtenerCarrito();
-    $id_producto = intval($_POST['id_producto']);
+// Eliminar producto
+if (isset($_POST['eliminar'])) {
+    $carr = getCarrito();
+    $id = intval($_POST['id']);
     
-    switch ($_POST['accion']) {
-        case 'incrementar':
-            if (isset($carrito[$id_producto])) {
-                $carrito[$id_producto]['cantidad']++;
-                guardarCarrito($carrito);
-            }
-            break;
-            
-        case 'decrementar':
-            if (isset($carrito[$id_producto])) {
-                $carrito[$id_producto]['cantidad']--;
-                if ($carrito[$id_producto]['cantidad'] <= 0) {
-                    unset($carrito[$id_producto]);
-                }
-                guardarCarrito($carrito);
-            }
-            break;
-            
-        case 'eliminar':
-            if (isset($carrito[$id_producto])) {
-                unset($carrito[$id_producto]);
-                guardarCarrito($carrito);
-            }
-            break;
+    if (isset($carr[$id])) {
+        unset($carr[$id]);
+        saveCarrito($carr);
     }
     
-    // Recargar para actualizar la vista
     header("Location: " . $_SERVER['PHP_SELF']);
     exit();
 }
@@ -60,382 +35,161 @@ if (isset($_GET['vaciar'])) {
     exit();
 }
 
-// Obtener carrito actual
-$carrito = obtenerCarrito();
+// Carrito actual
+$carr = getCarrito();
 
-// Calcular totales
+// Calculos
 $subtotal = 0;
-$total_items = 0;
-foreach ($carrito as $item) {
-    $subtotal += $item['precio'] * $item['cantidad'];
-    $total_items += $item['cantidad'];
+$items = 0;
+foreach ($carr as $it) {
+    if(isset($it['precio']) && isset($it['cant'])) {
+        $subtotal += $it['precio'] * $it['cant'];
+        $items += $it['cant'];
+    }
 }
 
-$impuestos = $subtotal * 0.16; // 16% IVA
-$total = $subtotal + $impuestos;
+$iva = $subtotal * 0.16;
+$total = $subtotal + $iva;
 ?>
-
 <!DOCTYPE html>
-<html lang="es">
+<html>
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mi Carrito - Carrito de Compras</title>
+    <title>Mi Carrito</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
+            font-family: Arial, sans-serif;
+            background-color: #f5f5f5;
             padding: 20px;
         }
-        
-        .navbar {
+        .header {
             background: white;
-            padding: 20px 30px;
-            border-radius: 15px;
-            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.2);
-            margin-bottom: 30px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        
-        .navbar h1 {
-            color: #333;
-            font-size: 28px;
-        }
-        
-        .btn-volver {
-            padding: 12px 25px;
-            background: #667eea;
-            color: white;
-            text-decoration: none;
-            border-radius: 8px;
-            font-weight: 600;
-            transition: all 0.3s;
-        }
-        
-        .btn-volver:hover {
-            background: #5568d3;
-            transform: translateY(-2px);
-        }
-        
-        .container {
-            max-width: 1000px;
-            margin: 0 auto;
-        }
-        
-        .carrito-vacio {
-            background: white;
-            padding: 60px;
-            border-radius: 15px;
-            text-align: center;
-            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.2);
-        }
-        
-        .carrito-vacio-icon {
-            font-size: 80px;
-            margin-bottom: 20px;
-        }
-        
-        .carrito-vacio h2 {
-            color: #333;
-            margin-bottom: 15px;
-        }
-        
-        .carrito-vacio p {
-            color: #666;
-            margin-bottom: 25px;
-        }
-        
-        .carrito-contenido {
-            background: white;
-            padding: 30px;
-            border-radius: 15px;
-            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.2);
-            margin-bottom: 20px;
-        }
-        
-        .carrito-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 25px;
-            padding-bottom: 20px;
-            border-bottom: 2px solid #f0f0f0;
-        }
-        
-        .carrito-header h2 {
-            color: #333;
-        }
-        
-        .btn-vaciar {
-            padding: 10px 20px;
-            background: #f44336;
-            color: white;
-            text-decoration: none;
-            border-radius: 8px;
-            font-weight: 600;
-            transition: all 0.3s;
-            border: none;
-            cursor: pointer;
-        }
-        
-        .btn-vaciar:hover {
-            background: #da190b;
-        }
-        
-        .item-carrito {
-            display: flex;
-            align-items: center;
-            gap: 20px;
             padding: 20px;
-            background: #f9f9f9;
-            border-radius: 10px;
-            margin-bottom: 15px;
-        }
-        
-        .item-info {
-            flex: 1;
-        }
-        
-        .item-nombre {
-            font-size: 18px;
-            font-weight: 600;
-            color: #333;
-            margin-bottom: 5px;
-        }
-        
-        .item-precio {
-            color: #667eea;
-            font-weight: 600;
-        }
-        
-        .item-controles {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-        }
-        
-        .cantidad-control {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            background: white;
-            padding: 5px;
-            border-radius: 8px;
-            border: 2px solid #ddd;
-        }
-        
-        .btn-cantidad {
-            width: 35px;
-            height: 35px;
-            background: #667eea;
-            color: white;
-            border: none;
+            margin-bottom: 20px;
             border-radius: 5px;
-            cursor: pointer;
-            font-size: 18px;
-            font-weight: bold;
-            transition: all 0.2s;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
-        
-        .btn-cantidad:hover {
-            background: #5568d3;
+        h2 {
+            margin: 0;
         }
-        
-        .cantidad-valor {
-            min-width: 40px;
-            text-align: center;
-            font-weight: 600;
-            font-size: 16px;
-        }
-        
-        .btn-eliminar {
-            padding: 10px 15px;
-            background: #f44336;
+        .volver {
+            background-color: #007bff;
             color: white;
+            padding: 10px 20px;
+            text-decoration: none;
+            border-radius: 5px;
+        }
+        .vacio {
+            background: white;
+            padding: 40px;
+            text-align: center;
+            border-radius: 5px;
+        }
+        .contenido {
+            background: white;
+            padding: 20px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+        .item {
+            padding: 15px;
+            border-bottom: 1px solid #ddd;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .item:last-child {
+            border-bottom: none;
+        }
+        .vaciar {
+            background-color: #dc3545;
+            color: white;
+            padding: 8px 15px;
+            text-decoration: none;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+        .eliminar {
+            background-color: #dc3545;
+            color: white;
+            padding: 5px 10px;
             border: none;
-            border-radius: 8px;
+            border-radius: 3px;
             cursor: pointer;
-            font-weight: 600;
-            transition: all 0.3s;
         }
-        
-        .btn-eliminar:hover {
-            background: #da190b;
-        }
-        
-        .subtotal-item {
-            font-size: 18px;
-            font-weight: bold;
-            color: #333;
-            min-width: 100px;
-            text-align: right;
-        }
-        
         .resumen {
             background: white;
-            padding: 30px;
-            border-radius: 15px;
-            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.2);
+            padding: 20px;
+            border-radius: 5px;
         }
-        
-        .resumen h3 {
-            color: #333;
-            margin-bottom: 20px;
-            font-size: 22px;
-        }
-        
-        .linea-resumen {
+        .linea {
             display: flex;
             justify-content: space-between;
-            padding: 12px 0;
+            padding: 10px 0;
             border-bottom: 1px solid #f0f0f0;
         }
-        
-        .linea-resumen:last-child {
-            border-bottom: none;
-            padding-top: 20px;
-            margin-top: 10px;
-            border-top: 2px solid #333;
-        }
-        
-        .linea-resumen.total {
-            font-size: 24px;
+        .total {
+            font-size: 20px;
             font-weight: bold;
-            color: #667eea;
-        }
-        
-        .btn-finalizar {
-            width: 100%;
-            padding: 15px;
-            background: #4caf50;
-            color: white;
-            border: none;
-            border-radius: 8px;
-            font-size: 18px;
-            font-weight: 600;
-            cursor: pointer;
-            margin-top: 20px;
-            transition: all 0.3s;
-        }
-        
-        .btn-finalizar:hover {
-            background: #45a049;
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(76, 175, 80, 0.3);
-        }
-        
-        .info {
-            background: white;
-            padding: 20px;
-            border-radius: 15px;
-            margin-top: 20px;
-            text-align: center;
-            color: #666;
-            font-size: 14px;
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 2px solid #333;
         }
     </style>
 </head>
 <body>
-    <div class="navbar">
-        <h1>🛍️ Mi Carrito</h1>
-        <a href="carrito_productos.php" class="btn-volver">← Seguir Comprando</a>
+    <div class="header">
+        <h2>Mi Carrito</h2>
+        <a href="carrito_productos.php" class="volver">Volver a Productos</a>
     </div>
     
-    <div class="container">
-        <?php if (empty($carrito)): ?>
-            <div class="carrito-vacio">
-                <div class="carrito-vacio-icon">🛒</div>
-                <h2>Tu carrito está vacío</h2>
-                <p>¡Agrega productos para comenzar tu compra!</p>
-                <a href="carrito_productos.php" class="btn-volver" style="display: inline-block;">
-                    Ver Productos
-                </a>
-            </div>
-        <?php else: ?>
-            <div class="carrito-contenido">
-                <div class="carrito-header">
-                    <h2>Productos en tu carrito (<?php echo $total_items; ?>)</h2>
-                    <a href="?vaciar=1" class="btn-vaciar" onclick="return confirm('¿Estás seguro de vaciar el carrito?')">
-                        🗑️ Vaciar carrito
-                    </a>
-                </div>
-                
-                <?php foreach ($carrito as $id => $item): ?>
-                    <div class="item-carrito">
-                        <div class="item-info">
-                            <div class="item-nombre"><?php echo htmlspecialchars($item['nombre']); ?></div>
-                            <div class="item-precio">$<?php echo number_format($item['precio'], 2); ?> c/u</div>
-                        </div>
-                        
-                        <div class="item-controles">
-                            <div class="cantidad-control">
-                                <form method="POST" style="display: inline;">
-                                    <input type="hidden" name="id_producto" value="<?php echo $id; ?>">
-                                    <input type="hidden" name="accion" value="decrementar">
-                                    <button type="submit" class="btn-cantidad">-</button>
-                                </form>
-                                
-                                <span class="cantidad-valor"><?php echo $item['cantidad']; ?></span>
-                                
-                                <form method="POST" style="display: inline;">
-                                    <input type="hidden" name="id_producto" value="<?php echo $id; ?>">
-                                    <input type="hidden" name="accion" value="incrementar">
-                                    <button type="submit" class="btn-cantidad">+</button>
-                                </form>
-                            </div>
-                            
-                            <div class="subtotal-item">
-                                $<?php echo number_format($item['precio'] * $item['cantidad'], 2); ?>
-                            </div>
-                            
-                            <form method="POST" style="display: inline;">
-                                <input type="hidden" name="id_producto" value="<?php echo $id; ?>">
-                                <input type="hidden" name="accion" value="eliminar">
-                                <button type="submit" class="btn-eliminar">🗑️</button>
-                            </form>
-                        </div>
-                    </div>
-                <?php endforeach; ?>
+    <?php if (empty($carr)): ?>
+        <div class="vacio">
+            <h3>Tu carrito esta vacio</h3>
+            <p>Agrega productos para comenzar</p>
+            <a href="carrito_productos.php" class="volver">Ver Productos</a>
+        </div>
+    <?php else: ?>
+        <div class="contenido">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 15px;">
+                <h3>Productos (<?php echo $items; ?>)</h3>
+                <a href="?vaciar=1" class="vaciar" onclick="return confirm('Vaciar carrito?')">Vaciar</a>
             </div>
             
-            <div class="resumen">
-                <h3>📋 Resumen del pedido</h3>
-                
-                <div class="linea-resumen">
-                    <span>Subtotal:</span>
-                    <span>$<?php echo number_format($subtotal, 2); ?></span>
+            <?php foreach ($carr as $id => $it): ?>
+                <div class="item">
+                    <div>
+                        <strong><?php echo $it['nom']; ?></strong><br>
+                        <span style="color: #666;">$<?php echo number_format($it['precio'], 2); ?> x <?php echo $it['cant']; ?></span>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 15px;">
+                        <strong>$<?php echo number_format($it['precio'] * $it['cant'], 2); ?></strong>
+                        <form method="POST" style="display: inline;">
+                            <input type="hidden" name="id" value="<?php echo $id; ?>">
+                            <button type="submit" name="eliminar" class="eliminar">X</button>
+                        </form>
+                    </div>
                 </div>
-                
-                <div class="linea-resumen">
-                    <span>IVA (16%):</span>
-                    <span>$<?php echo number_format($impuestos, 2); ?></span>
-                </div>
-                
-                <div class="linea-resumen total">
-                    <span>Total:</span>
-                    <span>$<?php echo number_format($total, 2); ?></span>
-                </div>
-                
-                <button class="btn-finalizar" onclick="alert('¡Compra finalizada! (Simulación)')">
-                    ✓ Finalizar Compra
-                </button>
-            </div>
-        <?php endif; ?>
-        
-        <div class="info">
-            <strong>ℹ️ Ejercicio 4 - Carrito de Compras con Cookies</strong><br>
-            Tu carrito se guarda en cookies y permanecerá disponible durante 7 días.
-            Puedes cerrar el navegador y tus productos seguirán aquí.
+            <?php endforeach; ?>
         </div>
-    </div>
+        
+        <div class="resumen">
+            <h3>Resumen</h3>
+            <div class="linea">
+                <span>Subtotal:</span>
+                <span>$<?php echo number_format($subtotal, 2); ?></span>
+            </div>
+            <div class="linea">
+                <span>IVA (16%):</span>
+                <span>$<?php echo number_format($iva, 2); ?></span>
+            </div>
+            <div class="linea total">
+                <span>Total:</span>
+                <span>$<?php echo number_format($total, 2); ?></span>
+            </div>
+        </div>
+    <?php endif; ?>
 </body>
 </html>

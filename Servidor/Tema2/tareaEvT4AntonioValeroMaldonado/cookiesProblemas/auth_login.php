@@ -1,10 +1,7 @@
 <?php
-/**
- * Ejercicio 3: Autenticación básica con cookies - Página de Login
- * Sistema simple de autenticación que guarda el nombre del usuario en una cookie.
- */
+// Ejercicio 3: Login con cookies
 
-// Si ya está autenticado, redirigir al área privada
+// Si ya hay cookie, ir al area privada
 if (isset($_COOKIE['usuario_autenticado'])) {
     header("Location: area_privada.php");
     exit();
@@ -12,22 +9,21 @@ if (isset($_COOKIE['usuario_autenticado'])) {
 
 $error = '';
 
-// Procesar el login
-if (isset($_POST['username']) && isset($_POST['password'])) {
-    $username = trim($_POST['username']);
-    $password = $_POST['password'];
+// Validar login
+if (isset($_POST['user']) && isset($_POST['pass'])) {
+    $u = trim($_POST['user']);
+    $p = $_POST['pass'];
     
-    // Usuarios de ejemplo (en un sistema real, estos estarían en una base de datos)
-    $usuarios_validos = [
+    // Usuarios validos
+    $users = array(
         'antonio' => '1234',
         'admin' => 'admin123',
         'usuario' => 'pass123'
-    ];
+    );
     
-    // Verificar credenciales
-    if (isset($usuarios_validos[$username]) && $usuarios_validos[$username] === $password) {
-        // Login exitoso: guardar cookie por 1 hora
-        setcookie('usuario_autenticado', $username, time() + 3600, "/");
+    // Comprobar
+    if (isset($users[$u]) && $users[$u] == $p) {
+        setcookie('usuario_autenticado', $u, time() + 3600, "/");
         header("Location: area_privada.php");
         exit();
     } else {
@@ -37,221 +33,91 @@ if (isset($_POST['username']) && isset($_POST['password'])) {
 ?>
 
 <!DOCTYPE html>
-<html lang="es">
+<html>
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login - Autenticación con Cookies</title>
+    <title>Login</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            padding: 20px;
+            font-family: Arial, sans-serif;
+            background-color: #e9ecef;
+            padding: 50px;
         }
-        
-        .login-container {
+        .login {
             background: white;
-            padding: 40px;
-            border-radius: 15px;
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
-            max-width: 450px;
-            width: 100%;
+            padding: 30px;
+            border-radius: 8px;
+            max-width: 350px;
+            margin: 0 auto;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
         }
-        
-        .login-header {
-            text-align: center;
-            margin-bottom: 30px;
-        }
-        
-        .login-icon {
-            font-size: 60px;
-            margin-bottom: 10px;
-        }
-        
-        h1 {
+        h2 {
             color: #333;
-            margin-bottom: 10px;
-        }
-        
-        .subtitle {
-            color: #666;
-            font-size: 14px;
-        }
-        
-        .error {
-            background: #ffebee;
-            border-left: 4px solid #f44336;
-            padding: 15px;
-            border-radius: 5px;
-            margin-bottom: 20px;
-            color: #c62828;
-            font-weight: 600;
-        }
-        
-        .form-group {
+            text-align: center;
             margin-bottom: 20px;
         }
-        
         label {
             display: block;
-            margin-bottom: 8px;
-            color: #555;
-            font-weight: 600;
-        }
-        
-        input[type="text"],
-        input[type="password"] {
-            width: 100%;
-            padding: 12px;
-            border: 2px solid #ddd;
-            border-radius: 8px;
-            font-size: 16px;
-            transition: border-color 0.3s;
-        }
-        
-        input:focus {
-            outline: none;
-            border-color: #667eea;
-        }
-        
-        button {
-            width: 100%;
-            padding: 14px;
-            background: #667eea;
-            color: white;
-            border: none;
-            border-radius: 8px;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s;
-        }
-        
-        button:hover {
-            background: #5568d3;
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
-        }
-        
-        .demo-users {
-            background: #f5f5f5;
-            padding: 20px;
-            border-radius: 8px;
-            margin-top: 20px;
-            font-size: 13px;
-        }
-        
-        .demo-users h3 {
-            color: #555;
-            margin-bottom: 15px;
-            font-size: 14px;
-        }
-        
-        .demo-user {
-            background: white;
-            padding: 10px;
-            border-radius: 5px;
-            margin-bottom: 10px;
-            display: flex;
-            justify-content: space-between;
-            border: 1px solid #ddd;
-        }
-        
-        .demo-user:last-child {
-            margin-bottom: 0;
-        }
-        
-        .demo-user span {
+            margin: 10px 0 5px;
             color: #666;
         }
-        
-        .demo-user strong {
-            color: #333;
+        input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
         }
-        
+        button {
+            width: 100%;
+            padding: 12px;
+            margin-top: 15px;
+            background-color: #28a745;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .error {
+            background-color: #f8d7da;
+            color: #721c24;
+            padding: 10px;
+            border-radius: 4px;
+            margin-bottom: 15px;
+        }
         .info {
-            background: #e3f2fd;
-            border-left: 4px solid #2196f3;
-            padding: 15px;
-            border-radius: 5px;
-            margin-top: 20px;
+            background-color: #d1ecf1;
+            color: #0c5460;
+            padding: 10px;
+            border-radius: 4px;
+            margin-top: 15px;
             font-size: 13px;
-            color: #1565c0;
         }
     </style>
 </head>
 <body>
-    <div class="login-container">
-        <div class="login-header">
-            <div class="login-icon">🔐</div>
-            <h1>Iniciar Sesión</h1>
-            <p class="subtitle">Ejercicio 3 - Autenticación con Cookies</p>
-        </div>
+    <div class="login">
+        <h2>Iniciar Sesion</h2>
         
-        <?php if ($error): ?>
-            <div class="error">
-                ❌ <?php echo $error; ?>
-            </div>
+        <?php if ($error != ''): ?>
+            <div class="error"><?php echo $error; ?></div>
         <?php endif; ?>
         
         <form method="POST">
-            <div class="form-group">
-                <label for="username">Usuario:</label>
-                <input 
-                    type="text" 
-                    id="username" 
-                    name="username" 
-                    placeholder="Ingresa tu usuario"
-                    required
-                    autofocus
-                    value="<?php echo isset($_POST['username']) ? htmlspecialchars($_POST['username']) : ''; ?>"
-                >
-            </div>
+            <label>Usuario:</label>
+            <input type="text" name="user" required>
             
-            <div class="form-group">
-                <label for="password">Contraseña:</label>
-                <input 
-                    type="password" 
-                    id="password" 
-                    name="password" 
-                    placeholder="Ingresa tu contraseña"
-                    required
-                >
-            </div>
+            <label>Contraseña:</label>
+            <input type="password" name="pass" required>
             
-            <button type="submit">Iniciar Sesión</button>
+            <button type="submit">Entrar</button>
         </form>
         
-        <div class="demo-users">
-            <h3>👤 Usuarios de prueba:</h3>
-            <div class="demo-user">
-                <span>Usuario: <strong>antonio</strong></span>
-                <span>Pass: <strong>1234</strong></span>
-            </div>
-            <div class="demo-user">
-                <span>Usuario: <strong>admin</strong></span>
-                <span>Pass: <strong>admin123</strong></span>
-            </div>
-            <div class="demo-user">
-                <span>Usuario: <strong>usuario</strong></span>
-                <span>Pass: <strong>pass123</strong></span>
-            </div>
-        </div>
-        
         <div class="info">
-            <strong>ℹ️ Información:</strong><br>
-            Al iniciar sesión, tu nombre de usuario se guardará en una cookie 
-            durante 1 hora. No necesitarás volver a ingresar tus credenciales.
+            <strong>Usuarios de prueba:</strong><br>
+            antonio/1234<br>
+            admin/admin123<br>
+            usuario/pass123
         </div>
     </div>
 </body>
