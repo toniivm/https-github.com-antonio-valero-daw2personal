@@ -1,0 +1,148 @@
+/* Estilos globales adicionales */
+:root {
+  --primary-color: #667eea;
+  --secondary-color: #764ba2;
+  --success-color: #48bb78; /* verde que me gusta */
+  --danger-color: #f56565;
+  --warning-color: #ed8936; /* naranja */
+  --text-dark: #2d3748;
+  --text-light: #718096;
+  --border-color: #e2e8f0;
+  --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+body {
+  color: var(--text-dark);
+  line-height: 1.6;
+  /* font-size: 16px; */ /* lo quite porque se veia muy grande */
+}
+
+button {
+  font-family: inherit;
+}
+
+/* estilos para scrollbar personalizada (solo chrome/edge) */
+::-webkit-scrollbar{
+  width: 10px;
+}
+::-webkit-scrollbar-track{
+  background: #f1f1f1;
+}
+::-webkit-scrollbar-thumb{
+  background: #888;
+  border-radius: 5px;
+}
+::-webkit-scrollbar-thumb:hover{
+  background: #555;
+}
+
+input, textarea, select {
+  font-family: inherit;
+  font-size: inherit;
+}
+
+.btn {
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.btn-primary {
+  background: var(--primary-color);
+  color: white;
+}
+
+.btn-primary:hover {
+  background: #5568d3;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 12px rgba(102, 126, 234, 0.3);
+}
+
+.btn-success {
+  background: var(--success-color);
+  color: white;
+}
+
+.btn-success:hover {
+  background: #38a169;
+}
+
+.btn-danger {
+  background: var(--danger-color);
+  color: white;
+}
+
+.btn-danger:hover {
+  background: #e53e3e;
+}
+
+.btn-secondary {
+  background: #cbd5e0;
+  color: var(--text-dark);
+}
+
+.btn-secondary:hover {
+  background: #a0aec0;
+}
+
+.card {
+  background: white;
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: var(--shadow);
+}
+
+.form-group{
+  margin-bottom: 1.5rem;
+}
+
+.form-label{
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+  color: var(--text-dark);
+}
+
+.form-input {
+  width: 100%;
+  padding: 0.75rem;
+  border: 2px solid var(--border-color);
+  border-radius: 8px;
+  font-size: 1rem;
+  transition: border-color 0.3s ease;
+}
+
+.form-input:focus {
+  outline: none;
+  border-color: var(--primary-color);
+}
+
+.badge {
+  display: inline-block;
+  padding: 0.25rem 0.75rem;
+  border-radius: 20px;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.badge-success {
+  background: #c6f6d5;
+  color: #22543d;
+}
+
+.badge-warning {
+  background: #feebc8;
+  color: #7c2d12;
+}
+
+.badge-info {
+  background: #bee3f8;
+  color: #2c5282;
+}
