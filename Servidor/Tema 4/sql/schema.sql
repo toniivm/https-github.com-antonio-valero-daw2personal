@@ -34,4 +34,18 @@ CREATE TABLE IF NOT EXISTS clientes (
   activo TINYINT(1)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
--- (Se omiten tablas de ejercicios no entregados)
+-- Ejercicio 3: logs
+CREATE TABLE IF NOT EXISTS logs (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  usuario VARCHAR(120),
+  accion VARCHAR(255),
+  fecha TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- Ejercicio 4: usuarios
+CREATE TABLE IF NOT EXISTS usuarios (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  email VARCHAR(200) UNIQUE,
+  passhash VARCHAR(300),
+  creado TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

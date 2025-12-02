@@ -14,4 +14,11 @@ INSERT INTO clientes (nombre, ciudad, fecha_registro, facturacion_anual, activo)
  ('Ana Pérez', 'Valencia', '2022-11-03', 8000.00, 0)
 ;
 
--- (Se omiten datos de ejercicios no entregados)
+-- Logs (para ejercicio 3)
+INSERT INTO logs (usuario, accion) VALUES
+ ('admin', 'Inicio de sesión'),
+ ('admin', 'Creó producto nuevo'),
+ ('usuario1', 'Modificó su perfil'),
+ ('soporte', 'Cerró ticket #145'),
+ ('ventas', 'Exportó informe mensual')
+;
