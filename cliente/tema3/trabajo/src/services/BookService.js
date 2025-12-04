@@ -104,9 +104,11 @@ export class BookService {
    */
   markAsRead(id) {
     const book = this.getBookById(id);
-    if(book){ // sin espacio antes del parentesis
+    if (book) {
+      console.log('Marcando como leído:', id);
       book.markAsRead();
       this.saveBooks();
+      console.log('Guardado. Estado final:', book.isRead);
       return true;
     }
     return false;
@@ -118,8 +120,10 @@ export class BookService {
   markAsUnread(id) {
     const book = this.getBookById(id);
     if (book) {
+      console.log('Marcando como no leído:', id);
       book.markAsUnread();
       this.saveBooks();
+      console.log('Guardado. Estado final:', book.isRead);
       return true;
     }
     return false;

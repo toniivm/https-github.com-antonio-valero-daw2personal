@@ -45,7 +45,7 @@
     <div class="books-grid">
       <BookCard 
         v-for="book in filteredBooks" 
-        :key="book.id" 
+        :key="book.id + updateTrigger"
         :book="book"
         @toggle-read="handleToggleRead"
         @delete-book="handleDeleteBook"
@@ -55,7 +55,7 @@
 </template>
 
 <script>
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, reactive } from 'vue';
 // import { watch } from 'vue'; // al final no lo necesite
 import BookCard from './BookCard.vue';
 
@@ -76,6 +76,7 @@ export default {
     const searchTerm = ref('');
     const selectedCategory = ref('all');
     const readFilter = ref('all');
+    const updateTrigger = ref(0); // Para forzar actualizaciones
 
     const categories = computed(() => {
       return props.bookService.getCategories();
@@ -110,7 +111,8 @@ export default {
     });
 
     const loadBooks = () => {
-      books.value = props.bookService.getAllBooks();
+      // Creo un nuevo array para forzar la reactividad
+      books.value = [...props.bookService.getAllBooks()];
       console.log('Libros cargados:', books.value.length); // para ver que funciona
     };
 
@@ -123,16 +125,25 @@ export default {
     };
 
     const handleToggleRead = (bookId) => {
+      console.log('handleToggleRead llamado para:', bookId);
       const book = props.bookService.getBookById(bookId);
       if (book) {
+        console.log('Estado actual del libro:', book.isRead);
         // Cambio el estado según esté
         if (book.isRead) {
+          console.log('Marcando como no leído...');
           props.bookService.markAsUnread(bookId);
         } else {
+          console.log('Marcando como leído...');
           props.bookService.markAsRead(bookId);
         }
-        loadBooks(); // recargo los libros
+        // Fuerzo la reactividad incrementando el trigger
+        updateTrigger.value++;
+        books.value = [...props.bookService.getAllBooks()];
+        console.log('Nuevo estado del libro:', book.isRead);
         emit('book-updated');
+      } else {
+        console.error('Libro no encontrado:', bookId);
       }
     };
 
@@ -140,7 +151,8 @@ export default {
       if (confirm('¿Estás seguro de que quieres eliminar este libro?')) {
         props.bookService.deleteBook(bookId);
         console.log('Libro eliminado'); // debug
-        loadBooks();
+        // Fuerzo la reactividad creando un nuevo array
+        books.value = [...props.bookService.getAllBooks()];
         emit('book-updated');
       }
     };
@@ -160,6 +172,7 @@ export default {
       readFilter,
       categories,
       filteredBooks,
+      updateTrigger,
       handleSearch,
       applyFilters,
       handleToggleRead,
