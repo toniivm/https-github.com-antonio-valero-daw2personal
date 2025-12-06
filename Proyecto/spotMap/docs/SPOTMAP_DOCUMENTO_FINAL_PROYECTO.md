@@ -1064,170 +1064,131 @@ El modelo relacional de SpotMap se encuentra en **Tercera Forma Normal (3NF)**, 
 
 ## 7.1 Diagramación y Prototipado
 
-El diseño visual de SpotMap sigue un enfoque **mobile-first**, responsivo y centrado en la experiencia del usuario. La interfaz debe ser intuitiva para usuarios de todos los niveles técnicos.
+El diseño visual de SpotMap se basa en un enfoque **mobile-first** y responsivo, priorizando claridad y acciones rápidas sobre el mapa. Esta sección recoge los entregables gráficos (wireframes, mapas de navegación y design system) y detalla la estructura de las pantallas clave.
 
-### Pantallas Principales
+### Alcance y entregables de diseño
+- Wireframes low-fi y mid-fi (mobile y desktop) en `./images/SPOTMAP_WIREFRAMES.svg`.
+- Fuentes PlantUML para regenerar o modificar diagramas: `./diagrams/ui_wireframes.puml`, `ui_screens.puml`, `ui_navigation_map.puml`, `ui_navigation_flowchart.puml`, `ui_sitemap.puml`, `ui_design_system.puml`, `ui_components.puml`.
+- Guía de estilos y componentes exportada: `./images/SPOTMAP_GUIA_ESTILOS.svg`.
+- Las imágenes SVG pueden convertirse a PNG/SVG incrustable para el documento final (Word/PDF) sin pérdida.
 
-#### 1. Pantalla de Inicio / Mapa Principal
+### Breakpoints y layout
+- XS 0–575px (mobile), SM 576–767px (mobile landscape), MD 768–991px (tablet), LG 992–1199px (desktop), XL 1200px+ (large desktop).
+- Grilla base 12 columnas (desktop) y 4–6 columnas (mobile/tablet); gutter 16px; contenedor máx 1200px.
+- Alturas de barra superior 64px (desktop) / 56px (mobile); CTA flotante separado 16px de borde inferior/derecho.
 
-**Propósito**: Visualizar spots geolocalizados en un mapa interactivo.
+### Pantallas principales (resumen funcional)
+1. **Pantalla de Inicio / Mapa Principal**
+  - Propósito: explorar spots en mapa Leaflet/OSM.
+  - Elementos: mapa al 80% de viewport, marcadores por categoría (color por tipo), barra de búsqueda/filtros arriba, botón flotante "+" para crear, barra lateral de resultados, panel de usuario (avatar/menú).
+  - Interacción: zoom/pan; clic en marcador → detalle; filtros por categoría/distancia/popularidad; búsqueda en tiempo real.
 
-**Elementos principales**:
-- Mapa Leaflet/OpenStreetMap ocupando el 80% de la pantalla
-- Marcadores de colores según categoría (mirador: rojo, playa: azul, urbano: naranja, etc.)
-- Barra de búsqueda/filtros en la parte superior
-- Botón flotante (+) para crear nuevo spot
-- Barra lateral con lista de spots filtrados
-- Panel de usuario en la esquina superior derecha
+2. **Detalle del Spot**
+  - Propósito: mostrar información completa del spot.
+  - Elementos: carrusel de imágenes, título/descripcion/ubicación, media de estrellas, conteo de comentarios/valoraciones, botones Favoritos y Valorar, sección de comentarios en hilos, botón Reportar.
+  - Layout: hero de imagen, tarjeta de info, panel de comentarios desplazable, pie con acciones principales.
 
-**Funcionalidades**:
-- Zoom y paneo del mapa
-- Click en marcador → detalles del spot
-- Filtros por categoría, distancia, popularidad
-- Búsqueda en tiempo real
+3. **Creación/Edición de Spot**
+  - Propósito: alta/edición de spots.
+  - Formulario: título (req.), descripción (opcional), categoría, ubicación (mapa + búsqueda), imágenes (drag & drop multi), etiquetas con sugerencias, botones Guardar/Cancelar/Vista previa.
+  - Validaciones: campos requeridos señalados, vista previa en tiempo real, compresión automática de imágenes, aviso de cambios sin guardar.
 
-#### 2. Detalle del Spot
+4. **Perfil de Usuario**
+  - Propósito: datos personales y contenido propio.
+  - Secciones: info personal (avatar, nombre, email, fecha), estadísticas (spots/valoraciones/comentarios), Mis spots (editar/eliminar), Mis favoritos, Configuración (contraseña, privacidad, notificaciones), cerrar sesión.
 
-**Propósito**: Mostrar información completa de un spot.
+5. **Panel de Moderación**
+  - Propósito: revisar contenido reportado.
+  - Elementos: lista de reportes con filtros, detalle (motivo/fecha/usuario), vista previa del contenido, acciones Aprobar/Ocultar/Eliminar/Cerrar, historial de decisiones.
 
-**Elementos principales**:
-- Galería de imágenes (carrousel)
-- Título, descripción y ubicación
-- Puntuación media (estrellas)
-- Número de comentarios y valoraciones
-- Botón "Añadir a favoritos"
-- Botón "Valorar"
-- Sección de comentarios con hilos de respuesta
-- Botón "Reportar" si es inapropiado
-
-**Layout**:
-- Imagen principal grande
-- Información general en tarjeta
-- Comentarios en sección desplazable
-- Pie con acciones principales
-
-#### 3. Creación/Edición de Spot
-
-**Propósito**: Permitir al usuario crear o editar un spot fotográfico.
-
-**Formulario con campos**:
-- Título (obligatorio)
-- Descripción (opcional)
-- Categoría (selector)
-- Ubicación (mapa interactivo + búsqueda de dirección)
-- Imágenes (carga múltiple con arrastrar y soltar)
-- Etiquetas (input con sugerencias)
-- Botones: Guardar, Cancelar, Vista previa
-
-**Validaciones**:
-- Campos obligatorios marcados
-- Vista previa en tiempo real
-- Compresión automática de imágenes
-- Aviso de cambios sin guardar
-
-#### 4. Perfil de Usuario
-
-**Propósito**: Mostrar datos personales y contenido del usuario.
-
-**Secciones**:
-- Información personal (avatar, nombre, email, fecha registro)
-- Estadísticas (spots creados, valoraciones, comentarios)
-- Mis spots (lista con opciones editar/eliminar)
-- Mis favoritos (spots guardados)
-- Configuración (contraseña, privacidad, notificaciones)
-- Opción cerrar sesión
-
-#### 5. Panel de Moderación
-
-**Propósito**: Permitir a moderadores revisar contenido reportado.
-
-**Elementos**:
-- Lista de reportes pendientes con filtros
-- Detalles del reporte (motivo, fecha, usuario que reporta)
-- Vista previa del contenido reportado
-- Acciones: Aprobar, Ocultar, Eliminar, Cerrar reporte
-- Historial de decisiones
-
-#### 6. Panel de Administración
-
-**Propósito**: Acceso a gestión global, estadísticas y configuración.
-
-**Secciones**:
-- Dashboard con métricas (usuarios, spots, comentarios, reportes)
-- Gestión de usuarios (listar, suspender, restablecer)
-- Gestión de categorías (crear, editar, eliminar)
-- Estadísticas gráficas (Chart.js: usuarios activos, spots por categoría, actividad temporal)
-- Logs de actividad
-- Configuración global
+6. **Panel de Administración**
+  - Propósito: gestión global y métricas.
+  - Secciones: dashboard de métricas (usuarios/spots/comentarios/reportes), gestión de usuarios, gestión de categorías/tags, gráficas (Chart.js) por actividad y categorías, logs de actividad, configuración global.
 
 ![Wireframes de las pantallas principales de SpotMap](./images/SPOTMAP_WIREFRAMES.svg)
 
 **Figura 7.1:** Wireframes de 6 pantallas principales: Mapa Interactivo (búsqueda/filtros), Detalle Spot (galería/comentarios), Crear Spot (formulario multi-paso), Perfil Usuario (estadísticas), Panel Moderación (revisión de reportes), y Admin Dashboard (métricas/logs).
 
+**Material de apoyo listo para la documentación**:
+- `./images/SPOTMAP_WIREFRAMES.svg`: exportado para incluir en el documento (mobile y desktop).
+- `./diagrams/ui_wireframes.puml`: fuente PlantUML de los wireframes.
+- `./diagrams/ui_screens.puml`: mapa de pantallas y estados principales.
+- `./diagrams/ui_navigation_map.puml`: navegación por roles (visitante, usuario, moderador, admin).
+- `./diagrams/ui_navigation_flowchart.puml`: flujo completo de navegación (alta/baja, creación, moderación, administración).
+- `./diagrams/ui_sitemap.puml`: sitemap jerárquico de la aplicación.
+- `./diagrams/ui_design_system.puml`: tokens de diseño y componentes base; puede exportarse como imagen de soporte.
+- `./diagrams/ui_components.puml`: librería de componentes reutilizables.
+- PNG ya renderizados para pegar en Word (alternativa a los SVG): `./images/wireframes.png`, `./images/screens.png`, `./images/componentsui.png`, `./images/sistema_diseño.png`.
+
+### Estados y microinteracciones
+- Carga: skeletons para tarjetas de spot y placeholders en mapa; spinner sobre CTA flotante al crear.
+- Vacío: mensajes guiados (sin resultados de filtro, sin favoritos, sin reportes), con CTA sugerido.
+- Error: toasts rojos para errores de red; retry en acciones de lista y mapa.
+- Feedback: toasts verdes para éxitos; badges de estado (nuevo, destacado, reportado).
+- Accesibilidad: contraste AA, foco visible, soporte teclado en formularios y mapa (tab/enter para seleccionar marcador), textos alternativos en imágenes.
+
+### Prototipado y handoff
+- Navegación por roles: ver `ui_navigation_map.puml` y `ui_navigation_flowchart.puml` para documentar flujos.
+- Sitemap: `ui_sitemap.puml` para jerarquía completa.
+- Design system: `SPOTMAP_GUIA_ESTILOS.svg` + `ui_design_system.puml` para tokens (color, tipografía, espaciado, sombras, radios, z-index, animaciones).
+- Exportar las .puml a SVG/PNG con `java -jar plantuml.jar <archivo>.puml` para incrustar en Word/PDF.
+
+![Wireframes de las pantallas principales de SpotMap](./images/SPOTMAP_WIREFRAMES.svg)
+
+**Figura 7.1:** Wireframes de 6 pantallas principales: Mapa Interactivo (búsqueda/filtros), Detalle Spot (galería/comentarios), Crear Spot (formulario multi-paso), Perfil Usuario (estadísticas), Panel Moderación (revisión de reportes), y Admin Dashboard (métricas/logs).
+
+**Material de apoyo listo para la documentación**:
+- `./images/SPOTMAP_WIREFRAMES.svg`: exportado para incluir en el documento (mobile y desktop).
+- `./diagrams/ui_wireframes.puml`: fuente PlantUML de los wireframes.
+- `./diagrams/ui_screens.puml`: mapa de pantallas y estados principales.
+- `./diagrams/ui_navigation_map.puml`: navegación por roles (visitante, usuario, moderador, admin).
+- `./diagrams/ui_navigation_flowchart.puml`: flujo completo de navegación (alta/baja, creación, moderación, administración).
+- `./diagrams/ui_sitemap.puml`: sitemap jerárquico de la aplicación.
+- `./diagrams/ui_design_system.puml`: tokens de diseño y componentes base; puede exportarse como imagen de soporte.
+
 ---
 
 ## 7.2 Guías de Estilo
 
-### Paleta de Colores
+### Paleta de colores (tokens)
 
-| Elemento | Color | Código Hex | Uso |
-|----------|-------|-----------|-----|
-| Primario | Verde esmeralda | #10b981 | Botones principales, acentos |
-| Secundario | Azul cielo | #3b82f6 | Links, botones secundarios |
-| Acento | Naranja cálido | #f97316 | Alertas, destacados |
-| Fondo | Blanco | #ffffff | Fondo principal |
-| Fondo secundario | Gris claro | #f3f4f6 | Tarjetas, secciones alternas |
-| Texto principal | Gris oscuro | #1f2937 | Texto body |
-| Texto secundario | Gris medio | #6b7280 | Etiquetas, descripciones |
-| Error | Rojo | #ef4444 | Mensajes de error |
-| Éxito | Verde | #22c55e | Mensajes de éxito |
-| Advertencia | Amarillo | #eab308 | Mensajes de advertencia |
+| Token | Hex | Uso principal |
+|-------|-----|---------------|
+| `color-primary` | #10b981 | CTA primario, links destacados |
+| `color-secondary` | #3b82f6 | Links secundarios, estados de foco |
+| `color-accent` | #f97316 | Destacados/alertas suaves |
+| `color-bg` | #ffffff | Fondo base |
+| `color-bg-soft` | #f3f4f6 | Tarjetas, secciones alternas |
+| `color-text` | #1f2937 | Texto principal |
+| `color-text-muted` | #6b7280 | Etiquetas y descripciones |
+| `color-error` | #ef4444 | Mensajes de error y estados de peligro |
+| `color-success` | #22c55e | Confirmaciones y estados OK |
+| `color-warning` | #eab308 | Avisos |
 
 ### Tipografía
 
-- **Fuente Principal**: Inter, Roboto o -apple-system (system fonts)
-- **Tamaños**:
-  - H1 (títulos principales): 32px, bold
-  - H2 (subtítulos): 24px, bold
-  - H3 (secciones): 18px, semi-bold
-  - Body (texto normal): 16px, regular
-  - Small (labels, ayuda): 14px, regular
-  - Tiny (metadata): 12px, regular
+- Fuente principal: Inter / Roboto / -apple-system.
+- Escala: H1 32px (700), H2 24px (700), H3 18px (600), Body 16px (400), Small 14px, Tiny 12px.
+- Line-height recomendada: 1.4–1.6; interletraje normal.
 
-### Espaciado
+### Espaciado y forma
 
-- **Padding estándar**: 8px, 16px, 24px, 32px
-- **Margen entre secciones**: 24px, 32px
-- **Gap entre elementos**: 8px, 12px, 16px
+- Espaciado base: 8px, 12px, 16px, 24px, 32px.
+- Márgenes entre secciones: 24px–32px.
+- Radio base: 6px (botones, inputs); 8px en tarjetas.
+- Sombras: suaves en tarjetas (nivel 1–2); sin sombra en botones por defecto.
 
-### Componentes Reutilizables
+### Componentes reutilizables (estados clave)
 
-#### Botones
-
-- **Primario**: Fondo verde, texto blanco, 12px padding horizontal, border-radius 6px
-- **Secundario**: Borde gris, texto gris, fondo transparente
-- **Peligro**: Fondo rojo, texto blanco
-- **Estado deshabilitado**: Opacidad 50%, sin hover
-
-#### Tarjetas
-
-- Fondo blanco, borde gris claro (1px), border-radius 8px, shadow suave
-- Padding 16px
-
-#### Inputs
-
-- Borde gris (1px), focus azul (2px), border-radius 6px
-- Padding 12px
-- Placeholder en gris claro
-
-#### Badges
-
-- Fondo de color según categoría, texto blanco, border-radius 12px
-- Padding 4px 8px
+- Botones: primario (fondo verde, texto blanco), secundario (borde gris), peligro (rojo); disabled al 50% de opacidad; hover con +4% de oscuridad.
+- Inputs: borde gris 1px, foco azul 2px, padding 12px, placeholder gris claro.
+- Tarjetas: fondo blanco, borde #e5e7eb fino, shadow ligera, padding 16px.
+- Badges: color según categoría, texto blanco, radio 12px, padding 4px 8px.
+- Accesibilidad: contraste AA, foco visible, tamaños táctiles ≥44px.
 
 ![Guía visual de estilos y componentes de SpotMap](./images/SPOTMAP_GUIA_ESTILOS.svg)
 
-**Figura 7.2:** Guía completa de estilos (Design System) incluyendo: paleta de colores (#10B981 verde primario, #3B82F6 azul, #F59E0B naranja), tipografía (Segoe UI, escalas 10px-28px), componentes (botones, cards, inputs), espaciado (4-32px), breakpoints responsivos (XS-XL), y efectos de sombra/elevación.
+**Figura 7.2:** Guía de estilos (tokens de color, tipografía, espaciado, radios y componentes: botones, cards, inputs, badges; breakpoints XS-XL; sombras/elevación).
 
 ---
 
