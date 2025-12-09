@@ -1,6 +1,6 @@
-# ========================================
-# SpotMap - Archivos ignorados en Git
-# ========================================
+# ⚠️ PROYECTO PROPIETARIO - SPOTMAP ⚠️
+# Copyright (c) 2025 Antonio Valero
+# CONFIDENCIAL - NO compartir código fuente original
 
 # === Credenciales y Configuración Sensible ===
 backend/.env
@@ -9,6 +9,25 @@ frontend/js/supabaseConfig.js
 config/credentials.json
 config/*.key
 config/*.pem
+config/blocked_ips.txt
+
+# === CÓDIGO FUENTE ORIGINAL (solo subir ofuscado) ===
+frontend/js/api.js
+frontend/js/auth.js
+frontend/js/supabaseClient.js
+frontend/js/config.js
+frontend/js/spots.js
+frontend/js/map.js
+frontend/js/cache.js
+
+# === Tests y Coverage (revelan implementación) ===
+backend/tests/
+frontend/tests/
+coverage/
+*.test.js
+*Test.php
+TESTING.md
+RESUMEN_MEJORAS.md
 
 # === Archivos temporales y cache ===
 *.log

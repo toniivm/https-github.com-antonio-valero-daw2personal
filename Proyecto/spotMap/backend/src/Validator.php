@@ -122,4 +122,12 @@ class Validator
     {
         return $this->errors;
     }
+
+    /**
+     * Alias para errors() (compatible con tests)
+     */
+    public function getErrors()
+    {
+        return $this->errors;
+    }
 }

@@ -1,53 +1,116 @@
-# SpotMap - Dockerfile para producción
-###########
-# Builder stage: instalar dependencias PHP sin arrastrar herramientas al final
-###########
-FROM php:8.2-cli AS builder
+# SpotMap - Dockerfile Optimizado con Multi-Stage Build
+# ⚠️ CÓDIGO PROPIETARIO - NO DISTRIBUIR
+# Copyright (c) 2025 Antonio Valero
 
-RUN apt-get update && apt-get install -y \
-    libpq-dev \
-    libzip-dev \
-    zip \
-    unzip \
-    git \
-    && docker-php-ext-install pdo pdo_pgsql zip \
-    && apt-get clean && rm -rf /var/lib/apt/lists/*
+###########
+# Stage 1: Builder
+###########
+FROM php:8.2-fpm-alpine AS builder
 
-# Copiar composer desde imagen oficial
+LABEL maintainer="Antonio Valero"
+LABEL description="SpotMap - Proprietary Climbing Spots Map"
+
+# Install build dependencies
+RUN apk add --no-cache \
+    gcc g++ make pkgconfig \
+    libpq-dev mysql-dev \
+    openssl-dev \
+    zlib-dev \
+    curl-dev \
+    git
+
+# Install PHP extensions
+RUN docker-php-ext-install \
+    pdo \
+    pdo_mysql \
+    pdo_pgsql \
+    json \
+    curl \
+    mbstring \
+    opcache \
+    bcmath \
+    gd
+
+# Install Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
-WORKDIR /app/backend
-COPY backend/composer.json backend/composer.lock* ./
-RUN composer install --no-dev --prefer-dist --optimize-autoloader || true
+# Copy application
+COPY backend /app
+WORKDIR /app
+
+# Install PHP dependencies
+RUN composer install --no-dev --optimize-autoloader 2>&1 || true
 
 ###########
-# Runtime stage
+# Stage 2: Runtime
 ###########
-FROM php:8.2-apache
+FROM php:8.2-fpm-alpine
 
-# Metadata
-LABEL maintainer="antonio-valero"
-LABEL description="SpotMap - Aplicación de mapeo de spots"
-LABEL version="1.0.0"
+LABEL maintainer="Antonio Valero"
+LABEL version="1.2"
+LABEL description="SpotMap Production Container"
 
-# Instalar extensiones PHP necesarias
-RUN apt-get update && apt-get install -y \
-    libpq-dev \
-    libzip-dev \
-    zip \
-    unzip \
-    && docker-php-ext-install pdo pdo_pgsql zip \
-    && apt-get clean && rm -rf /var/lib/apt/lists/*
+# Install runtime dependencies
+RUN apk add --no-cache \
+# Install PHP extensions (production)
+RUN docker-php-ext-install \
+    pdo \
+    pdo_mysql \
+    pdo_pgsql \
+    json \
+    curl \
+    mbstring \
+    opcache \
+    bcmath \
+    gd
 
-## No copiamos composer al final (imagen más ligera). Si se necesita en desarrollo, añadirlo.
+# Copy application from builder
+COPY --from=builder /app /app
 
-# Habilitar mod_rewrite para Apache
-RUN a2enmod rewrite headers expires
+# Create non-root user
+RUN addgroup -g 1000 spotmap && \
+    adduser -D -u 1000 -G spotmap spotmap
 
-# Configurar Apache
-ENV APACHE_DOCUMENT_ROOT=/var/www/html/frontend
-RUN sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/sites-available/*.conf
-RUN sed -ri -e 's!/var/www/!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/apache2.conf /etc/apache2/conf-available/*.conf
+# Create necessary directories
+RUN mkdir -p /app/logs /app/public/uploads && \
+    chown -R spotmap:spotmap /app
+
+# Copy Nginx configuration
+COPY docker/nginx.conf /etc/nginx/nginx.conf
+COPY docker/default.conf /etc/nginx/conf.d/default.conf
+
+# Copy PHP configuration
+COPY docker/php.ini /usr/local/etc/php/php.ini
+COPY docker/www.conf /usr/local/etc/php-fpm.d/www.conf
+
+# Copy supervisor configuration
+COPY docker/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
+
+# Copy startup script
+COPY docker/docker-entrypoint.sh /usr/local/bin/
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh
+
+# Set working directory
+WORKDIR /app
+
+# Change to spotmap user
+USER spotmap
+
+# Expose ports
+EXPOSE 9000 8080
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=3s --start-period=40s --retries=3 \
+    CMD curl -f http://localhost:8080/health || exit 1
+
+# Set environment
+ENV APP_ENV=production
+ENV DEBUG=false
+ENV LOG_LEVEL=INFO
+
+# Entrypoint
+ENTRYPOINT ["docker-entrypoint.sh"]
+CMD ["supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf"]
 
 # Configurar permisos de upload
 RUN mkdir -p /var/www/html/backend/public/uploads && \

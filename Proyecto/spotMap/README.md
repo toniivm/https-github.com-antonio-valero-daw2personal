@@ -199,7 +199,46 @@ curl http://localhost/.../backend/public/index.php/api/status | jq
 
 - [`backend/SETUP.md`](./backend/SETUP.md) — Instalación paso a paso
 - [`backend/PLANETSCALE.md`](./backend/PLANETSCALE.md) — Guía PlanetScale
+- [`backend/MONITORING.md`](./backend/MONITORING.md) — Sistema de Monitoreo y Alertas
+- [`backend/CLI_TOOLS.md`](./backend/CLI_TOOLS.md) — Herramientas de CLI
 - [`backend/init-db/schema.sql`](./backend/init-db/schema.sql) — Esquema de BD
+
+## 📊 Monitoreo en Tiempo Real
+
+SpotMap incluye un **sistema empresarial de monitoring** con:
+
+### Dashboard en Vivo
+```
+URL: https://spotmap.local/monitoring.html
+```
+Ver métricas, logs y alertas en tiempo real.
+
+### CLI Tools
+```bash
+# Ver últimos logs
+php backend/cli-logs.php tail 50
+
+# Filtrar errores
+php backend/cli-logs.php filter error 100
+
+# Ver alertas
+php backend/cli-logs.php alerts 20
+
+# Estadísticas del sistema
+php backend/cli-logs.php stats
+
+# Health check automático
+php backend/health-check.php
+```
+
+### Componentes Incluidos
+- **AdvancedLogger** — Logging centralizado con sanitización y rotación
+- **PerformanceMonitor** — Tracking de performance y memoria
+- **ErrorTracker** — Captura automática de errores y excepciones
+- **MonitoringController** — API REST para datos de monitoreo
+- **monitoring.html** — Dashboard visual profesional
+
+Ver [`backend/MONITORING.md`](./backend/MONITORING.md) y [`backend/CLI_TOOLS.md`](./backend/CLI_TOOLS.md) para documentación completa.
 
 ## 🐛 Troubleshooting
 
