@@ -2,6 +2,8 @@
 
 Aplicación web para crear, compartir y gestionar "spots" (ubicaciones de interés) en un mapa interactivo, con sincronización en tiempo real si se usa BD remota.
 
+**Status:** ✅ CI/CD Automático activado (GitHub Actions)
+
 ## 📋 Descripción
 
 **spotMap** permite a usuarios mapear lugares de interés, categorizarlos y compartirlos. Ideal para:
