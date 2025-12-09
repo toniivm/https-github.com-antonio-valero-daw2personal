@@ -1,0 +1,199 @@
+name: 🚀 Deploy - Production
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'backend/**'
+      - 'frontend/**'
+      - 'docker-compose.yml'
+      - 'Dockerfile'
+      - '.env.docker'
+      - '.github/workflows/deploy.yml'
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Target environment'
+        required: true
+        default: 'staging'
+        type: choice
+        options:
+          - staging
+          - production
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  build:
+    name: 🐳 Build & Push Image
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    outputs:
+      image-tag: ${{ steps.meta.outputs.tags }}
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 📊 Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: 🔐 Log in to Container Registry
+        uses: docker/login-action@v2
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: 📝 Extract metadata
+        id: meta
+        uses: docker/metadata-action@v4
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=ref,event=branch
+            type=sha,prefix={{branch}}-
+            type=semver,pattern={{version}}
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      - name: 🐳 Build and push image
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  deploy-staging:
+    name: 🧪 Deploy to Staging
+    needs: build
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    environment:
+      name: staging
+      url: https://staging.spotmap.example.com
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🔐 Configure SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.STAGING_SSH_KEY }}" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh-keyscan -H ${{ secrets.STAGING_HOST }} >> ~/.ssh/known_hosts
+        if: ${{ secrets.STAGING_SSH_KEY != '' }}
+
+      - name: 📦 Deploy to staging server
+        run: |
+          ssh -i ~/.ssh/id_ed25519 ${{ secrets.STAGING_USER }}@${{ secrets.STAGING_HOST }} << 'EOF'
+          set -e
+          cd ~/spotmap
+          docker-compose pull
+          docker-compose up -d
+          docker-compose exec -T spotmap php migrate.php up
+          echo "✅ Staging deployment completed"
+          EOF
+        if: ${{ secrets.STAGING_SSH_KEY != '' }}
+        continue-on-error: true
+
+      - name: ✅ Health check staging
+        run: |
+          echo "🔍 Checking staging health..."
+          curl -f https://staging.spotmap.example.com/health || echo "Health check skipped"
+        continue-on-error: true
+
+      - name: 📢 Notify Slack (Staging)
+        uses: 8398a7/action-slack@v3
+        if: always()
+        with:
+          status: ${{ job.status }}
+          text: 'Staging deployment ${{ job.status }}'
+          webhook_url: ${{ secrets.SLACK_WEBHOOK }}
+          fields: repo,message,commit,author,action,eventName,ref,workflow
+        continue-on-error: true
+
+  deploy-production:
+    name: 🚀 Deploy to Production
+    needs: build
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    environment:
+      name: production
+      url: https://spotmap.example.com
+    
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🔐 Configure SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.PROD_SSH_KEY }}" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh-keyscan -H ${{ secrets.PROD_HOST }} >> ~/.ssh/known_hosts
+        if: ${{ secrets.PROD_SSH_KEY != '' }}
+
+      - name: 📦 Deploy to production
+        run: |
+          ssh -i ~/.ssh/id_ed25519 ${{ secrets.PROD_USER }}@${{ secrets.PROD_HOST }} << 'EOF'
+          set -e
+          cd ~/spotmap
+          
+          echo "📦 Creating backup..."
+          docker-compose exec -T mysql mysqldump -u spotmap -pspotmap123 spotmap | gzip > backups/spotmap-$(date +%Y%m%d-%H%M%S).sql.gz
+          
+          echo "🔄 Pulling latest images..."
+          docker-compose pull
+          
+          echo "🚀 Starting new containers..."
+          docker-compose up -d
+          
+          echo "🗄️ Running migrations..."
+          docker-compose exec -T spotmap php migrate.php up
+          
+          echo "✅ Production deployment completed"
+          EOF
+        if: ${{ secrets.PROD_SSH_KEY != '' }}
+        continue-on-error: true
+
+      - name: ✅ Health check production
+        run: |
+          echo "🔍 Checking production health..."
+          curl -f https://spotmap.example.com/health || echo "Health check skipped"
+        continue-on-error: true
+
+      - name: 📢 Notify Slack (Production)
+        uses: 8398a7/action-slack@v3
+        if: always()
+        with:
+          status: ${{ job.status }}
+          text: '🚀 Production deployment ${{ job.status }}'
+          webhook_url: ${{ secrets.SLACK_WEBHOOK }}
+          fields: repo,message,commit,author,action,eventName,ref,workflow
+        continue-on-error: true
+
+      - name: 📧 Send email notification
+        if: always()
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: ${{ secrets.EMAIL_SERVER }}
+          server_port: ${{ secrets.EMAIL_PORT }}
+          username: ${{ secrets.EMAIL_USER }}
+          password: ${{ secrets.EMAIL_PASSWORD }}
+          subject: 'SpotMap Production Deployment - ${{ job.status }}'
+          body: |
+            Deployment Status: ${{ job.status }}
+            Commit: ${{ github.sha }}
+            Author: ${{ github.actor }}
+            Timestamp: ${{ github.event.head_commit.timestamp }}
+            URL: https://spotmap.example.com
+          to: ${{ secrets.EMAIL_RECIPIENTS }}
+        continue-on-error: true

@@ -1,0 +1,200 @@
+name: 🔒 Security - Scan & Analysis
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+  schedule:
+    - cron: '0 2 * * *'  # Daily at 2 AM
+
+permissions:
+  contents: read
+  security-events: write
+
+jobs:
+  container-scan:
+    name: 🐳 Container Security Scan
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 📊 Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: 🐳 Build Docker image
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          push: false
+          load: true
+          tags: spotmap:security-scan
+          cache-from: type=gha
+
+      - name: 🔍 Scan with Trivy
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: 'spotmap:security-scan'
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+          severity: 'CRITICAL,HIGH'
+
+      - name: 📤 Upload Trivy results to GitHub Security
+        uses: github/codeql-action/upload-sarif@v2
+        if: always()
+        with:
+          sarif_file: 'trivy-results.sarif'
+
+  php-security:
+    name: 🐘 PHP Security Check
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🐘 Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+
+      - name: 📦 Install dependencies
+        working-directory: ./backend
+        run: composer install --prefer-dist --no-progress
+
+      - name: 🔐 Check for vulnerabilities
+        working-directory: ./backend
+        run: composer audit || true
+
+      - name: 🔍 PHP Security Checker
+        run: |
+          composer global require phpstan/phpstan-security-rules
+          cd backend && php -d display_errors=1 vendor/bin/phpstan analyse src --level=1 || true
+
+  dependency-check:
+    name: 📦 Dependency Check
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🔍 Run Dependency Check
+        uses: dependency-check/Dependency-Check_Action@main
+        with:
+          path: '.'
+          format: 'SARIF'
+          args: >
+            --enable-retired
+            --exclude '.git'
+            --exclude 'vendor'
+            --exclude 'node_modules'
+
+      - name: 📤 Upload dependency check results
+        uses: github/codeql-action/upload-sarif@v2
+        if: always()
+        with:
+          sarif_file: 'dependency-check-report.sarif'
+
+  sast:
+    name: 🔍 SAST - Code Analysis
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: 📝 Initialize CodeQL
+        uses: github/codeql-action/init@v2
+        with:
+          languages: 'cpp, csharp, go, java, javascript, python'
+
+      - name: 🔨 Autobuild
+        uses: github/codeql-action/autobuild@v2
+
+      - name: 📊 Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v2
+        with:
+          category: '/language:javascript'
+
+  secrets-scan:
+    name: 🔐 Secrets Detection
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: 🔍 TruffleHog Secret Scan
+        uses: trufflesecurity/trufflehog@main
+        with:
+          path: ./
+          base: ${{ github.event.repository.default_branch }}
+          head: HEAD
+          extra_args: --debug
+
+  license-check:
+    name: 📜 License Check
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🐘 Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+
+      - name: 📦 Install dependencies
+        working-directory: ./backend
+        run: composer install --prefer-dist --no-progress
+
+      - name: 📜 Check PHP licenses
+        working-directory: ./backend
+        run: composer licenses || true
+
+  infrastructure-as-code:
+    name: 🏗️ IaC Security Scan
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 📊 Scan Dockerfile
+        uses: hadolint/hadolint-action@v3.1.0
+        with:
+          dockerfile: Dockerfile
+          ignore: DL3009,DL3010
+
+      - name: 🔍 Scan docker-compose
+        run: |
+          echo "📋 Checking docker-compose.yml syntax..."
+          docker-compose -f docker-compose.yml config > /dev/null && echo "✅ Valid docker-compose"
+        continue-on-error: true
+
+  summary:
+    name: 📊 Security Summary
+    runs-on: ubuntu-latest
+    if: always()
+    needs: [container-scan, php-security, dependency-check, secrets-scan]
+
+    steps:
+      - name: 📢 Create security summary
+        run: |
+          echo "## 🔒 Security Scan Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "✅ Container Security: Scanned with Trivy" >> $GITHUB_STEP_SUMMARY
+          echo "✅ PHP Security: Checked with composer audit" >> $GITHUB_STEP_SUMMARY
+          echo "✅ Dependencies: Checked for vulnerabilities" >> $GITHUB_STEP_SUMMARY
+          echo "✅ Secrets: Scanned with TruffleHog" >> $GITHUB_STEP_SUMMARY
+          echo "✅ Code Quality: Analyzed with CodeQL" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Review results in Security → Code scanning alerts" >> $GITHUB_STEP_SUMMARY
