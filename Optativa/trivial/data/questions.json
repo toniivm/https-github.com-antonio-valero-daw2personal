@@ -1,0 +1,312 @@
+[
+  {
+    "id": 1,
+    "category": "Cultura General",
+    "difficulty": "facil",
+    "type": "choice",
+    "question": "¿Cuál es el planeta más cercano al Sol?",
+    "choices": ["Mercurio", "Venus", "Marte", "Tierra"],
+    "answer": 0
+  },
+  {
+    "id": 2,
+    "category": "Historia",
+    "difficulty": "media",
+    "type": "choice",
+    "question": "¿En qué año llegó Cristóbal Colón a América?",
+    "choices": ["1453", "1492", "1514", "1521"],
+    "answer": 1
+  },
+  {
+    "id": 3,
+    "category": "Ciencia",
+    "difficulty": "dificil",
+    "type": "truefalse",
+    "question": "La velocidad de la luz es aproximadamente 300.000 km/s.",
+    "answer": true
+  },
+  {
+    "id": 4,
+    "category": "Deportes",
+    "difficulty": "media",
+    "type": "choice",
+    "question": "¿Cuántos jugadores tiene un equipo de fútbol en el campo?",
+    "choices": ["9", "10", "11", "12"],
+    "answer": 2
+  },
+  {
+    "id": 5,
+    "category": "Arte",
+    "difficulty": "facil",
+    "type": "choice",
+    "question": "¿Quién pintó La noche estrellada?",
+    "choices": ["Claude Monet", "Pablo Picasso", "Vincent van Gogh", "Salvador Dalí"],
+    "answer": 2
+  }
+  ,
+  {
+    "id": 6,
+    "category": "Geografía",
+    "difficulty": "facil",
+    "type": "choice",
+    "question": "¿Cuál es el río más largo del mundo según medidas recientes?",
+    "choices": ["Nilo", "Amazonas", "Yangtsé", "Misisipi"],
+    "answer": 1
+  },
+  {
+    "id": 7,
+    "category": "Literatura",
+    "difficulty": "media",
+    "type": "choice",
+    "question": "¿Quién escribió Don Quijote de la Mancha?",
+    "choices": ["Lope de Vega", "Miguel de Cervantes", "Calderón de la Barca", "Garcilaso de la Vega"],
+    "answer": 1
+  },
+  {
+    "id": 8,
+    "category": "Tecnología",
+    "difficulty": "media",
+    "type": "truefalse",
+    "question": "HTML es un lenguaje de programación.",
+    "answer": false
+  },
+  {
+    "id": 9,
+    "category": "Ciencia",
+    "difficulty": "media",
+    "type": "choice",
+    "question": "¿Qué partícula subatómica tiene carga negativa?",
+    "choices": ["Protón", "Neutrón", "Electrón", "Quark"],
+    "answer": 2
+  },
+  {
+    "id": 10,
+    "category": "Cine",
+    "difficulty": "facil",
+    "type": "choice",
+    "question": "¿Quién dirigió Titanic (1997)?",
+    "choices": ["Steven Spielberg", "James Cameron", "Christopher Nolan", "Ridley Scott"],
+    "answer": 1
+  },
+  {
+    "id": 11,
+    "category": "Música",
+    "difficulty": "media",
+    "type": "choice",
+    "question": "¿Qué banda lanzó el álbum 'The Dark Side of the Moon'?",
+    "choices": ["Pink Floyd", "The Beatles", "Queen", "Led Zeppelin"],
+    "answer": 0
+  },
+  {
+    "id": 12,
+    "category": "Videojuegos",
+    "difficulty": "dificil",
+    "type": "choice",
+    "question": "¿En qué año se lanzó la primera PlayStation?",
+    "choices": ["1993", "1994", "1995", "1996"],
+    "answer": 1
+  },
+  {
+    "id": 13,
+    "category": "Historia",
+    "difficulty": "dificil",
+    "type": "truefalse",
+    "question": "El Imperio Romano cayó en el año 476 d.C.",
+    "answer": true
+  },
+  {
+    "id": 14,
+    "category": "Deportes",
+    "difficulty": "facil",
+    "type": "choice",
+    "question": "¿Cuántos puntos vale un triple en baloncesto?",
+    "choices": ["2", "3", "4", "1"],
+    "answer": 1
+  },
+  {
+    "id": 15,
+    "category": "Cultura General",
+    "difficulty": "media",
+    "type": "choice",
+    "question": "¿Qué país tiene forma de bota en el mapa?",
+    "choices": ["España", "Italia", "Grecia", "Portugal"],
+    "answer": 1
+  },
+  {
+    "id": 16,
+    "category": "Historia",
+    "difficulty": "media",
+    "type": "choice",
+    "question": "¿Quién fue el primer presidente de los Estados Unidos?",
+    "choices": ["George Washington", "Thomas Jefferson", "John Adams", "Abraham Lincoln"],
+    "answer": 0
+  },
+  {
+    "id": 17,
+    "category": "Historia",
+    "difficulty": "dificil",
+    "type": "choice",
+    "question": "¿En qué año empezó la Revolución Francesa?",
+    "choices": ["1776", "1789", "1812", "1848"],
+    "answer": 1
+  },
+  {
+    "id": 18,
+    "category": "Ciencia",
+    "difficulty": "facil",
+    "type": "choice",
+    "question": "¿Qué gas respiramos principalmente?",
+    "choices": ["Oxígeno", "Nitrógeno", "Dióxido de carbono", "Hidrógeno"],
+    "answer": 1
+  },
+  {
+    "id": 19,
+    "category": "Ciencia",
+    "difficulty": "dificil",
+    "type": "truefalse",
+    "question": "El número de Avogadro es aproximadamente 6,02×10^23.",
+    "answer": true
+  },
+  {
+    "id": 20,
+    "category": "Arte",
+    "difficulty": "media",
+    "type": "choice",
+    "question": "¿En qué museo se encuentra La Mona Lisa?",
+    "choices": ["Museo del Prado", "Museo d'Orsay", "Museo del Louvre", "Galería Uffizi"],
+    "answer": 2
+  },
+  {
+    "id": 21,
+    "category": "Geografía",
+    "difficulty": "media",
+    "type": "choice",
+    "question": "¿Cuál es la capital de Canadá?",
+    "choices": ["Toronto", "Vancouver", "Ottawa", "Montreal"],
+    "answer": 2
+  },
+  {
+    "id": 22,
+    "category": "Tecnología",
+    "difficulty": "media",
+    "type": "choice",
+    "question": "¿Qué significa las siglas CPU?",
+    "choices": ["Central Performance Unit", "Central Processing Unit", "Computer Power Unit", "Core Processing Utility"],
+    "answer": 1
+  },
+  {
+    "id": 23,
+    "category": "Videojuegos",
+    "difficulty": "media",
+    "type": "choice",
+    "question": "¿En qué saga aparece el personaje Master Chief?",
+    "choices": ["Halo", "Gears of War", "Mass Effect", "Destiny"],
+    "answer": 0
+  },
+  {
+    "id": 24,
+    "category": "Cine",
+    "difficulty": "media",
+    "type": "choice",
+    "question": "¿Qué película ganó el Óscar a mejor película en 2020?",
+    "choices": ["1917", "Joker", "Parásitos", "Once Upon a Time in Hollywood"],
+    "answer": 2
+  },
+  {
+    "id": 25,
+    "category": "Música",
+    "difficulty": "facil",
+    "type": "choice",
+    "question": "¿Qué cantante es conocida como la Reina del Pop?",
+    "choices": ["Britney Spears", "Madonna", "Lady Gaga", "Beyoncé"],
+    "answer": 1
+  },
+  {
+    "id": 26,
+    "category": "Deportes",
+    "difficulty": "media",
+    "type": "choice",
+    "question": "¿Cuántos Grand Slam ganó Roger Federer?",
+    "choices": ["18", "20", "21", "23"],
+    "answer": 1
+  },
+  {
+    "id": 27,
+    "category": "Cultura General",
+    "difficulty": "facil",
+    "type": "truefalse",
+    "question": "La Torre Eiffel está en París.",
+    "answer": true
+  },
+  {
+    "id": 28,
+    "category": "Geografía",
+    "difficulty": "dificil",
+    "type": "choice",
+    "question": "¿Cuál es el país más poblado de África?",
+    "choices": ["Nigeria", "Etiopía", "Egipto", "Sudáfrica"],
+    "answer": 0
+  },
+  {
+    "id": 29,
+    "category": "Arte",
+    "difficulty": "dificil",
+    "type": "truefalse",
+    "question": "El Guernica fue pintado por Picasso en 1937.",
+    "answer": true
+  },
+  {
+    "id": 30,
+    "category": "Tecnología",
+    "difficulty": "dificil",
+    "type": "choice",
+    "question": "¿Qué inventor creó el algoritmo de Enigma que se rompió en Bletchley Park?",
+    "choices": ["Alan Turing", "Arthur Scherbius", "Claude Shannon", "Konrad Zuse"],
+    "answer": 1
+  },
+  {
+    "id": 31,
+    "category": "Historia",
+    "difficulty": "media",
+    "type": "choice",
+    "question": "¿Qué tratado puso fin a la Primera Guerra Mundial?",
+    "choices": ["Versalles", "París", "Ginebra", "Yalta"],
+    "answer": 0
+  },
+  {
+    "id": 32,
+    "category": "Arte",
+    "difficulty": "facil",
+    "type": "choice",
+    "question": "¿Cuál es la técnica principal de la acuarela?",
+    "choices": ["Pintura al óleo", "Pigmento diluido en agua", "Pigmento con cera", "Acrílico espeso"],
+    "answer": 1
+  },
+  {
+    "id": 33,
+    "category": "Geografía",
+    "difficulty": "media",
+    "type": "choice",
+    "question": "¿Qué cordillera alberga el monte Everest?",
+    "choices": ["Andes", "Alpes", "Himalaya", "Rocosas"],
+    "answer": 2
+  },
+  {
+    "id": 34,
+    "category": "Ciencia",
+    "difficulty": "media",
+    "type": "choice",
+    "question": "¿Qué tipo de enlace une a los aminoácidos en una proteína?",
+    "choices": ["Iónico", "Covalente peptídico", "Puente de hidrógeno", "Metálico"],
+    "answer": 1
+  },
+  {
+    "id": 35,
+    "category": "Cine",
+    "difficulty": "dificil",
+    "type": "truefalse",
+    "question": "'Blade Runner' está basada en una novela de Philip K. Dick.",
+    "answer": true
+  }
+  }
+]
