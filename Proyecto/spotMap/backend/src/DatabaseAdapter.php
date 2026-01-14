@@ -88,8 +88,15 @@ class DatabaseAdapter
             $stmt->bindValue(':offset', $offset, \PDO::PARAM_INT);
             $stmt->execute();
             $spots = $stmt->fetchAll();
-            
+
+            // Normalizar nombres de campos a frontend (lat/lng)
             array_walk($spots, function(&$spot) {
+                if (array_key_exists('latitude', $spot) && !array_key_exists('lat', $spot)) {
+                    $spot['lat'] = (float)$spot['latitude'];
+                }
+                if (array_key_exists('longitude', $spot) && !array_key_exists('lng', $spot)) {
+                    $spot['lng'] = (float)$spot['longitude'];
+                }
                 $spot['tags'] = $spot['tags'] ? json_decode($spot['tags']) : [];
             });
             
@@ -116,6 +123,12 @@ class DatabaseAdapter
             if (!$spot) {
                 return ['error' => 'Not found'];
             }
+            if (array_key_exists('latitude', $spot) && !array_key_exists('lat', $spot)) {
+                $spot['lat'] = (float)$spot['latitude'];
+            }
+            if (array_key_exists('longitude', $spot) && !array_key_exists('lng', $spot)) {
+                $spot['lng'] = (float)$spot['longitude'];
+            }
             $spot['tags'] = $spot['tags'] ? json_decode($spot['tags']) : [];
             return $spot;
         }
@@ -128,7 +141,7 @@ class DatabaseAdapter
         } else {
             $pdo = self::getClient();
             $stmt = $pdo->prepare('
-                INSERT INTO spots (title, description, lat, lng, tags, category, image_path)
+                INSERT INTO spots (title, description, latitude, longitude, tags, category, image_path)
                 VALUES (:title, :desc, :lat, :lng, :tags, :cat, :image_path)
             ');
             $stmt->execute([
@@ -141,7 +154,11 @@ class DatabaseAdapter
                 ':image_path' => $data['image_path'] ?? null
             ]);
             $id = (int)$pdo->lastInsertId();
-            return array_merge(['id' => $id], $data);
+            // Asegurar que lat/lng estén presentes en respuesta
+            $out = array_merge(['id' => $id], $data);
+            if (!isset($out['lat']) && isset($data['latitude'])) $out['lat'] = (float)$data['latitude'];
+            if (!isset($out['lng']) && isset($data['longitude'])) $out['lng'] = (float)$data['longitude'];
+            return $out;
         }
     }
 

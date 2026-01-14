@@ -1,6 +1,6 @@
 /**
  * main.js - Punto de entrada de la aplicación
- * Orquesta los módulos: map, spots, ui, auth
+ * Orquesta los módulos: map, spots, ui, auth, oauth
  */
 
 import { initMap } from './map.js';
@@ -16,6 +16,8 @@ import { initSocial, isSpotLiked, toggleLike, openShareModal } from './social.js
 import { openSpotDetailsModal } from './comments.js';
 import { initI18n, t } from './i18n.js';
 import { initTheme } from './theme.js';
+import { initOAuthButtons, handleOAuthCallback } from './oauth.js';
+import { Config } from './config.js';
 
 /**
  * Inicializar aplicación cuando el DOM esté listo
@@ -33,10 +35,14 @@ document.addEventListener('DOMContentLoaded', async () => {
         // 0.2 Inicializar sistema de autenticación
         initAuth();
 
-        // 0.3 Inicializar sistema social
+        // 0.3 Inicializar OAuth social login
+        initOAuthButtons();
+        handleOAuthCallback(); // Procesar callback si viene de OAuth
+
+        // 0.4 Inicializar sistema social
         initSocial();
 
-        // 0.4 Registrar Service Worker (PWA)
+        // 0.5 Registrar Service Worker (PWA)
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.register('./sw.js')
                 .then(reg => console.log('[PWA] Service Worker registered:', reg))
@@ -60,6 +66,16 @@ document.addEventListener('DOMContentLoaded', async () => {
         
         if (spots.length === 0) {
             console.warn('[MAIN] No hay spots en la base de datos');
+            const list = document.getElementById('spot-list');
+            if (list) {
+                list.innerHTML = `
+                    <div class="alert alert-warning m-2">
+                        <div><strong>Sin spots para mostrar.</strong></div>
+                        <div class="small text-muted mt-1">Revisa que la base de datos esté inicializada y que la API sea accesible.</div>
+                        <div class="small mt-2">API base detectada: <code>${Config.apiBase}</code></div>
+                        <div class="small mt-1">Puedes inicializar datos desde backend/init-database.php o verificar rutas en backend/public/index.php</div>
+                    </div>`;
+            }
         }
 
         // 5. Mostrar spots en mapa y sidebar
@@ -74,7 +90,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         // 5.3 Service Worker: listener de actualizaciones
         if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
             navigator.serviceWorker.addEventListener('controllerchange', () => {
-                showNotification('Nueva versión disponible. Recargando...', 'info');
+                showToast('Nueva versión disponible. Recargando...', 'info');
                 setTimeout(() => window.location.reload(), 1000);
             });
         }
