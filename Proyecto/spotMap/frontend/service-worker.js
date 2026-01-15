@@ -113,14 +113,14 @@ async function cacheFirst(request, cacheName) {
 // Stale While Revalidate: devuelve cache y actualiza en background
 async function cacheFirstWithRefresh(request, cacheName) {
   const cached = await caches.match(request);
-  const fetchPromise = fetch(request).then(response => {
-    if (response.ok) {
-      const cache = caches.open(cacheName);
-      cache.then(c => c.put(request, response.clone()));
+  fetch(request).then(response => {
+    if (response && response.ok) {
+      caches.open(cacheName).then(cache => {
+        cache.put(request, response.clone());
+      });
     }
-    return response;
-  }).catch(() => cached);
-  return cached || fetchPromise;
+  }).catch(() => {});
+  return cached || fetch(request);
 }
 
 // Network First con fallback a index.html

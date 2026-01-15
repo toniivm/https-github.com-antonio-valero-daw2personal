@@ -42,12 +42,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         // 0.4 Inicializar sistema social
         initSocial();
 
-        // 0.5 Registrar Service Worker (PWA)
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('./sw.js')
-                .then(reg => console.log('[PWA] Service Worker registered:', reg))
-                .catch(err => console.warn('[PWA] Service Worker registration failed:', err));
-        }
+        // 0.5 Registrar Service Worker (PWA) - DESACTIVADO (causa reloads múltiples)
+        // if ('serviceWorker' in navigator) {
+        //     navigator.serviceWorker.register('./sw.js')
+        //         .then(reg => console.log('[PWA] Service Worker registered:', reg))
+        //         .catch(err => console.warn('[PWA] Service Worker registration failed:', err));
+        // }
 
         // 1. Inicializar mapa
         if (!initMap()) {
@@ -87,13 +87,13 @@ document.addEventListener('DOMContentLoaded', async () => {
         // 5.2 Realtime: suscribirse a cambios en spots
         setupRealtime();
 
-        // 5.3 Service Worker: listener de actualizaciones
-        if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
-            navigator.serviceWorker.addEventListener('controllerchange', () => {
-                showToast('Nueva versión disponible. Recargando...', 'info');
-                setTimeout(() => window.location.reload(), 1000);
-            });
-        }
+        // 5.3 Service Worker: listener de actualizaciones (desactivado temporalmente)
+        // if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+        //     navigator.serviceWorker.addEventListener('controllerchange', () => {
+        //         showToast('Nueva versión disponible. Recargando...', 'info');
+        //         setTimeout(() => window.location.reload(), 1000);
+        //     });
+        // }
 
         // 6. Actualizar categorías en filtro
         updateCategoryFilter(spots);
@@ -130,6 +130,27 @@ window.openShareModal = openShareModal;
 
 // Exponer función de detalles/comentarios globalmente
 window.openSpotDetails = openSpotDetailsModal;
+
+// Función segura para eliminar spot con confirmación
+window.confirmDeleteSpot = async (spotId) => {
+    if (!confirm('¿Estás seguro de eliminar este spot? Esta acción no se puede deshacer.')) {
+        return;
+    }
+    
+    try {
+        showToast('Eliminando spot...', 'info', { autoCloseMs: 1000 });
+        await deleteSpot(spotId);
+        mapModule.removeMarker(spotId);
+        showToast('✓ Spot eliminado correctamente', 'success');
+        
+        // Recargar lista
+        const spots = await loadSpots({ forceRefresh: true });
+        displaySpots(spots, renderSpotList);
+    } catch (error) {
+        console.error('[DELETE] Error eliminando spot:', error);
+        showToast('Error al eliminar spot: ' + (error.message || 'Error desconocido'), 'error');
+    }
+};
 
 // Offline / Online feedback
 window.addEventListener('offline', () => {

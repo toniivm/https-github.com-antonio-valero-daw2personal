@@ -94,6 +94,3 @@ class PerformanceMonitor {
         ];
     }
 }
-
-// Auto-start performance monitoring
-PerformanceMonitor::start();

@@ -28,7 +28,9 @@ export async function reject(id) {
 
 export async function createSpotRecord(data, photoFile = null) {
   if (supabaseAvailable()) {
-    const base = { ...data, status: 'pending' };
+    // Crear spot sin 'status' (columna no existe por defecto en Supabase)
+    // Si quieres moderación, ejecuta SUPABASE_SPOTS_STATUS.sql
+    const base = { ...data };
     const created = await sbCreateSpot(base);
     if (!created) return null;
     if (photoFile) {

@@ -15,13 +15,14 @@ class SpotController
     public function index(): void
     {
         try {
-            $page = max(1, (int)($_GET['page'] ?? 1));
-            $limit = min(100, (int)($_GET['limit'] ?? 50));
+            // Validación segura de parámetros
+            $page = max(1, filter_var($_GET['page'] ?? 1, FILTER_VALIDATE_INT) ?: 1);
+            $limit = min(100, max(1, filter_var($_GET['limit'] ?? 50, FILTER_VALIDATE_INT) ?: 50));
             $offset = ($page - 1) * $limit;
             // Advanced filters (category, tag, min_rating) placeholder parsing
-            $category = $_GET['category'] ?? null;
-            $tag = $_GET['tag'] ?? null;
-            $minRating = isset($_GET['min_rating']) ? (float)$_GET['min_rating'] : null;
+            $category = isset($_GET['category']) ? trim($_GET['category']) : null;
+            $tag = isset($_GET['tag']) ? trim($_GET['tag']) : null;
+            $minRating = isset($_GET['min_rating']) ? filter_var($_GET['min_rating'], FILTER_VALIDATE_FLOAT) : null;
 
             // Cache primero
             $cacheKey = "spots_{$page}_{$limit}";

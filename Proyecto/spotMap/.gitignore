@@ -1,5 +1,5 @@
 # ⚠️ PROYECTO PROPIETARIO - SPOTMAP ⚠️
-# Copyright (c) 2025 Antonio Valero
+# Copyright (c) 2026 Antonio Valero
 # CONFIDENCIAL - NO compartir código fuente original
 
 # === Credenciales y Configuración Sensible ===
@@ -11,14 +11,7 @@ config/*.key
 config/*.pem
 config/blocked_ips.txt
 
-# === CÓDIGO FUENTE ORIGINAL (solo subir ofuscado) ===
-frontend/js/api.js
-frontend/js/auth.js
-frontend/js/supabaseClient.js
-frontend/js/config.js
-frontend/js/spots.js
-frontend/js/map.js
-frontend/js/cache.js
+# === CÓDIGO FUENTE ORIGINAL ===
 
 # === Tests y Coverage (revelan implementación) ===
 backend/tests/

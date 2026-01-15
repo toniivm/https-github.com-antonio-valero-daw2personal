@@ -10,8 +10,18 @@ class Auth
 {
     public static function requireUser(): array
     {
-        $hdr = $_SERVER['HTTP_AUTHORIZATION'] ?? '';
+        // Apache no pasa HTTP_AUTHORIZATION por defecto, probamos varias fuentes
+        $hdr = $_SERVER['HTTP_AUTHORIZATION'] 
+            ?? (function_exists('apache_request_headers') ? (apache_request_headers()['Authorization'] ?? '') : '')
+            ?? (function_exists('getallheaders') ? (getallheaders()['Authorization'] ?? '') : '')
+            ?? $_SERVER['REDIRECT_HTTP_AUTHORIZATION']
+            ?? '';
+
         if (!str_starts_with($hdr, 'Bearer ')) {
+            if (function_exists('apache_request_headers')) {
+                error_log('[AUTH] Headers Apache: ' . print_r(apache_request_headers(), true));
+            }
+            error_log('[AUTH] _SERVER keys: ' . implode(', ', array_keys($_SERVER)));
             ApiResponse::unauthorized('Missing bearer token');
         }
         $token = substr($hdr, 7);
@@ -41,6 +51,8 @@ class Auth
         $ch = curl_init($url);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+        curl_setopt($ch, CURLOPT_TIMEOUT, 5); // Timeout total de 5 segundos
+        curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 3); // Timeout de conexión de 3 segundos
         $resp = curl_exec($ch);
         $code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
         curl_close($ch);

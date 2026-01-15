@@ -2,7 +2,7 @@
 
 **Versión:** 1.2 (Producción con Monitoreo Avanzado)  
 **Estado:** ✅ COMPLETAMENTE DESARROLLADO Y SECURIZADO  
-**Última Actualización:** Diciembre 2025  
+**Última Actualización:** Enero 2026  
 **Autor:** Antonio Valero (DAW2)
 
 ---
@@ -427,7 +427,7 @@ php backend/health-check.php
 
 ## 📜 Licencia
 
-**Propietario** - Todos los derechos reservados (2025)
+**Propietario** - Todos los derechos reservados (2026)
 
 No se permite:
 - Distribución
@@ -444,7 +444,7 @@ Ver `LICENSE` para términos completos.
 
 **Desarrollado por:** Antonio Valero  
 **Contexto:** DAW2 (Desarrollo de Aplicaciones Web 2)  
-**Año:** 2025
+**Año:** 2026
 
 ---
 

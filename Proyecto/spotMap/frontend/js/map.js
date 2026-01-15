@@ -65,7 +65,7 @@ export function addMarker(spot) {
 
     popupContent += `
             <p><small>Lat: ${spot.lat.toFixed(4)}, Lng: ${spot.lng.toFixed(4)}</small></p>
-            <button class="btn btn-sm btn-danger" onclick="window.deleteSpot(${spot.id})">Eliminar</button>
+            <button class="btn btn-sm btn-danger" onclick="window.confirmDeleteSpot(${spot.id})">Eliminar</button>
         </div>
     `;
 

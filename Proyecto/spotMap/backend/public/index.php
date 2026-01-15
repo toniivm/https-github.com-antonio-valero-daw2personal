@@ -49,10 +49,15 @@ $allowedOrigins = explode(',', Config::get('CORS_ORIGINS', 'http://localhost,htt
 $origin = $_SERVER['HTTP_ORIGIN'] ?? '';
 if (in_array($origin, $allowedOrigins) || in_array('*', $allowedOrigins)) {
     header("Access-Control-Allow-Origin: $origin");
+    header("Access-Control-Allow-Credentials: true");
 }
 header("Access-Control-Allow-Methods: GET, POST, DELETE, OPTIONS, PUT");
-header("Access-Control-Allow-Headers: Content-Type, Authorization");
-if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') exit;
+header("Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With");
+header("Access-Control-Expose-Headers: Authorization");
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+    http_response_code(204);
+    exit;
+}
 
 // Inicializar base de datos local solo si NO usamos Supabase
 if (!DatabaseAdapter::useSupabase()) {

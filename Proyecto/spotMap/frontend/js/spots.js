@@ -116,13 +116,30 @@ export async function deleteSpot(spotId) {
     try {
         console.log(`[SPOTS] Eliminando spot ${spotId}`);
         
+        // Obtener token de autenticación desde Supabase
+        const { getClient, supabaseAvailable } = await import('./supabaseClient.js');
+        let token = null;
+        
+        if (supabaseAvailable()) {
+            const supabase = getClient();
+            const { data } = await supabase.auth.getSession();
+            token = data?.session?.access_token;
+        }
+        
+        if (!token) {
+            throw new Error('Debes iniciar sesión para eliminar spots');
+        }
+        
+        console.log('[SPOTS] Token obtenido, enviando DELETE...');
+        console.log('[SPOTS] Token (primeros 20 chars):', token?.substring(0, 20) + '...');
+        
         // La API retorna 204 (sin contenido) en delete exitoso
-        const response = await apiFetch(`/spots/${spotId}`, { method: 'DELETE' });
+        const response = await apiFetch(`/spots/${spotId}`, { 
+            method: 'DELETE',
+            token: token
+        });
         
-        // Response será null para 204, lo cual es correcto
-        // No validar response.success porque es 204 No Content
-        
-        mapModule.removeMarker(spotId);
+        console.log('[SPOTS] Response DELETE:', response);
         Cache.remove('spots'); // invalidate cache
         console.log(`[SPOTS] ✓ Spot ${spotId} eliminado`);
         return true;

@@ -108,10 +108,12 @@ export async function rejectSpot(id) {
 
 export async function fetchApprovedSpots({ limit = 50, offset = 0 } = {}) {
   if (!supabaseAvailable()) return null;
+  // NOTA: Columna 'status' NO existe por defecto
+  // Ejecuta SUPABASE_SPOTS_STATUS.sql si quieres moderación
   const { data, error, count } = await supabase
     .from('spots')
     .select('*', { count: 'exact' })
-    .eq('status', 'approved')
+    // .eq('status', 'approved') // DESACTIVADO - columna no existe
     .range(offset, offset + limit - 1)
     .order('created_at', { ascending: false });
   if (error) {

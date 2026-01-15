@@ -50,7 +50,10 @@ export async function apiFetch(endpoint, {
   }
   
   if (token) {
+    console.log('[API] Añadiendo token Bearer (primeros 20):', token?.substring(0, 20) + '...');
     headers.append('Authorization', `Bearer ${token}`);
+  } else {
+    console.warn('[API] NO HAY TOKEN - request sin autenticar');
   }
 
   // Construir URL con parámetros

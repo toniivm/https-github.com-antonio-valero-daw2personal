@@ -4,11 +4,7 @@
  */
 
 import { showToast } from './notifications.js';
-import { initSupabase, getClient, getOrProvisionProfile } from './supabaseClient.js';
-
-// Configuración de Supabase (usar variables del servidor)
-const SUPABASE_URL = 'https://ptjkepxsjqyejkynjewc.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB0amtlcHhzanF5ZWpreW5qZXdjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjMwNDkyNDksImV4cCI6MjA3ODYyNTI0OX0._OPoGxMknS9VTzC16Zx_euobimiW1dzQnbpT5Ae3WQw';
+import { initSupabase, getClient, getOrProvisionProfile, supabaseAvailable } from './supabaseClient.js';
 
 let currentUser = null;
 let currentRole = 'guest';
@@ -21,7 +17,7 @@ export async function initAuth() {
     await initSupabase();
     const supabase = getClient();
 
-    if (supabase) {
+    if (supabaseAvailable() && supabase) {
         const { data } = await supabase.auth.getSession();
         if (data.session) {
             currentUser = data.session.user;
@@ -52,10 +48,25 @@ export async function initAuth() {
         } else {
             updateUIForLoggedOutUser();
         }
+        setAuthUnavailableState();
     }
 
     setupAuthListeners();
     console.log('[AUTH] ✓ Autenticación inicializada');
+}
+
+function setAuthUnavailableState() {
+    const loginBtn = document.getElementById('btn-login');
+    const registerBtn = document.getElementById('btn-register');
+    if (loginBtn) {
+        loginBtn.setAttribute('disabled', 'disabled');
+        loginBtn.setAttribute('title', 'Configura Supabase para iniciar sesión');
+    }
+    if (registerBtn) {
+        registerBtn.setAttribute('disabled', 'disabled');
+        registerBtn.setAttribute('title', 'Configura Supabase para registrarte');
+    }
+    showToast('Auth deshabilitado: falta supabaseConfig.js', 'warning', { autoCloseMs: 4000 });
 }
 
 /**
@@ -234,8 +245,14 @@ function updateUIForLoggedInUser(user) {
     const userName = document.getElementById('user-name');
     const userAvatar = document.getElementById('user-avatar');
 
-    if (loggedOut) loggedOut.style.display = 'none';
-    if (loggedIn) loggedIn.style.display = 'block';
+    if (loggedOut) {
+        loggedOut.style.display = 'none';
+        loggedOut.style.visibility = 'hidden';
+    }
+    if (loggedIn) {
+        loggedIn.style.display = 'block';
+        loggedIn.style.visibility = 'visible';
+    }
     
     if (userName) {
         const name = user.user_metadata?.full_name || user.email.split('@')[0];
@@ -258,8 +275,14 @@ function updateUIForLoggedOutUser() {
     const loggedOut = document.getElementById('auth-logged-out');
     const loggedIn = document.getElementById('auth-logged-in');
 
-    if (loggedOut) loggedOut.style.display = 'flex';
-    if (loggedIn) loggedIn.style.display = 'none';
+    if (loggedOut) {
+        loggedOut.style.display = 'flex';
+        loggedOut.style.visibility = 'visible';
+    }
+    if (loggedIn) {
+        loggedIn.style.display = 'none';
+        loggedIn.style.visibility = 'hidden';
+    }
 
     const panel = document.getElementById('moderation-panel');
     if (panel) panel.style.display = 'none';
@@ -307,7 +330,19 @@ export function isAuthenticated() {
 /**
  * Obtener token de acceso
  */
-export function getAccessToken() {
+export async function getAccessToken() {
+    // Primero intentar obtener de Supabase
+    if (supabaseAvailable()) {
+        const supabase = getClient();
+        if (supabase) {
+            const { data } = await supabase.auth.getSession();
+            if (data?.session?.access_token) {
+                return data.session.access_token;
+            }
+        }
+    }
+    
+    // Fallback: sesión almacenada
     const session = getStoredSession();
     return session?.access_token || null;
 }

@@ -1,102 +1,115 @@
-# spotMap - Mapa Colaborativo de Spots
+# 📸 SpotMap - Descubre y comparte lugares increíbles
 
-Aplicación web para crear, compartir y gestionar "spots" (ubicaciones de interés) en un mapa interactivo, con sincronización en tiempo real si se usa BD remota.
+> Aplicación web moderna para crear, compartir y descubrir ubicaciones (spots) en un mapa interactivo, con autenticación Supabase y sincronización en tiempo real.
 
-**Status:** ✅ CI/CD Automático activado (GitHub Actions)
+[![Status](https://img.shields.io/badge/status-active-success.svg)]()
+[![CI/CD](https://img.shields.io/badge/CI%2FCD-GitHub%20Actions-blue.svg)]()
+[![License](https://img.shields.io/badge/license-Propietario-red.svg)]()
 
-## 📋 Descripción
+---
 
-**spotMap** permite a usuarios mapear lugares de interés, categorizarlos y compartirlos. Ideal para:
-- Mapas comunitarios de graffiti, arte callejero.
-- Recomendaciones locales (cafés, parks, eventos).
-- Geolocalización educativa de POIs (Puntos de Interés).
+## 🚀 Quick Start (5 minutos)
+
+### 1. Requisitos Previos
+- **XAMPP** (PHP 8.0+, MySQL/MariaDB)
+- **Cuenta Supabase** (gratuita): https://supabase.com
+- **Git**
+
+### 2. Instalación
+
+```powershell
+# Clonar repositorio
+cd C:\xampp\htdocs
+git clone <repo-url> spotMap
+cd spotMap
+
+# Configurar backend
+Copy-Item backend\.env.example backend\.env
+# EDITAR backend\.env con tus credenciales MySQL y Supabase
+
+# Crear base de datos
+php backend\init-database.php
+
+# Configurar frontend
+Copy-Item frontend\js\supabaseConfig.example.js frontend\js\supabaseConfig.js
+# EDITAR frontend\js\supabaseConfig.js con tus keys de Supabase
+
+# Abrir en navegador
+Start-Process "http://localhost/spotMap/frontend/index.html"
+```
+
+### 3. Obtener Credenciales Supabase
+
+1. Ve a https://app.supabase.com
+2. Crea un proyecto nuevo (o usa existente)
+3. Ve a **Settings → API**
+4. Copia:
+   - `Project URL` → `SUPABASE_URL`
+   - `anon public` → `SUPABASE_ANON_KEY`
+   - `service_role` → `SUPABASE_SERVICE_KEY`
+
+---
+
+## 📋 Características
+
+✅ **Autenticación**
+- Login/Registro con email/password
+- OAuth con Google, Facebook, Twitter, Instagram
+- Sesiones persistentes con JWT
+
+✅ **Gestión de Spots**
+- Crear spots con foto, título, descripción
+- Geolocalización automática
+- Categorías y tags
+- Búsqueda y filtros
+
+✅ **Mapa Interactivo**
+- Leaflet.js con OpenStreetMap
+- Marcadores personalizados
+- Popups con información
+
+✅ **Social**
+- Likes y favoritos
+- Comentarios y ratings
+- Compartir en redes sociales
+
+✅ **Seguridad**
+- Rate limiting
+- CORS configurado
+- CSP headers
+- Sanitización de inputs
+- Validación de archivos
+
+---
 
 ## 🏗️ Arquitectura
 
 ```
 spotMap/
-├── backend/           # API PHP
+├── backend/              # API REST en PHP
 │   ├── src/
-│   │   ├── Config.php           # Gestión de configuración (env vars)
-│   │   ├── Database.php         # Conexión y pool de BD
-│   │   ├── Logger.php           # Logging centralizado
-│   │   ├── RateLimiter.php      # Control de rate limiting
-│   │   ├── Migration.php        # Sistema de migraciones
-│   │   ├── Router.php           # Enrutador
-│   │   ├── Validator.php        # Validación de datos
-│   │   ├── Security.php         # Funciones de seguridad
-│   │   ├── ApiResponse.php      # Formato de respuestas
-│   │   └── Controllers/
-│   │       └── SpotController.php   # Controlador de spots
+│   │   ├── Controllers/  # SpotController, AdminController, etc.
+│   │   ├── Auth.php      # Validación JWT Supabase
+│   │   ├── Database.php  # Conexión MySQL
+│   │   ├── Security.php  # CORS, headers, sanitización
+│   │   └── ...
 │   ├── public/
-│   │   ├── index.php            # Punto de entrada (API)
-│   │   └── uploads/             # Almacenamiento de fotos
-│   ├── init-db/
-│   │   └── schema.sql           # Esquema de BD
-│   ├── migrate.php              # CLI para migraciones
-│   ├── .env.example             # Plantilla de configuración
-│   ├── SETUP.md                 # Guía de instalación
-│   └── PLANETSCALE.md           # Guía de PlanetScale
+│   │   └── index.php     # Entry point API
+│   └── .env             # Configuración (NO en git)
 │
-├── frontend/          # Interfaz web
-│   ├── index.html
+├── frontend/             # SPA con ES6 Modules
+│   ├── js/
+│   │   ├── auth.js       # Sistema autenticación
+│   │   ├── spots.js      # CRUD spots
+│   │   ├── map.js        # Leaflet integration
+│   │   ├── ui.js         # Interfaz de usuario
+│   │   ├── supabaseClient.js  # Cliente Supabase
+│   │   └── supabaseConfig.js  # Keys (NO en git)
 │   ├── css/
-│   │   └── styles.css
-│   ├── img/
-│   └── js/
-│       ├── main.js              # Lógica principal
-│       ├── map.js               # Integración con mapa
-│       ├── spots.js             # Gestión de spots
-│       ├── ui.js                # Componentes UI
-│       └── api.js               # Cliente API
+│   │   └── styles.css    # Estilos personalizados
+│   └── index.html        # SPA entry point
 │
-└── README.md          # Este archivo
-```
-
-## 🚀 Quick Start
-
-### Opción 1: Desarrollo Local (XAMPP)
-
-```powershell
-# 1. Clonar repo
-cd d:\Escritorio\xampp\htdocs
-git clone <repo> spotMap && cd spotMap
-
-# 2. Crear configuración
-Copy-Item backend\.env.example backend\.env
-
-# 3. Ejecutar migraciones
-php backend\migrate.php up
-
-# 4. Abrir en navegador
-Start-Process "http://localhost/https-github.com-antonio-valero-daw2personal/Proyecto/spotMap/frontend/index.html"
-```
-
-### Opción 2: Desarrollo Remoto (PlanetScale)
-
-Ver [`backend/SETUP.md`](./backend/SETUP.md) — Sección "Instalación Remota".
-
-## 📊 Endpoints API
-
-### Spots
-
-| Método | Ruta | Descripción |
-|--------|------|-------------|
-| GET | `/spots` | Listar todos los spots |
-| POST | `/spots` | Crear nuevo spot |
-| GET | `/spots/:id` | Obtener spot por ID |
-| DELETE | `/spots/:id` | Eliminar spot |
-| POST | `/spots/:id/photo` | Subir foto a spot |
-
-### Diagnóstico
-
-| Método | Ruta | Descripción |
-|--------|------|-------------|
-| GET | `/ping-db` | Comprobar conexión BD |
-| GET | `/db-info` | Info de tablas y recuentos |
-| GET | `/api/status` | Estado de salud completo |
-
-## ⚙️ Configuración
+└── docs/                 # Documentación
 
 Edita `backend\.env`:
 
@@ -293,4 +306,4 @@ Recomendaciones:
 
 ---
 
-**Última actualización**: Noviembre 2025
+**Última actualización**: Enero 2026

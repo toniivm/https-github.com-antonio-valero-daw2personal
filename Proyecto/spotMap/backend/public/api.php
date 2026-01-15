@@ -72,7 +72,7 @@ if (isset($_GET['monitoring']) || (isset($_SERVER['PATH_INFO']) && $_SERVER['PAT
 \SpotMap\Config::load();
 
 // 🔍 INICIALIZAR MONITORING AVANZADO
-PerformanceMonitor::getInstance()->start();
+PerformanceMonitor::start();
 ErrorTracker::getInstance(); // Registra automáticamente handlers
 $logger = AdvancedLogger::getInstance();
 
@@ -137,7 +137,7 @@ $sub = $_GET['sub'] ?? null;
 try {
     // 🔍 RUTAS DE MONITOREO
     if ($action === 'monitoring') {
-        PerformanceMonitor::getInstance()->mark('monitoring_start');
+        PerformanceMonitor::mark('monitoring_start');
         
         if ($method === 'GET' && $sub === 'logs') {
             $monitoringController->getLogs();
@@ -162,44 +162,44 @@ try {
 
     // ⭐ GET /spots (listar todos)
     if ($method === 'GET' && $action === 'spots' && !$id) {
-        PerformanceMonitor::getInstance()->mark('spots_list_start');
+        PerformanceMonitor::mark('spots_list_start');
         $controller->index();
-        PerformanceMonitor::getInstance()->mark('spots_list_end');
+        PerformanceMonitor::mark('spots_list_end');
         $logger->info('GET /spots - Success', ['count' => count($_GET)]);
         exit;
     }
 
     // ⭐ POST /spots (crear)
     if ($method === 'POST' && $action === 'spots' && !$id) {
-        PerformanceMonitor::getInstance()->mark('spots_create_start');
+        PerformanceMonitor::mark('spots_create_start');
         $controller->store();
-        PerformanceMonitor::getInstance()->mark('spots_create_end');
+        PerformanceMonitor::mark('spots_create_end');
         exit;
     }
 
     // ⭐ GET /spots?id=1 (obtener uno)
     if ($method === 'GET' && $action === 'spots' && $id) {
-        PerformanceMonitor::getInstance()->mark('spots_show_start');
+        PerformanceMonitor::mark('spots_show_start');
         $controller->show($id);
-        PerformanceMonitor::getInstance()->mark('spots_show_end');
+        PerformanceMonitor::mark('spots_show_end');
         $logger->info("GET /spots/{$id} - Success");
         exit;
     }
 
     // ⭐ DELETE /spots?id=1 (eliminar)
     if ($method === 'DELETE' && $action === 'spots' && $id) {
-        PerformanceMonitor::getInstance()->mark('spots_delete_start');
+        PerformanceMonitor::mark('spots_delete_start');
         $controller->destroy($id);
-        PerformanceMonitor::getInstance()->mark('spots_delete_end');
+        PerformanceMonitor::mark('spots_delete_end');
         $logger->info("DELETE /spots/{$id} - Success");
         exit;
     }
 
     // ⭐ POST /spots?id=1&sub=photo (subir foto)
     if ($method === 'POST' && $action === 'spots' && $id && $sub === 'photo') {
-        PerformanceMonitor::getInstance()->mark('photo_upload_start');
+        PerformanceMonitor::mark('photo_upload_start');
         $controller->uploadPhoto($id);
-        PerformanceMonitor::getInstance()->mark('photo_upload_end');
+        PerformanceMonitor::mark('photo_upload_end');
         $logger->info("POST /spots/{$id}/photo - Success");
         exit;
     }
@@ -229,7 +229,7 @@ try {
     $logger->debug('Exception backtrace', ['trace' => $e->getTraceAsString()]);
     
     // Registrar tiempo total
-    $summary = PerformanceMonitor::getInstance()->getSummary();
+    $summary = PerformanceMonitor::getSummary();
     $logger->info('Request completed with error', $summary);
     
     ApiResponse::serverError('Unexpected error', [

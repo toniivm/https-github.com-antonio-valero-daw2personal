@@ -467,13 +467,6 @@ function renderSpotCardGrid(spot) {
 }
 
 /**
- * Mostrar notificación al usuario
- * @param {string} message - Mensaje a mostrar
- * @param {string} type - Tipo: 'success', 'error', 'warning', 'info'
- */
-// showNotification deprecated -> use showToast from notifications.js
-
-/**
  * Actualizar categorías en el filtro
  * @param {Array} spots - Array de spots
  */

@@ -14,17 +14,31 @@ class Security
      */
     public static function setCORSHeaders($allowedOrigin = null)
     {
-        $origin = $_SERVER['HTTP_ORIGIN'] ?? '*';
-        
+        $origin = $_SERVER['HTTP_ORIGIN'] ?? '';
+        $allowCredentials = false;
+
         // Si se especifica origin, validar
         if ($allowedOrigin) {
-            $origin = ($origin === $allowedOrigin) ? $origin : '';
+            if ($origin !== $allowedOrigin) {
+                header("Access-Control-Allow-Methods: GET, POST, DELETE, OPTIONS, PUT");
+                header("Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With");
+                header("Access-Control-Max-Age: 86400"); // 24 horas
+                return;
+            }
+            $allowCredentials = true;
+        } else {
+            if ($origin !== '') {
+                $allowCredentials = true;
+            }
         }
 
-        header("Access-Control-Allow-Origin: $origin");
+        $allowOrigin = $origin !== '' ? $origin : '*';
+        header("Access-Control-Allow-Origin: $allowOrigin");
         header("Access-Control-Allow-Methods: GET, POST, DELETE, OPTIONS, PUT");
         header("Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With");
-        header("Access-Control-Allow-Credentials: true");
+        if ($allowCredentials && $allowOrigin !== '*') {
+            header("Access-Control-Allow-Credentials: true");
+        }
         header("Access-Control-Max-Age: 86400"); // 24 horas
     }
 
@@ -33,6 +47,9 @@ class Security
      */
     public static function setSecurityHeaders()
     {
+        if (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') {
+            header("Strict-Transport-Security: max-age=31536000; includeSubDomains; preload");
+        }
         // Prevenir clickjacking
         header("X-Frame-Options: DENY");
         
@@ -191,9 +208,8 @@ class Security
      */
     public static function validateNonce($nonce)
     {
-        // TODO: Implementar validación con sesiones
-        // Por ahora es un placeholder
-        return strlen($nonce) === 64;
+        // Validación básica: verificar formato hexadecimal de 64 caracteres
+        return is_string($nonce) && strlen($nonce) === 64 && ctype_xdigit($nonce);
     }
 
     /**
