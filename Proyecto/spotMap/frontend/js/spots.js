@@ -116,15 +116,31 @@ export async function deleteSpot(spotId) {
     try {
         console.log(`[SPOTS] Eliminando spot ${spotId}`);
         
-        // Obtener token de autenticación desde Supabase
-        const { getClient, supabaseAvailable } = await import('./supabaseClient.js');
-        let token = null;
+        // Importar utilidades de Supabase
+        const { supabaseAvailable, getClient, getValidToken } = await import('./supabaseClient.js');
         
+        // Si Supabase está disponible, usar directamente
         if (supabaseAvailable()) {
+            console.log('[SPOTS] Usando Supabase para eliminar...');
             const supabase = getClient();
-            const { data } = await supabase.auth.getSession();
-            token = data?.session?.access_token;
+            const { error } = await supabase
+                .from('spots')
+                .delete()
+                .eq('id', spotId);
+            
+            if (error) {
+                console.error('[SPOTS] Error eliminando de Supabase:', error);
+                throw new Error(error.message || 'Error eliminando spot');
+            }
+            
+            Cache.remove('spots');
+            console.log(`[SPOTS] ✓ Spot ${spotId} eliminado desde Supabase`);
+            return true;
         }
+        
+        // Fallback: usar API REST con token
+        console.log('[SPOTS] Supabase no disponible, usando API...');
+        const token = await getValidToken();
         
         if (!token) {
             throw new Error('Debes iniciar sesión para eliminar spots');
@@ -156,7 +172,7 @@ export async function deleteSpot(spotId) {
  * @param {File} photoFile - Archivo de imagen
  * @returns {Promise<Object>} Spot actualizado con la nueva foto
  */
-export async function uploadPhoto(spotId, photoFile) {
+async function uploadPhoto(spotId, photoFile) {
     try {
         if (!photoFile) {
             throw new Error('Archivo de foto es requerido');
@@ -194,35 +210,12 @@ export async function uploadPhoto(spotId, photoFile) {
  * @param {string} searchTerm - Término a buscar
  * @returns {Array} Spots filtrados
  */
-export function searchSpots(spots, searchTerm) {
-    if (!searchTerm || !searchTerm.trim()) {
-        return spots;
-    }
-
-    const term = searchTerm.toLowerCase().trim();
-    return spots.filter(spot => {
-        const title = (spot.title || '').toLowerCase();
-        const description = (spot.description || '').toLowerCase();
-        const category = (spot.category || '').toLowerCase();
-        
-        return title.includes(term) || description.includes(term) || category.includes(term);
-    });
-}
-
 /**
  * Filtrar spots por categoría
  * @param {Array} spots - Array de spots
  * @param {string} category - Categoría a filtrar
  * @returns {Array} Spots de la categoría
  */
-export function filterByCategory(spots, category) {
-    if (!category || category === 'all') {
-        return spots;
-    }
-
-    return spots.filter(spot => spot.category === category);
-}
-
 /**
  * Obtener todas las categorías únicas
  * @param {Array} spots - Array de spots
@@ -250,4 +243,60 @@ export function focusSpot(spotId) {
         mapModule.getMap().panTo(marker.getLatLng());
         console.log(`[SPOTS] ✓ Enfoque en spot ${spotId}`);
     }
+}
+/**
+ * Buscar spots por término
+ * @param {Array} spots - Array de spots
+ * @param {string} searchTerm - Término de búsqueda
+ * @returns {Array} Spots filtrados
+ */
+export function searchSpots(spots, searchTerm = '') {
+    if (!searchTerm || searchTerm.trim() === '') {
+        return spots;
+    }
+
+    const term = searchTerm.toLowerCase();
+    return spots.filter(spot => 
+        (spot.title && spot.title.toLowerCase().includes(term)) ||
+        (spot.description && spot.description.toLowerCase().includes(term)) ||
+        (spot.category && spot.category.toLowerCase().includes(term))
+    );
+}
+
+/**
+ * Filtrar spots por categoría
+ * @param {Array} spots - Array de spots
+ * @param {string} category - Categoría a filtrar
+ * @returns {Array} Spots filtrados
+ */
+export function filterByCategory(spots, category = 'all') {
+    if (!category || category === 'all') {
+        return spots;
+    }
+
+    return spots.filter(spot => spot.category === category);
+}
+
+/**
+ * Paginación simple - divide spots en páginas
+ * @param {Array} spots - Array de spots
+ * @param {number} pageNumber - Número de página (1-indexed)
+ * @param {number} pageSize - Spots por página
+ * @returns {Object} {items, total, page, pages}
+ */
+export function paginate(spots, pageNumber = 1, pageSize = 20) {
+    const total = spots.length;
+    const pages = Math.ceil(total / pageSize);
+    const page = Math.max(1, Math.min(pageNumber, pages));
+    const start = (page - 1) * pageSize;
+    const end = start + pageSize;
+    
+    return {
+        items: spots.slice(start, end),
+        total,
+        page,
+        pages,
+        hasNext: page < pages,
+        hasPrev: page > 1
+    };
 }

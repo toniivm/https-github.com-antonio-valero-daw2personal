@@ -6,6 +6,9 @@
 import * as spotsModule from './spots.js';
 import * as mapModule from './map.js';
 import { showToast } from './notifications.js';
+import { getFavoriteSpots } from './social.js';
+import { validateImage } from './imageValidator.js';
+import { isAuthenticated, getCurrentUser } from './auth.js';
 
 /**
  * Configurar todos los event listeners de la UI
@@ -17,11 +20,58 @@ export function setupUI() {
     const btnAddSpot = document.getElementById('btn-add-spot');
     if (btnAddSpot) {
         btnAddSpot.addEventListener('click', () => {
+            // Validar autenticación
+            if (!isAuthenticated()) {
+                showToast('Debes iniciar sesión para crear spots', 'warning');
+                return;
+            }
+            
             console.log('[UI] Abriendo modal para añadir spot');
-            const modal = new bootstrap.Modal(document.getElementById('modalAddSpot'));
+            const modalEl = document.getElementById('modalAddSpot');
+            const modal = new bootstrap.Modal(modalEl);
+
+            // Accesibilidad: asegurar que aria-hidden no permanezca activo mientras hay foco dentro
+            modalEl.addEventListener('shown.bs.modal', () => {
+                modalEl.removeAttribute('aria-hidden');
+            });
+            modalEl.addEventListener('hidden.bs.modal', () => {
+                modalEl.setAttribute('aria-hidden', 'true');
+            });
+
             modal.show();
         });
     }
+
+    // Botón favoritos: mostrar solo spots marcados como favoritos
+    const btnFavorites = document.getElementById('btn-favorites');
+    if (btnFavorites) {
+        btnFavorites.addEventListener('click', async () => {
+            const allSpots = await spotsModule.loadSpots();
+            const favIds = getFavoriteSpots();
+            const favoritesOnly = allSpots.filter(s => favIds.includes(s.id));
+            renderSpotList(favoritesOnly);
+            showToast(`Favoritos: ${favoritesOnly.length}`, 'info');
+        });
+    }
+
+    // Evento delegado para clicks en botones de like (corazón)
+    document.addEventListener('click', async (e) => {
+        const likeBtn = e.target.closest('.btn-like');
+        if (!likeBtn) return;
+        
+        e.preventDefault();
+        e.stopPropagation();
+        
+        // Validar autenticación
+        if (!isAuthenticated()) {
+            showToast('Debes iniciar sesión para marcar favoritos', 'warning');
+            return;
+        }
+        
+        const spotId = parseInt(likeBtn.dataset.spotId);
+        const { toggleLike } = await import('./social.js');
+        await toggleLike(spotId, likeBtn);
+    });
 
     // Botón toggle sidebar (móvil)
     const btnToggleSidebar = document.getElementById('btn-toggle-sidebar');
@@ -123,6 +173,17 @@ async function handleAddSpotSubmit(e) {
         const tags = tagsInput ? tagsInput.split(',').map(t => t.trim()).filter(t => t) : [];
         const photoFile = document.getElementById('spot-photo').files[0] || null;
 
+        // Validar imagen si está presente
+        if (photoFile) {
+            const imageValidation = await validateImage(photoFile);
+            if (!imageValidation.valid) {
+                showToast('Error en la foto: ' + imageValidation.error, 'error');
+                btnSubmit.disabled = false;
+                btnSubmit.textContent = originalText;
+                return;
+            }
+        }
+
         // Validar datos
         const validationErrors = validateSpotForm(title, latStr, lngStr);
         
@@ -152,11 +213,18 @@ async function handleAddSpotSubmit(e) {
         // Crear spot (sin pasar headers, dejar que spots.js maneje)
         const newSpot = await spotsModule.createSpot(spotData, photoFile);
 
-        if (newSpot.status === 'pending') {
-            showToast('Spot creado y pendiente de aprobación', 'info');
-        }
-
         console.log('[UI] ✓ Spot creado exitosamente:', newSpot);
+
+        // Mensaje personalizado según estado
+        if (newSpot.status === 'pending') {
+            showToast(
+                '✅ Spot creado correctamente\n\nTu spot está siendo verificado por nuestro equipo y aparecerá públicamente en breve.',
+                'info',
+                { autoCloseMs: 5000 }
+            );
+        } else {
+            showToast('✓ Spot publicado correctamente', 'success');
+        }
 
         // Limpiar formulario
         document.getElementById('form-add-spot').reset();
@@ -174,8 +242,6 @@ async function handleAddSpotSubmit(e) {
         if (newSpot.id) {
             mapModule.getMap().setView([newSpot.lat, newSpot.lng], 12);
         }
-
-        showToast('✓ Spot creado correctamente', 'success');
 
     } catch (error) {
         console.error('[UI] Error creando spot:', error);
@@ -326,7 +392,7 @@ function handleGeolocate() {
     console.log('[UI] Solicitando geolocalización...');
 
     if (!navigator.geolocation) {
-        alert('Geolocalización no soportada en este navegador');
+        showToast('Geolocalización no soportada. Ingresa coordenadas manualmente.', 'warning');
         return;
     }
 
@@ -344,12 +410,13 @@ function handleGeolocate() {
             // Mover mapa a la ubicación
             mapModule.getMap().setView([lat, lng], 14);
 
-            showToast('Ubicación obtenida correctamente', 'success');
+            showToast('✓ Ubicación obtenida', 'success');
         },
         (error) => {
-            console.error('[UI] Error de geolocalización:', error);
-            alert('No se pudo obtener la ubicación: ' + error.message);
-        }
+            console.warn('[UI] Geolocalización rechazada:', error.message);
+            showToast('📍 Ingresa ubicación manualmente', 'info');
+        },
+        { timeout: 5000, enableHighAccuracy: false }
     );
 }
 
@@ -376,6 +443,9 @@ export function renderSpotList(spots) {
         return;
     }
 
+    // Guardar referencia global para features sociales
+    window.currentSpots = spots || [];
+
     // Detectar vista activa
     const isGridView = spotList.classList.contains('spot-grid-view');
     
@@ -399,20 +469,31 @@ function renderSpotCardList(spot) {
     
     const isLiked = window.isSpotLiked ? window.isSpotLiked(spot.id) : false;
     
+    // Verificar si puede borrar
+    const user = getCurrentUser();
+    const isAdmin = user?.role === 'admin' || user?.role === 'moderator';
+    const isOwner = spot.user_id === user?.id;
+    const canDelete = isAuthenticated() && (isAdmin || isOwner);
+    
     return `
         <div class="spot-card" onclick="window.openSpotDetails(${JSON.stringify(spot).replace(/"/g, '&quot;')})">
             ${imageHtml}
             <div class="spot-card-content">
                 <div class="spot-card-actions">
-                    <button class="btn-social btn-like ${isLiked ? 'liked' : ''}" data-spot-id="${spot.id}" title="Me gusta" onclick="event.stopPropagation()">
+                    <button type="button" class="btn-social btn-like ${isLiked ? 'liked' : ''}" data-spot-id="${spot.id}" title="Añadir a favoritos" onclick="event.stopPropagation()">
                         <span class="like-icon">${isLiked ? '❤️' : '🤍'}</span>
                     </button>
-                    <button class="btn-social btn-share" data-spot-id="${spot.id}" title="Compartir" onclick="event.stopPropagation()">
+                    <button type="button" class="btn-social btn-share" data-spot-id="${spot.id}" title="Compartir este lugar" onclick="event.stopPropagation()">
                         <i class="bi bi-share-fill"></i>
                     </button>
-                    <button class="btn-social btn-delete" onclick="event.stopPropagation(); window.deleteSpot(${spot.id})" title="Eliminar">
-                        <i class="bi bi-trash3"></i>
+                    <button type="button" class="btn-social btn-details" data-spot-id="${spot.id}" title="Ver detalles" onclick="event.stopPropagation(); window.openSpotDetails(${JSON.stringify(spot).replace(/"/g, '&quot;')})">
+                        <i class="bi bi-eye-fill"></i>
                     </button>
+                    ${canDelete ? `
+                        <button type="button" class="btn-social btn-delete" onclick="event.stopPropagation(); window.confirmDeleteSpot(${spot.id})" title="Eliminar spot">
+                            <i class="bi bi-trash3"></i>
+                        </button>
+                    ` : ''}
                 </div>
                 <h6 class="spot-card-title">
                     ${escapeHtml(spot.title)}
@@ -420,11 +501,20 @@ function renderSpotCardList(spot) {
                 <p class="spot-card-description">
                     ${escapeHtml(spot.description || 'Sin descripción')}
                 </p>
+                ${spot.status === 'pending' ? `
+                    <div class="alert alert-warning small mb-2" style="padding: 0.5rem 0.75rem; font-size: 0.85rem;">
+                        <strong>⏳ En verificación</strong><br>
+                        Este spot está siendo revisado por nuestro equipo de moderación. Aparecerá públicamente en breve.
+                    </div>
+                ` : ''}
                 <div class="d-flex justify-content-between align-items-center">
                     <small class="spot-card-meta">
                         📍 ${spot.lat.toFixed(3)}, ${spot.lng.toFixed(3)}
                     </small>
-                    ${spot.category ? `<span class="badge">${escapeHtml(spot.category)}</span>` : ''}
+                    <div>
+                        ${spot.status === 'pending' ? '<span class="badge bg-warning text-dark">⏳ Pendiente</span>' : ''}
+                        ${spot.category ? `<span class="badge">${escapeHtml(spot.category)}</span>` : ''}
+                    </div>
                 </div>
             </div>
         </div>
@@ -442,25 +532,39 @@ function renderSpotCardGrid(spot) {
     
     const isLiked = window.isSpotLiked ? window.isSpotLiked(spot.id) : false;
     
+    // Verificar si puede borrar
+    const user = getCurrentUser();
+    const isAdmin = user?.role === 'admin' || user?.role === 'moderator';
+    const isOwner = spot.user_id === user?.id;
+    const canDelete = isAuthenticated() && (isAdmin || isOwner);
+    
     return `
         <div class="spot-card spot-card-grid" onclick="window.openSpotDetails(${JSON.stringify(spot).replace(/"/g, '&quot;')})">
             ${imageHtml}
             <div class="spot-card-content">
                 <div class="spot-card-actions">
-                    <button class="btn-social btn-like ${isLiked ? 'liked' : ''}" data-spot-id="${spot.id}" title="Me gusta" onclick="event.stopPropagation()">
+                    <button type="button" class="btn-social btn-like ${isLiked ? 'liked' : ''}" data-spot-id="${spot.id}" title="Añadir a favoritos" onclick="event.stopPropagation()">
                         <span class="like-icon">${isLiked ? '❤️' : '🤍'}</span>
                     </button>
-                    <button class="btn-social btn-share" data-spot-id="${spot.id}" title="Compartir" onclick="event.stopPropagation()">
+                    <button type="button" class="btn-social btn-share" data-spot-id="${spot.id}" title="Compartir este lugar" onclick="event.stopPropagation()">
                         <i class="bi bi-share-fill"></i>
                     </button>
-                    <button class="btn-social btn-delete" onclick="event.stopPropagation(); window.deleteSpot(${spot.id})" title="Eliminar">
-                        <i class="bi bi-trash3"></i>
+                    <button type="button" class="btn-social btn-details" data-spot-id="${spot.id}" title="Ver detalles" onclick="event.stopPropagation(); window.openSpotDetails(${JSON.stringify(spot).replace(/"/g, '&quot;')})">
+                        <i class="bi bi-eye-fill"></i>
                     </button>
+                    ${canDelete ? `
+                        <button type="button" class="btn-social btn-delete" onclick="event.stopPropagation(); window.confirmDeleteSpot(${spot.id})" title="Eliminar spot">
+                            <i class="bi bi-trash3"></i>
+                        </button>
+                    ` : ''}
                 </div>
                 <h6 class="spot-card-title mb-1">
                     ${escapeHtml(spot.title)}
                 </h6>
-                ${spot.category ? `<span class="badge">${escapeHtml(spot.category)}</span>` : ''}
+                <div class="d-flex gap-1">
+                    ${spot.status === 'pending' ? '<span class="badge bg-warning text-dark">⏳ Pendiente</span>' : ''}
+                    ${spot.category ? `<span class="badge">${escapeHtml(spot.category)}</span>` : ''}
+                </div>
             </div>
         </div>
     `;

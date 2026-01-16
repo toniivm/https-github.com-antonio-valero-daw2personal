@@ -1,28 +1,32 @@
 <?php
+declare(strict_types=1);
 namespace SpotMap;
 
 /**
- * Clase para manejo de seguridad en la API
- * Incluye sanitización, rate limiting, CORS
+ * 🔐 Security Consolidada - Sistema unificado de seguridad
+ * Integra: CORS, CSP, sanitización, rate limiting, CSRF, encryption
+ * Absorbió funcionalidades de SecurityHardening para evitar duplicación
  */
 class Security
 {
     private static ?string $nonce = null;
+    private static array $suspiciousIPs = [];
+    private static array $blockedIPs = [];
+    private static int $maxRequestsPerMinute = 60;
+    
     /**
      * Configurar headers CORS
-     * @param string $allowedOrigin - Origin permitido (ej: http://localhost)
      */
     public static function setCORSHeaders($allowedOrigin = null)
     {
         $origin = $_SERVER['HTTP_ORIGIN'] ?? '';
         $allowCredentials = false;
 
-        // Si se especifica origin, validar
         if ($allowedOrigin) {
             if ($origin !== $allowedOrigin) {
                 header("Access-Control-Allow-Methods: GET, POST, DELETE, OPTIONS, PUT");
                 header("Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With");
-                header("Access-Control-Max-Age: 86400"); // 24 horas
+                header("Access-Control-Max-Age: 86400");
                 return;
             }
             $allowCredentials = true;
@@ -39,54 +43,54 @@ class Security
         if ($allowCredentials && $allowOrigin !== '*') {
             header("Access-Control-Allow-Credentials: true");
         }
-        header("Access-Control-Max-Age: 86400"); // 24 horas
+        header("Access-Control-Max-Age: 86400");
     }
 
     /**
-     * Configurar headers de seguridad
+     * Configurar headers de seguridad completos
      */
     public static function setSecurityHeaders()
     {
         if (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') {
             header("Strict-Transport-Security: max-age=31536000; includeSubDomains; preload");
         }
-        // Prevenir clickjacking
+        
         header("X-Frame-Options: DENY");
-        
-        // Prevenir MIME sniffing
         header("X-Content-Type-Options: nosniff");
-        
-        // Prevenir XSS
         header("X-XSS-Protection: 1; mode=block");
-        
-        // Referrer policy
         header("Referrer-Policy: strict-origin-when-cross-origin");
-        
-        // Feature policy (ahora Permissions-Policy)
         header("Permissions-Policy: geolocation=(self), camera=()");
 
-        // Content Security Policy dinámica basada en Config
-        \SpotMap\Config::load();
+        // CSP dinámica
+        Config::load();
         $nonce = self::getNonce();
         $csp = [
-            'default-src ' . \SpotMap\Config::get('CSP_DEFAULT', "'self'"),
-            'script-src ' . \SpotMap\Config::get('CSP_SCRIPT', "'self'") . " 'nonce-$nonce'",
-            'style-src ' . \SpotMap\Config::get('CSP_STYLE', "'self'"),
-            'img-src ' . \SpotMap\Config::get('CSP_IMG', "'self'"),
-            'font-src ' . \SpotMap\Config::get('CSP_FONT', "'self'"),
-            'connect-src ' . \SpotMap\Config::get('CSP_CONNECT', "'self'"),
-            'object-src ' . \SpotMap\Config::get('CSP_OBJECT', "'none'"),
-            'base-uri ' . \SpotMap\Config::get('CSP_BASE', "'self'"),
-            'frame-ancestors ' . \SpotMap\Config::get('CSP_FRAME_ANCESTORS', "'none'"),
+            'default-src ' . Config::get('CSP_DEFAULT', "'self'"),
+            'script-src ' . Config::get('CSP_SCRIPT', "'self'") . " 'nonce-$nonce'",
+            'style-src ' . Config::get('CSP_STYLE', "'self'"),
+            'img-src ' . Config::get('CSP_IMG', "'self'"),
+            'font-src ' . Config::get('CSP_FONT', "'self'"),
+            'connect-src ' . Config::get('CSP_CONNECT', "'self'"),
+            'object-src ' . Config::get('CSP_OBJECT', "'none'"),
+            'base-uri ' . Config::get('CSP_BASE', "'self'"),
+            'frame-ancestors ' . Config::get('CSP_FRAME_ANCESTORS', "'none'"),
         ];
         header('Content-Security-Policy: ' . implode('; ', $csp));
         header('X-CSP-Nonce: ' . $nonce);
+        header('X-SpotMap-Protected: true');
+    }
+
+    /**
+     * Headers de seguridad avanzados (complementario)
+     */
+    public static function setAdvancedSecurityHeaders(): void
+    {
+        self::setSecurityHeaders();
+        header('X-Copyright: (c) 2025 Antonio Valero. Todos los derechos reservados.');
     }
 
     /**
      * Sanitizar string para prevenir inyección
-     * @param string $input - Input a sanitizar
-     * @return string - String sanitizado
      */
     public static function sanitizeString($input)
     {
@@ -94,13 +98,8 @@ class Security
             return $input;
         }
 
-        // Remover caracteres de control
         $sanitized = preg_replace('/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/u', '', $input);
-        
-        // Trim
         $sanitized = trim($sanitized);
-        
-        // Escape HTML entities
         $sanitized = htmlspecialchars($sanitized, ENT_QUOTES, 'UTF-8');
         
         return $sanitized;
@@ -108,8 +107,6 @@ class Security
 
     /**
      * Sanitizar array recursivamente
-     * @param array $input - Array a sanitizar
-     * @return array - Array sanitizado
      */
     public static function sanitizeArray($input)
     {
@@ -128,20 +125,77 @@ class Security
     }
 
     /**
-     * Verificar rate limiting (simple, basado en IP)
-     * @param int $maxRequests - Máximo de requests permitidos
-     * @param int $timeWindow - Ventana de tiempo en segundos
-     * @return bool - True si está dentro del límite
+     * Sanitización avanzada de inputs (múltiples tipos)
      */
-    public static function checkRateLimit($maxRequests = 100, $timeWindow = 60)
+    public static function sanitizeInput(mixed $input, string $type = 'string'): mixed
     {
-        $ip = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
+        if (is_array($input)) {
+            return array_map(function($item) use ($type) {
+                return self::sanitizeInput($item, $type);
+            }, $input);
+        }
+
+        switch ($type) {
+            case 'string':
+                $input = strip_tags($input);
+                $input = htmlspecialchars($input, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+                break;
+            case 'email':
+                $input = filter_var($input, FILTER_SANITIZE_EMAIL);
+                break;
+            case 'url':
+                $input = filter_var($input, FILTER_SANITIZE_URL);
+                break;
+            case 'int':
+                $input = filter_var($input, FILTER_SANITIZE_NUMBER_INT);
+                break;
+            case 'float':
+                $input = filter_var($input, FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION);
+                break;
+            case 'sql':
+                $input = str_replace(["'", '"', ';', '--', '/*', '*/'], '', $input);
+                break;
+        }
+
+        // Detectar patrones de ataque
+        $dangerousPatterns = [
+            '/<script\b[^>]*>(.*?)<\/script>/is',
+            '/javascript:/i',
+            '/on\w+\s*=/i',
+            '/eval\s*\(/i',
+            '/UNION.*SELECT/i',
+            '/DROP.*TABLE/i',
+            '/INSERT.*INTO/i',
+            '/UPDATE.*SET/i',
+            '/DELETE.*FROM/i',
+        ];
+
+        foreach ($dangerousPatterns as $pattern) {
+            if (preg_match($pattern, $input)) {
+                self::flagSuspiciousIP(self::getClientIP(), 'injection_attempt');
+                throw new \Exception('Input contains potentially malicious content');
+            }
+        }
+
+        return $input;
+    }
+
+    /**
+     * Rate limiting por IP
+     */
+    public static function checkRateLimit($maxRequests = 100, $timeWindow = 60): bool
+    {
+        $ip = self::getClientIP();
+        
+        // Verificar si IP está bloqueada
+        if (self::isIPBlocked($ip)) {
+            return false;
+        }
+
         $cacheKey = "rate_limit_" . md5($ip);
         $cacheFile = sys_get_temp_dir() . '/' . $cacheKey . '.tmp';
-
         $now = time();
 
-        // Leer cache anterior
         $data = [];
         if (file_exists($cacheFile)) {
             $content = file_get_contents($cacheFile);
@@ -160,14 +214,13 @@ class Security
             header("X-RateLimit-Limit: $maxRequests");
             header("X-RateLimit-Remaining: 0");
             header("X-RateLimit-Reset: " . ($now + $timeWindow));
+            self::flagSuspiciousIP($ip, 'rate_limit_exceeded');
             return false;
         }
 
         // Agregar request actual
         $data['requests'][] = $now;
-
-        // Guardar cache
-        file_put_contents($cacheFile, json_encode($data));
+        @file_put_contents($cacheFile, json_encode($data));
 
         // Headers informativos
         header("X-RateLimit-Limit: $maxRequests");
@@ -178,42 +231,54 @@ class Security
     }
 
     /**
-     * Validar que la solicitud es JSON válida
-     * @return bool
+     * Protección CSRF - Generar token
      */
-    public static function isValidJSON()
+    public static function generateCSRFToken(): string
     {
-        $contentType = $_SERVER['CONTENT_TYPE'] ?? '';
-        
-        if (strpos($contentType, 'application/json') === false) {
-            return false;
+        if (session_status() === PHP_SESSION_NONE) {
+            session_start();
         }
 
-        return true;
+        $token = bin2hex(random_bytes(32));
+        $_SESSION['csrf_token'] = $token;
+        $_SESSION['csrf_time'] = time();
+
+        return $token;
     }
 
     /**
-     * Generar nonce para CSRF protection
-     * @return string
+     * Protección CSRF - Validar token
      */
-    public static function generateNonce()
+    public static function validateCSRFToken(string $token): bool
+    {
+        if (session_status() === PHP_SESSION_NONE) {
+            session_start();
+        }
+
+        if (!isset($_SESSION['csrf_token']) || !isset($_SESSION['csrf_time'])) {
+            return false;
+        }
+
+        // Token expira en 1 hora
+        if (time() - $_SESSION['csrf_time'] > 3600) {
+            unset($_SESSION['csrf_token']);
+            unset($_SESSION['csrf_time']);
+            return false;
+        }
+
+        return hash_equals($_SESSION['csrf_token'], $token);
+    }
+
+    /**
+     * Generar nonce para CSP
+     */
+    public static function generateNonce(): string
     {
         return bin2hex(random_bytes(16));
     }
 
     /**
-     * Validar nonce CSRF
-     * @param string $nonce - Nonce a validar
-     * @return bool
-     */
-    public static function validateNonce($nonce)
-    {
-        // Validación básica: verificar formato hexadecimal de 64 caracteres
-        return is_string($nonce) && strlen($nonce) === 64 && ctype_xdigit($nonce);
-    }
-
-    /**
-     * Obtener (o crear) nonce usado en CSP del request actual
+     * Obtener nonce actual (o crear uno)
      */
     public static function getNonce(): string
     {
@@ -224,42 +289,150 @@ class Security
     }
 
     /**
-     * Obtener IP del cliente (considerando proxies)
-     * @return string
+     * Validar nonce
      */
-    public static function getClientIP()
+    public static function validateNonce($nonce): bool
     {
-        $ip = '';
+        return is_string($nonce) && strlen($nonce) === 32 && ctype_xdigit($nonce);
+    }
 
-        if (!empty($_SERVER['HTTP_CLIENT_IP'])) {
-            $ip = $_SERVER['HTTP_CLIENT_IP'];
-        } elseif (!empty($_SERVER['HTTP_X_FORWARDED_FOR'])) {
-            $ips = explode(',', $_SERVER['HTTP_X_FORWARDED_FOR']);
-            $ip = trim($ips[0]);
-        } else {
-            $ip = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
+    /**
+     * Obtener IP real del cliente (detrás de proxies/CDN)
+     */
+    public static function getClientIP(): string
+    {
+        $ipKeys = [
+            'HTTP_CF_CONNECTING_IP', // Cloudflare
+            'HTTP_X_FORWARDED_FOR',
+            'HTTP_X_REAL_IP',
+            'HTTP_CLIENT_IP',
+            'REMOTE_ADDR'
+        ];
+
+        foreach ($ipKeys as $key) {
+            if (isset($_SERVER[$key])) {
+                $ip = $_SERVER[$key];
+                if (strpos($ip, ',') !== false) {
+                    $ips = explode(',', $ip);
+                    $ip = trim($ips[0]);
+                }
+
+                if (filter_var($ip, FILTER_VALIDATE_IP)) {
+                    return $ip;
+                }
+            }
         }
 
-        // Validar que sea IP válida
-        if (filter_var($ip, FILTER_VALIDATE_IP)) {
-            return $ip;
+        return '0.0.0.0';
+    }
+
+    /**
+     * Encriptar datos (AES-256-CBC)
+     */
+    public static function encrypt(string $data, string $key): string
+    {
+        $iv = random_bytes(16);
+        $encrypted = openssl_encrypt(
+            $data,
+            'AES-256-CBC',
+            hash('sha256', $key, true),
+            0,
+            $iv
+        );
+
+        return base64_encode($iv . $encrypted);
+    }
+
+    /**
+     * Desencriptar datos
+     */
+    public static function decrypt(string $data, string $key): string
+    {
+        $data = base64_decode($data);
+        $iv = substr($data, 0, 16);
+        $encrypted = substr($data, 16);
+
+        return openssl_decrypt(
+            $encrypted,
+            'AES-256-CBC',
+            hash('sha256', $key, true),
+            0,
+            $iv
+        );
+    }
+
+    /**
+     * Marcar IP como sospechosa
+     */
+    private static function flagSuspiciousIP(string $ip, string $reason): void
+    {
+        if (!isset(self::$suspiciousIPs[$ip])) {
+            self::$suspiciousIPs[$ip] = [];
         }
 
-        return 'unknown';
+        self::$suspiciousIPs[$ip][] = [
+            'reason' => $reason,
+            'timestamp' => time()
+        ];
+
+        Logger::warning("Actividad sospechosa detectada", [
+            'ip' => $ip,
+            'reason' => $reason,
+            'user_agent' => $_SERVER['HTTP_USER_AGENT'] ?? 'unknown'
+        ]);
+
+        // Bloquear después de 3 infracciones
+        if (count(self::$suspiciousIPs[$ip]) >= 3) {
+            self::blockIP($ip);
+        }
+    }
+
+    /**
+     * Bloquear IP
+     */
+    private static function blockIP(string $ip): void
+    {
+        self::$blockedIPs[] = $ip;
+
+        $blockedFile = __DIR__ . '/../../config/blocked_ips.txt';
+        @mkdir(dirname($blockedFile), 0755, true);
+        @file_put_contents($blockedFile, $ip . PHP_EOL, FILE_APPEND | LOCK_EX);
+
+        Logger::error("IP bloqueada permanentemente", ['ip' => $ip]);
+    }
+
+    /**
+     * Verificar si IP está bloqueada
+     */
+    private static function isIPBlocked(string $ip): bool
+    {
+        $blockedFile = __DIR__ . '/../../config/blocked_ips.txt';
+        if (file_exists($blockedFile)) {
+            $blockedIPs = @file($blockedFile, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES) ?: [];
+            return in_array($ip, $blockedIPs, true);
+        }
+
+        return in_array($ip, self::$blockedIPs, true);
+    }
+
+    /**
+     * Validar JSON válido
+     */
+    public static function isValidJSON(): bool
+    {
+        $contentType = $_SERVER['CONTENT_TYPE'] ?? '';
+        return strpos($contentType, 'application/json') !== false;
     }
 
     /**
      * Registrar acceso (logging simple)
-     * @param string $method - HTTP method (GET, POST, etc)
-     * @param string $endpoint - Endpoint accedido
-     * @param int $statusCode - Status code de respuesta
      */
     public static function logAccess($method, $endpoint, $statusCode)
     {
         $logDir = __DIR__ . '/../../logs';
-        
+
         if (!is_dir($logDir)) {
-            mkdir($logDir, 0755, true);
+            @mkdir($logDir, 0755, true);
         }
 
         $ip = self::getClientIP();
@@ -267,6 +440,25 @@ class Security
         $logFile = $logDir . '/api_' . date('Y-m-d') . '.log';
 
         $logLine = "[$timestamp] $method $endpoint | Status: $statusCode | IP: $ip\n";
-        file_put_contents($logFile, $logLine, FILE_APPEND);
+        @file_put_contents($logFile, $logLine, FILE_APPEND);
+    }
+
+    /**
+     * Validar fingerprint del cliente
+     */
+    public static function validateClientFingerprint(): bool
+    {
+        $fingerprint = $_SERVER['HTTP_X_SPOTMAP_FINGERPRINT'] ?? null;
+
+        if (!$fingerprint) {
+            return false;
+        }
+
+        if (!preg_match('/^[a-z0-9]{8,16}$/', $fingerprint)) {
+            self::flagSuspiciousIP(self::getClientIP(), 'invalid_fingerprint');
+            return false;
+        }
+
+        return true;
     }
 }

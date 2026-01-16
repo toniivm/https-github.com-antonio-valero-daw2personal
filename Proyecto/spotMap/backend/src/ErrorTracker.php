@@ -19,7 +19,7 @@ class ErrorTracker {
     }
 
     private function __construct() {
-        $this->logger = AdvancedLogger::getInstance();
+        $this->logger = Logger::getInstance();
         
         // Register error handler
         set_error_handler([$this, 'handleError']);

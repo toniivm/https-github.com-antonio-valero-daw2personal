@@ -17,7 +17,7 @@ use SpotMap\DatabaseAdapter;
 
 // Cargar configuración
 \SpotMap\Config::load();
-$logger = AdvancedLogger::getInstance();
+$logger = Logger::getInstance();
 
 // Color output
 class Health {
@@ -156,7 +156,7 @@ echo "─" . str_repeat("─", 40) . "\n";
 
 $criticalFiles = [
     'Config' => __DIR__ . '/src/Config.php',
-    'Logger' => __DIR__ . '/src/AdvancedLogger.php',
+    'Logger' => __DIR__ . '/src/Logger.php',
     'API' => __DIR__ . '/public/api.php',
     'Database' => __DIR__ . '/src/Database.php'
 ];

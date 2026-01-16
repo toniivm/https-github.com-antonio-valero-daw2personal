@@ -20,8 +20,6 @@ require __DIR__ . '/../src/DatabaseAdapter.php';
 require __DIR__ . '/../src/ApiResponse.php';
 require __DIR__ . '/../src/Validator.php';
 require __DIR__ . '/../src/Security.php';
-require __DIR__ . '/../src/SecurityHardening.php';
-require __DIR__ . '/../src/AdvancedLogger.php';
 require __DIR__ . '/../src/PerformanceMonitor.php';
 require __DIR__ . '/../src/ErrorTracker.php';
 require __DIR__ . '/../src/Controllers/SpotController.php';
@@ -33,7 +31,7 @@ use SpotMap\ApiResponse;
 use SpotMap\Security;
 use SpotMap\Controllers\SpotController;
 use SpotMap\Controllers\MonitoringController;
-use SpotMap\AdvancedLogger;
+use SpotMap\Logger;
 use SpotMap\PerformanceMonitor;
 use SpotMap\ErrorTracker;
 
@@ -74,7 +72,7 @@ if (isset($_GET['monitoring']) || (isset($_SERVER['PATH_INFO']) && $_SERVER['PAT
 // 🔍 INICIALIZAR MONITORING AVANZADO
 PerformanceMonitor::start();
 ErrorTracker::getInstance(); // Registra automáticamente handlers
-$logger = AdvancedLogger::getInstance();
+$logger = Logger::getInstance();
 
 // Log inicio de petición con detalles completos
 $logger->info('Nueva petición API', [
@@ -86,7 +84,7 @@ $logger->info('Nueva petición API', [
 ]);
 
 // ⚠️ SISTEMA DE SEGURIDAD AVANZADO ACTIVADO
-\SpotMap\SecurityHardening::setAdvancedSecurityHeaders();
+\SpotMap\Security::setAdvancedSecurityHeaders();
 
 // Seguridad: Headers CORS, CSP y otros
 Security::setCORSHeaders(); // Usar * para desarrollo local
@@ -96,7 +94,7 @@ Security::setSecurityHeaders();
 header("Content-Type: application/json");
 
 // Verificar rate limiting
-if (!\SpotMap\SecurityHardening::checkRateLimit()) {
+if (!\SpotMap\Security::checkRateLimit()) {
     ob_clean();
     $logger->warning('Rate limit exceeded', [
         'ip' => $_SERVER['REMOTE_ADDR'] ?? 'unknown',

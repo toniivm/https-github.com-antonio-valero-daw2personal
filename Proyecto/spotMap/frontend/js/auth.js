@@ -4,7 +4,7 @@
  */
 
 import { showToast } from './notifications.js';
-import { initSupabase, getClient, getOrProvisionProfile, supabaseAvailable } from './supabaseClient.js';
+import { getClient, getOrProvisionProfile, supabaseAvailable } from './supabaseClient.js';
 
 let currentUser = null;
 let currentRole = 'guest';
@@ -14,7 +14,6 @@ let currentRole = 'guest';
  */
 export async function initAuth() {
     console.log('[AUTH] Inicializando sistema de autenticación...');
-    await initSupabase();
     const supabase = getClient();
 
     if (supabaseAvailable() && supabase) {
@@ -85,17 +84,67 @@ function setupAuthListeners() {
         registerForm.addEventListener('submit', handleRegister);
     }
 
-    // Logout button
-    const logoutBtn = document.getElementById('btn-logout');
-    if (logoutBtn) {
-        logoutBtn.addEventListener('click', handleLogout);
-    }
+    // Logout button - usar delegación de eventos global
+    document.addEventListener('click', (e) => {
+        const logoutBtn = e.target?.closest('#btn-logout');
+        if (logoutBtn) {
+            console.log('[AUTH] Click en logout button');
+            e.preventDefault();
+            e.stopPropagation();
+            handleLogout(e);
+        }
+    });
 
     // Forgot password
     const forgotPasswordLink = document.getElementById('link-forgot-password');
     if (forgotPasswordLink) {
         forgotPasswordLink.addEventListener('click', handleForgotPassword);
     }
+
+    // Dropdown toggle simple y directo
+    // Usar delegación: detecta clicks en cualquier elemento y maneja el dropdown
+    document.addEventListener('click', (e) => {
+        const dropdownBtn = e.target?.closest('#auth-logged-in .dropdown-toggle');
+        
+        if (dropdownBtn) {
+            console.log('[AUTH] Click en dropdown button');
+            e.preventDefault();
+            e.stopPropagation();
+            
+            const loggedInDiv = document.getElementById('auth-logged-in');
+            const menu = loggedInDiv?.querySelector('.dropdown-menu');
+            
+            console.log('[AUTH] Menu encontrado:', !!menu);
+            
+            if (menu) {
+                menu.classList.toggle('show');
+                console.log('[AUTH] Menu ahora visible:', menu.classList.contains('show'));
+            }
+            return;
+        }
+        
+        // Cerrar dropdown si clickeamos fuera
+        const loggedInDiv = document.getElementById('auth-logged-in');
+        if (loggedInDiv && !loggedInDiv.contains(e.target)) {
+            const menu = loggedInDiv?.querySelector('.dropdown-menu');
+            if (menu) {
+                menu.classList.remove('show');
+            }
+        }
+    });
+
+    // Cerrar dropdown al clickear un item del menu
+    document.addEventListener('click', (e) => {
+        if (e.target?.closest('#auth-logged-in .dropdown-item')) {
+            const loggedInDiv = document.getElementById('auth-logged-in');
+            const menu = loggedInDiv?.querySelector('.dropdown-menu');
+            if (menu) {
+                menu.classList.remove('show');
+            }
+        }
+    });
+
+    console.log('[AUTH] ✓ Auth listeners configurados');
 }
 
 /**
@@ -195,16 +244,26 @@ async function handleRegister(e) {
  */
 async function handleLogout(e) {
     e.preventDefault();
+    console.log('[AUTH] Ejecutando logout...');
 
     try {
+        const supabase = getClient();
+        if (supabase) {
+            console.log('[AUTH] Cerrando sesión en Supabase...');
+            await supabase.auth.signOut();
+            console.log('[AUTH] ✓ Sesión cerrada en Supabase');
+        }
         // Limpiar sesión local
         localStorage.removeItem('spotmap_session');
         sessionStorage.removeItem('spotmap_session');
 
         currentUser = null;
+        console.log('[AUTH] ✓ Datos de sesión limpiados');
+        
         updateUIForLoggedOutUser();
 
         showToast('Sesión cerrada correctamente', 'success');
+        console.log('[AUTH] ✓ Logout completado');
 
     } catch (error) {
         console.error('[AUTH] Error en logout:', error);
@@ -349,8 +408,13 @@ export async function getAccessToken() {
 
 async function loadProfileRole() {
     if (!currentUser) return;
-    const profile = await getOrProvisionProfile(currentUser.id);
-    currentRole = profile?.role || 'user';
+    try {
+        const profile = await getOrProvisionProfile(currentUser.id);
+        currentRole = profile?.role || 'user';
+    } catch (error) {
+        console.warn('[AUTH] Error cargando rol del perfil:', error?.message);
+        currentRole = 'user'; // Default role
+    }
 }
 
 function toggleModerationVisibility() {

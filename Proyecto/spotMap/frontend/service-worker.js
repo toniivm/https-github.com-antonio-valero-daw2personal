@@ -149,8 +149,10 @@ async function trimCache(cacheName, maxItems) {
 self.addEventListener('message', e => {
   if (e.data.action === 'skipWaiting') {
     self.skipWaiting();
+    return;
   }
   if (e.data.action === 'clearCache') {
     caches.keys().then(keys => Promise.all(keys.map(k => caches.delete(k))));
+    return;
   }
 });

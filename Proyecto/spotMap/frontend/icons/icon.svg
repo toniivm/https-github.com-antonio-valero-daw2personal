@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 192" width="192" height="192">
+  <!-- Fondo circular -->
+  <circle cx="96" cy="96" r="96" fill="#0ea5e9"/>
+  
+  <!-- Cámara (círculo exterior) -->
+  <circle cx="96" cy="96" r="70" fill="none" stroke="white" stroke-width="4"/>
+  
+  <!-- Cuerpo de la cámara -->
+  <rect x="50" y="65" width="92" height="62" rx="8" fill="white" opacity="0.2" stroke="white" stroke-width="2"/>
+  
+  <!-- Lente (círculo central) -->
+  <circle cx="96" cy="96" r="24" fill="none" stroke="white" stroke-width="3"/>
+  <circle cx="96" cy="96" r="18" fill="white" opacity="0.3"/>
+  
+  <!-- Punto focal (reflejo) -->
+  <circle cx="88" cy="88" r="6" fill="white"/>
+  
+  <!-- Marcador de ubicación (pequeño) en esquina superior derecha -->
+  <g transform="translate(130, 55)">
+    <path d="M 0,-8 C -4.4,-8 -8,-4.4 -8,0 C -8,3 -4,8 0,12 C 4,-4 8,-5 8,0 C 8,-4.4 4.4,-8 0,-8 Z" fill="#ff3b30" stroke="white" stroke-width="1"/>
+  </g>
+</svg>

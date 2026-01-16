@@ -9,7 +9,7 @@ declare(strict_types=1);
 
 namespace SpotMap\Controllers;
 
-use SpotMap\AdvancedLogger;
+use SpotMap\Logger;
 use SpotMap\ApiResponse;
 
 class MonitoringController {
@@ -17,7 +17,7 @@ class MonitoringController {
     private $apiResponse;
 
     public function __construct() {
-        $this->logger = AdvancedLogger::getInstance();
+        $this->logger = Logger::getInstance();
         $this->apiResponse = new \SpotMap\ApiResponse();
     }
 

@@ -22,16 +22,7 @@
     <!-- Leaflet -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
 
-    <!-- Design System (Variables y estilos base profesionales) -->
-    <link rel="stylesheet" href="css/design-system.css">
-    
-    <!-- Estilos mejorados - UI/UX profesional -->
-    <link rel="stylesheet" href="css/styles-enhanced.css">
-    
-    <!-- Mejoras de controles - Botones y navegación visibles -->
-    <link rel="stylesheet" href="css/controls.css">
-    
-    <!-- Estilos propios (legacy - será deprecado) -->
+    <!-- Estilos consolidados - Un solo archivo CSS optimizado -->
     <link rel="stylesheet" href="css/styles.css">
 
     <!-- Supabase y App Scripts -->
@@ -59,14 +50,14 @@
         
         <!-- User menu (when logged in) -->
         <div id="auth-logged-in" class="dropdown" style="display: none;">
-          <button class="btn btn-sm dropdown-toggle d-flex align-items-center gap-2" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+          <button class="btn btn-sm dropdown-toggle d-flex align-items-center gap-2" type="button" aria-expanded="false">
             <img id="user-avatar" src="https://api.dicebear.com/7.x/avataaars/svg?seed=default" alt="Avatar" class="rounded-circle" style="width: 32px; height: 32px;">
             <span id="user-name">Usuario</span>
           </button>
           <ul class="dropdown-menu dropdown-menu-end">
             <li><a class="dropdown-item" href="#" id="btn-profile">👤 Mi Perfil</a></li>
             <li><a class="dropdown-item" href="#" id="btn-my-spots">📍 Mis Spots</a></li>
-            <li><a class="dropdown-item" href="#" id="btn-favorites">⭐ Favoritos</a></li>
+            <li><a class="dropdown-item" href="#" id="btn-favorites">❤️ Favoritos</a></li>
             <li><hr class="dropdown-divider"></li>
             <li><a class="dropdown-item" href="#" id="btn-settings">⚙️ Configuración</a></li>
             <li><a class="dropdown-item text-danger" href="#" id="btn-logout">🚪 Cerrar Sesión</a></li>
@@ -330,12 +321,12 @@
               
               <div class="mb-3">
                 <label for="login-email" class="form-label">Email</label>
-                <input type="email" class="form-control" id="login-email" required placeholder="tu@email.com">
+                <input type="email" class="form-control" id="login-email" required placeholder="tu@email.com" autocomplete="email">
               </div>
               <div class="mb-3">
                 <label for="login-password" class="form-label">Contraseña</label>
                 <div class="input-group">
-                  <input type="password" class="form-control" id="login-password" required placeholder="••••••••">
+                  <input type="password" class="form-control" id="login-password" required placeholder="••••••••" autocomplete="current-password">
                   <button class="btn btn-outline-secondary" type="button" id="toggle-login-password">
                     <i class="bi bi-eye"></i>
                   </button>
@@ -377,16 +368,16 @@
             <div class="modal-body" style="overflow-y: auto !important; flex: 1; -webkit-overflow-scrolling: touch;">
               <div class="mb-3">
                 <label for="register-name" class="form-label">Nombre completo</label>
-                <input type="text" class="form-control" id="register-name" required placeholder="Tu nombre">
+                <input type="text" class="form-control" id="register-name" required placeholder="Tu nombre" autocomplete="name">
               </div>
               <div class="mb-3">
                 <label for="register-email" class="form-label">Email</label>
-                <input type="email" class="form-control" id="register-email" required placeholder="tu@email.com">
+                <input type="email" class="form-control" id="register-email" required placeholder="tu@email.com" autocomplete="email">
               </div>
               <div class="mb-3">
                 <label for="register-password" class="form-label">Contraseña</label>
                 <div class="input-group">
-                  <input type="password" class="form-control" id="register-password" required placeholder="Mínimo 6 caracteres">
+                  <input type="password" class="form-control" id="register-password" required placeholder="Mínimo 6 caracteres" autocomplete="new-password">
                   <button class="btn btn-outline-secondary" type="button" id="toggle-register-password">
                     <i class="bi bi-eye"></i>
                   </button>
@@ -396,7 +387,7 @@
               <div class="mb-3">
                 <label for="register-password-confirm" class="form-label">Confirmar contraseña</label>
                 <div class="input-group">
-                  <input type="password" class="form-control" id="register-password-confirm" required placeholder="Repite tu contraseña">
+                  <input type="password" class="form-control" id="register-password-confirm" required placeholder="Repite tu contraseña" autocomplete="new-password">
                   <button class="btn btn-outline-secondary" type="button" id="toggle-register-password-confirm">
                     <i class="bi bi-eye"></i>
                   </button>

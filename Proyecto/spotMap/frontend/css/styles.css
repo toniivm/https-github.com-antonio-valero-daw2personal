@@ -125,6 +125,9 @@ html, body {
   padding: var(--spacing-md) var(--spacing-lg) !important;
   transition: all var(--transition-smooth);
   animation: fadeIn 0.5s ease-out;
+  position: sticky;
+  top: 0;
+  z-index: 1200; /* por encima del mapa y overlays */
 }
 
 .navbar-brand {
@@ -183,6 +186,14 @@ html, body {
   overflow: hidden;
   gap: var(--spacing-md);
   padding: var(--spacing-md);
+}
+
+/* Asegurar que menús y overlays queden por encima del mapa */
+.dropdown-menu,
+.offcanvas,
+.modal,
+#moderation-panel {
+  z-index: 1201;
 }
 
 /* Sidebar glassmorphism vibrante */
@@ -381,7 +392,7 @@ html, body {
     flex-direction: column;
     padding: var(--spacing-xs);
     gap: var(--spacing-xs);
-    height: calc(100vh - 56px);
+    height: calc(100vh - 56px); /* navbar móvil */
   }
 
   .sidebar {
@@ -413,8 +424,8 @@ html, body {
   }
 
   #map {
-    height: 55vh;
-    min-height: 350px;
+    height: 60vh; /* más espacio al mapa en tablet */
+    min-height: 360px;
     border-radius: var(--radius-md);
   }
 
@@ -439,8 +450,8 @@ html, body {
 
   #map {
     border-radius: 0;
-    height: 50vh;
-    min-height: 300px;
+    height: 58vh; /* experiencia móvil optimizada */
+    min-height: 340px;
   }
 
   .sidebar {
@@ -459,6 +470,16 @@ html, body {
 
   .navbar-brand {
     font-size: 1.1rem;
+  }
+}
+
+/* Soporte para notch/safe-area en móviles iOS/Android */
+@supports (padding: env(safe-area-inset-top)) {
+  .navbar {
+    padding-top: calc(var(--spacing-md) + env(safe-area-inset-top));
+  }
+  .main-layout {
+    height: calc(100vh - 64px - env(safe-area-inset-top));
   }
 }
 
@@ -579,11 +600,15 @@ html, body {
   top: var(--spacing-sm);
   right: var(--spacing-sm);
   opacity: 0;
-  transition: opacity var(--transition-fast);
+  transform: scale(0.8) translateY(-4px);
+  transition: all var(--transition-smooth) cubic-bezier(0.34, 1.56, 0.64, 1);
+  pointer-events: none;
 }
 
 .spot-card:hover .spot-card-actions {
   opacity: 1;
+  transform: scale(1) translateY(0);
+  pointer-events: auto;
 }
 
 .spot-card h6,
@@ -1134,6 +1159,15 @@ hr {
   box-shadow: var(--shadow-xl);
   min-width: 220px;
   animation: fadeIn 0.2s ease-out;
+  display: none; /* oculto por defecto */
+  position: absolute;
+  top: 100%;
+  right: 0;
+  z-index: 1201;
+}
+
+.dropdown-menu.show {
+  display: block; /* mostrar cuando tiene clase show */
 }
 
 .dropdown-item {
@@ -1356,16 +1390,16 @@ hr {
   box-shadow: var(--shadow-md), var(--shadow-glow-pink);
 }
 
-.btn-social.btn-like.liked {
-  background: var(--gradient-secondary);
-  border-color: var(--color-secondary);
-  animation: pulse 1s;
-}
-
 .btn-social.btn-share:hover {
   background: var(--gradient-accent);
   border-color: var(--color-accent);
   box-shadow: var(--shadow-md), var(--shadow-glow-cyan);
+}
+
+.btn-social.btn-details:hover {
+  background: var(--gradient-primary);
+  border-color: var(--color-primary);
+  box-shadow: var(--shadow-md), var(--shadow-glow);
 }
 
 .btn-social.btn-delete:hover {
@@ -1377,10 +1411,104 @@ hr {
 .like-icon {
   font-size: 1.2rem;
   transition: transform var(--transition-bounce);
+  display: inline-block;
 }
 
 .btn-like:active .like-icon {
   transform: scale(1.3);
+}
+
+/* Cambio instantáneo de color cuando está liked */
+.btn-social.btn-like.liked .like-icon {
+  filter: brightness(1.2) drop-shadow(0 0 4px rgba(236, 72, 153, 0.6));
+}
+
+/* ===== ANIMACIONES DE LIKE/FAVORITO ===== */
+
+/* Animación de pulso al clickear el botón like */
+@keyframes likeButtonPulse {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.15);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+/* Animación de corazón rebotando */
+@keyframes likeHeartBounce {
+  0%, 100% {
+    transform: scale(1) translateY(0);
+  }
+  25% {
+    transform: scale(1.1) translateY(-4px);
+  }
+  50% {
+    transform: scale(1.15) translateY(-8px);
+  }
+  75% {
+    transform: scale(1.1) translateY(-4px);
+  }
+}
+
+/* Animación de glow en el botón */
+@keyframes likeGlow {
+  0% {
+    box-shadow: 0 0 0 0 rgba(236, 72, 153, 0.7);
+  }
+  70% {
+    box-shadow: 0 0 0 10px rgba(236, 72, 153, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(236, 72, 153, 0);
+  }
+}
+
+/* Animación de latido suave */
+@keyframes likeHeartbeat {
+  0%, 100% {
+    transform: scale(1);
+  }
+  14% {
+    transform: scale(1.08);
+  }
+  28% {
+    transform: scale(1);
+  }
+  42% {
+    transform: scale(1.08);
+  }
+  56% {
+    transform: scale(1);
+  }
+}
+
+/* Aplicar animación al botón when clicked y marked as liked */
+.btn-social.btn-like {
+  position: relative;
+  overflow: visible;
+}
+
+/* Animación del icono cuando se marca like */
+.btn-social.btn-like.liked .like-icon {
+  animation: likeHeartBounce 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+  filter: brightness(1.2) drop-shadow(0 0 4px rgba(236, 72, 153, 0.6)) !important;
+}
+
+/* Animación del botón cuando se marca like */
+.btn-social.btn-like.liked {
+  animation: likeButtonPulse 0.4s ease-out, likeGlow 0.6s ease-out;
+  background: var(--gradient-secondary) !important;
+  border-color: var(--color-secondary) !important;
+  box-shadow: 0 0 12px rgba(236, 72, 153, 0.5) !important;
+}
+
+/* Latido suave en hover sin estar liked */
+.btn-social.btn-like:hover:not(.liked) .like-icon {
+  animation: likeHeartbeat 1s ease-in-out infinite;
 }
 
 /* ========================================

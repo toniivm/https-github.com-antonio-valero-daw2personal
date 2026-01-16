@@ -27,6 +27,8 @@ export function getClient() {
   return supabase;
 }
 
+export { supabase };
+
 export function supabaseAvailable() {
   return isReady && supabase !== null;
 }
@@ -39,31 +41,36 @@ export async function getSession() {
 
 export async function getOrProvisionProfile(userId) {
   if (!supabaseAvailable()) return null;
-  // Buscar perfil
-  const { data: existing, error: selErr } = await supabase
-    .from('profiles')
-    .select('role')
-    .eq('user_id', userId)
-    .single();
+  try {
+    // Buscar perfil
+    const { data: existing, error: selErr } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('user_id', userId)
+      .single();
 
-  if (selErr && selErr.code !== 'PGRST116') { // 116 = not found single
-    console.error('[Supabase] Error seleccionando perfil', selErr);
-    return null;
+    if (selErr && selErr.code !== 'PGRST116') { // 116 = not found single
+      console.warn('[Supabase] Perfil no encontrado, usando rol por defecto', selErr?.message);
+      return { role: 'user' };
+    }
+    if (existing) return existing;
+
+    // Crear perfil por defecto
+    const { data: inserted, error: insErr } = await supabase
+      .from('profiles')
+      .insert({ user_id: userId, role: 'user' })
+      .select('role')
+      .single();
+
+    if (insErr) {
+      console.warn('[Supabase] Error creando perfil, usando rol por defecto', insErr?.message);
+      return { role: 'user' };
+    }
+    return inserted;
+  } catch (error) {
+    console.warn('[Supabase] Error en getOrProvisionProfile:', error?.message);
+    return { role: 'user' };
   }
-  if (existing) return existing;
-
-  // Crear perfil por defecto
-  const { data: inserted, error: insErr } = await supabase
-    .from('profiles')
-    .insert({ user_id: userId, role: 'user' })
-    .select('role')
-    .single();
-
-  if (insErr) {
-    console.error('[Supabase] Error creando perfil', insErr);
-    return null;
-  }
-  return inserted;
 }
 
 export async function listPendingSpots() {
@@ -108,19 +115,53 @@ export async function rejectSpot(id) {
 
 export async function fetchApprovedSpots({ limit = 50, offset = 0 } = {}) {
   if (!supabaseAvailable()) return null;
-  // NOTA: Columna 'status' NO existe por defecto
-  // Ejecuta SUPABASE_SPOTS_STATUS.sql si quieres moderación
-  const { data, error, count } = await supabase
-    .from('spots')
-    .select('*', { count: 'exact' })
-    // .eq('status', 'approved') // DESACTIVADO - columna no existe
-    .range(offset, offset + limit - 1)
-    .order('created_at', { ascending: false });
-  if (error) {
-    console.error('[Supabase] Error fetchApprovedSpots', error);
+  
+  try {
+    const session = await getSession();
+    const userId = session?.user?.id;
+    
+    // 1. Traer todos los spots approved (públicos)
+    const { data: approved, error: err1, count } = await supabase
+      .from('spots')
+      .select('*', { count: 'exact' })
+      .eq('status', 'approved')
+      .range(offset, offset + limit - 1)
+      .order('created_at', { ascending: false });
+    
+    if (err1) {
+      console.error('[Supabase] Error fetchApprovedSpots', err1);
+      return null;
+    }
+    
+    // 2. Si hay usuario logueado, también traer sus spots pending
+    let userPending = [];
+    if (userId) {
+      const { data: pending, error: err2 } = await supabase
+        .from('spots')
+        .select('*')
+        .eq('user_id', userId)
+        .eq('status', 'pending')
+        .order('created_at', { ascending: false });
+      
+      if (!err2 && pending) {
+        userPending = pending;
+      }
+    }
+    
+    // 3. Combinar: approved + pending del usuario
+    const combined = [...userPending, ...approved];
+    
+    console.log('[Supabase] Spots loaded:', {
+      approved: approved?.length,
+      userPending: userPending.length,
+      total: combined.length
+    });
+    
+    return { spots: combined, total: count };
+  } catch (error) {
+    console.error('[Supabase] Error en fetchApprovedSpots:', error);
     return null;
   }
-  return { spots: data, total: count };
 }
 
 export async function createSpot(spot) {
@@ -178,5 +219,47 @@ export function subscribeToSpots(callback) {
 export function unsubscribe(channel) {
   if (channel) {
     supabase.removeChannel(channel);
+  }
+}
+
+/**
+ * Obtener token de autenticación con auto-refresh
+ * Intenta obtener el token actual y si no es válido, lo refresca
+ * @returns {Promise<string|null>} Token o null si no hay sesión
+ */
+export async function getValidToken() {
+  if (!supabaseAvailable()) return null;
+  
+  try {
+    const { data, error } = await supabase.auth.getSession();
+    if (error) {
+      console.warn('[Supabase] Error obteniendo sesión:', error);
+      return null;
+    }
+    
+    let token = data?.session?.access_token;
+    
+    // Si hay token, retornarlo
+    if (token) {
+      return token;
+    }
+    
+    // Si no hay token pero hay refresh token, intentar refrescar
+    if (data?.session?.refresh_token) {
+      console.log('[Supabase] Token expirado, refrescando...');
+      const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession();
+      
+      if (refreshError) {
+        console.error('[Supabase] Error refrescando token:', refreshError);
+        return null;
+      }
+      
+      return refreshData?.session?.access_token || null;
+    }
+    
+    return null;
+  } catch (error) {
+    console.error('[Supabase] Error en getValidToken:', error);
+    return null;
   }
 }

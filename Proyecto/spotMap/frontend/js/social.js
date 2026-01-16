@@ -23,109 +23,186 @@ export function initSocial() {
  */
 function setupSocialListeners() {
     // Los listeners se añaden dinámicamente a cada card
+    // Usar capturing phase (true) para capturar eventos antes de stopPropagation
     document.addEventListener('click', (e) => {
+        const likeBtn = e.target.closest('.btn-like');
+        
         // Like button
-        if (e.target.closest('.btn-like')) {
+        if (likeBtn) {
+            console.log('[SOCIAL] ✓ Click detectado en .btn-like', likeBtn);
             e.stopPropagation();
-            const btn = e.target.closest('.btn-like');
-            const spotId = parseInt(btn.dataset.spotId);
-            toggleLike(spotId, btn);
+            e.preventDefault();
+            const spotId = parseInt(likeBtn.dataset.spotId);
+            console.log(`[SOCIAL] Toggling like para spotId: ${spotId}`);
+            toggleLike(spotId, likeBtn);
+            return;
         }
 
         // Share button
-        if (e.target.closest('.btn-share')) {
+        const shareBtn = e.target.closest('.btn-share');
+        if (shareBtn) {
+            console.log('[SOCIAL] ✓ Click detectado en .btn-share');
             e.stopPropagation();
-            const btn = e.target.closest('.btn-share');
-            const spotId = parseInt(btn.dataset.spotId);
+            e.preventDefault();
+            const spotId = parseInt(shareBtn.dataset.spotId);
             openShareModal(spotId);
+            return;
         }
-    });
+    }, true); // true = usar capturing phase
+    
+    console.log('[SOCIAL] ✓ Event listeners configurados');
 }
 
 /**
  * Toggle like en un spot
  */
-export function toggleLike(spotId, buttonElement) {
+export async function toggleLike(spotId, buttonElement) {
+    console.log(`[SOCIAL] toggleLike llamado: spotId=${spotId}, isAuthenticated=${isAuthenticated()}`);
+    
     if (!isAuthenticated()) {
+        console.warn('[SOCIAL] Usuario no autenticado');
         showToast('Debes iniciar sesión para dar like', 'warning');
         return;
     }
 
-    const favorites = getFavorites();
-    const index = favorites.indexOf(spotId);
-    
-    if (index > -1) {
-        // Ya está en favoritos, quitarlo
-        favorites.splice(index, 1);
-        updateLikeButton(buttonElement, false);
-        showToast('Eliminado de favoritos', 'info', { autoCloseMs: 1500 });
-    } else {
-        // Añadir a favoritos
-        favorites.push(spotId);
-        updateLikeButton(buttonElement, true);
-        showToast('Añadido a favoritos ⭐', 'success', { autoCloseMs: 1500 });
+    const user = getCurrentUser();
+    console.log(`[SOCIAL] Usuario actual:`, user);
+    if (!user || !user.id) {
+        console.error('[SOCIAL] Error: usuario no identificado');
+        showToast('Error: usuario no identificado', 'error');
+        return;
     }
 
-    saveFavorites(favorites);
-    updateFavoritesCount();
+    try {
+        const { addFavorite, removeFavorite } = await import('./supabaseSpots.js');
+        const isCurrentlyLiked = isSpotLiked(spotId);
+        console.log(`[SOCIAL] isCurrentlyLiked=${isCurrentlyLiked}`);
+        
+        if (isCurrentlyLiked) {
+            // Remover de favoritos
+            console.log('[SOCIAL] Removiendo de favoritos...');
+            const success = await removeFavorite(user.id, spotId);
+            if (success) {
+                const index = favoritesCache.indexOf(spotId);
+                if (index > -1) favoritesCache.splice(index, 1);
+                updateLikeButton(buttonElement, false);
+                showToast('Eliminado de favoritos', 'info', { autoCloseMs: 1500 });
+            } else {
+                console.error('[SOCIAL] removeFavorite falló');
+            }
+        } else {
+            // Añadir a favoritos
+            console.log('[SOCIAL] Añadiendo a favoritos...');
+            const success = await addFavorite(user.id, spotId);
+            if (success) {
+                if (!favoritesCache.includes(spotId)) {
+                    favoritesCache.push(spotId);
+                }
+                updateLikeButton(buttonElement, true);
+                showToast('Añadido a favoritos ⭐', 'success', { autoCloseMs: 1500 });
+            } else {
+                console.error('[SOCIAL] addFavorite falló');
+            }
+        }
+    } catch (error) {
+        console.error('[SOCIAL] Error toggling like:', error);
+        showToast('Error al guardar favorito', 'error');
+    }
 }
 
 /**
  * Actualizar botón de like
  */
 function updateLikeButton(button, isLiked) {
-    if (!button) return;
+    if (!button) {
+        console.warn('[SOCIAL] updateLikeButton: button is null');
+        return;
+    }
 
     const icon = button.querySelector('.like-icon');
-    if (icon) {
-        icon.textContent = isLiked ? '❤️' : '🤍';
+    if (!icon) {
+        console.warn('[SOCIAL] updateLikeButton: like-icon not found');
+        return;
     }
-    button.classList.toggle('liked', isLiked);
+    
+    // Log para debug
+    console.log(`[SOCIAL] Updating like button: isLiked=${isLiked}, currentClass=${button.className}`);
+    
+    // Actualizar el emoji
+    icon.textContent = isLiked ? '❤️' : '🤍';
+    
+    // Remover la clase liked primero
+    button.classList.remove('liked');
+    
+    // Forzar reflow para resetear la animación
+    void button.offsetWidth;
+    
+    // Agregar la clase liked para disparar la animación
+    if (isLiked) {
+        button.classList.add('liked');
+        console.log('[SOCIAL] ✓ Added liked class, animation should play');
+    } else {
+        console.log('[SOCIAL] ✓ Removed liked class');
+    }
 }
 
+// Cache global de favoritos para esta sesión
+let favoritesCache = [];
+let favoritesCacheReady = false;
+
 /**
- * Verificar si un spot está en favoritos
+ * Verificar si un spot está en favoritos (sync desde cache)
  */
 export function isSpotLiked(spotId) {
-    const favorites = getFavorites();
-    return favorites.includes(spotId);
+    return favoritesCache.includes(spotId);
 }
 
 /**
- * Obtener favoritos del localStorage
+ * Obtener spots favoritos (desde cache)
  */
-function getFavorites() {
+export function getFavoriteSpots() {
+    return [...favoritesCache];
+}
+
+/**
+ * Cargar favoritos del usuario desde Supabase
+ */
+export async function loadUserFavorites() {
     const user = getCurrentUser();
-    const key = user ? `${FAVORITES_KEY}_${user.id}` : FAVORITES_KEY;
+    if (!user || !user.id) {
+        console.log('[SOCIAL] No hay usuario logueado, favoritos vacíos');
+        favoritesCache = [];
+        favoritesCacheReady = true;
+        return [];
+    }
     
     try {
-        const stored = localStorage.getItem(key);
-        return stored ? JSON.parse(stored) : [];
+        // Importar dinámicamente para evitar circular deps
+        const { getFavoriteSpotIds } = await import('./supabaseSpots.js');
+        favoritesCache = await getFavoriteSpotIds(user.id);
+        favoritesCacheReady = true;
+        console.log('[SOCIAL] ✓ Favoritos cargados:', favoritesCache);
+        return favoritesCache;
     } catch (error) {
-        console.error('[SOCIAL] Error obteniendo favoritos:', error);
+        console.error('[SOCIAL] Error cargando favoritos:', error);
+        favoritesCacheReady = true;
         return [];
     }
 }
 
 /**
- * Guardar favoritos en localStorage
+ * Esperar a que los favoritos estén listos
  */
-function saveFavorites(favorites) {
-    const user = getCurrentUser();
-    const key = user ? `${FAVORITES_KEY}_${user.id}` : FAVORITES_KEY;
-    
-    try {
-        localStorage.setItem(key, JSON.stringify(favorites));
-    } catch (error) {
-        console.error('[SOCIAL] Error guardando favoritos:', error);
+export async function waitForFavorites() {
+    if (favoritesCacheReady) return favoritesCache;
+    // Esperar máximo 5 segundos
+    const maxWait = 50;
+    let waited = 0;
+    while (!favoritesCacheReady && waited < maxWait) {
+        await new Promise(r => setTimeout(r, 100));
+        waited++;
     }
-}
-
-/**
- * Obtener spots favoritos
- */
-export function getFavoriteSpots() {
-    return getFavorites();
+    return favoritesCache;
 }
 
 /**

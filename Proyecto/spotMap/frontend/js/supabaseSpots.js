@@ -28,9 +28,9 @@ export async function reject(id) {
 
 export async function createSpotRecord(data, photoFile = null) {
   if (supabaseAvailable()) {
-    // Crear spot sin 'status' (columna no existe por defecto en Supabase)
-    // Si quieres moderación, ejecuta SUPABASE_SPOTS_STATUS.sql
-    const base = { ...data };
+    // Crear spot con status='pending' (moderación)
+    // Si quieres que se publiquen automáticamente, usa status='approved'
+    const base = { ...data, status: 'pending' };
     const created = await sbCreateSpot(base);
     if (!created) return null;
     if (photoFile) {
@@ -41,4 +41,98 @@ export async function createSpotRecord(data, photoFile = null) {
   }
   const res = await apiFetch('/spots', { method: 'POST', body: data });
   return res?.data || null;
+}
+
+/**
+ * FAVORITOS - Guardar en Supabase para sincronización en tiempo real
+ */
+
+export async function addFavorite(userId, spotId) {
+  if (!supabaseAvailable()) return false;
+  try {
+    const { getClient } = await import('./supabaseClient.js');
+    const client = getClient();
+    const { error } = await client
+      .from('user_favorites')
+      .insert({ user_id: userId, spot_id: spotId });
+    
+    if (error) {
+      console.warn('[SPOTS] Error agregando favorito:', error);
+      return false;
+    }
+    console.log('[SPOTS] ✓ Favorito agregado:', spotId);
+    return true;
+  } catch (err) {
+    console.error('[SPOTS] Error en addFavorite:', err);
+    return false;
+  }
+}
+
+export async function removeFavorite(userId, spotId) {
+  if (!supabaseAvailable()) return false;
+  try {
+    const { getClient } = await import('./supabaseClient.js');
+    const client = getClient();
+    const { error } = await client
+      .from('user_favorites')
+      .delete()
+      .eq('user_id', userId)
+      .eq('spot_id', spotId);
+    
+    if (error) {
+      console.warn('[SPOTS] Error removiendo favorito:', error);
+      return false;
+    }
+    console.log('[SPOTS] ✓ Favorito removido:', spotId);
+    return true;
+  } catch (err) {
+    console.error('[SPOTS] Error en removeFavorite:', err);
+    return false;
+  }
+}
+
+export async function getFavoriteSpotIds(userId) {
+  if (!supabaseAvailable()) return [];
+  try {
+    const { getClient } = await import('./supabaseClient.js');
+    const client = getClient();
+    const { data, error } = await client
+      .from('user_favorites')
+      .select('spot_id')
+      .eq('user_id', userId);
+    
+    if (error) {
+      console.warn('[SPOTS] Error obteniendo favoritos:', error);
+      return [];
+    }
+    const ids = data?.map(fav => fav.spot_id) || [];
+    console.log('[SPOTS] ✓ Favoritos cargados:', ids.length);
+    return ids;
+  } catch (err) {
+    console.error('[SPOTS] Error en getFavoriteSpotIds:', err);
+    return [];
+  }
+}
+
+export async function subscribeFavorites(userId, callback) {
+  if (!supabaseAvailable()) return null;
+  try {
+    const { getClient } = await import('./supabaseClient.js');
+    const client = getClient();
+    
+    const subscription = client
+      .from('user_favorites')
+      .on('*', (payload) => {
+        if (payload.new?.user_id === userId || payload.old?.user_id === userId) {
+          console.log('[SPOTS] Cambio en favoritos detectado');
+          callback(payload);
+        }
+      })
+      .subscribe();
+    
+    return subscription;
+  } catch (err) {
+    console.error('[SPOTS] Error en subscribeFavorites:', err);
+    return null;
+  }
 }

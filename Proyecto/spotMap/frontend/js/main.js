@@ -7,7 +7,7 @@ import { initMap } from './map.js';
 import { loadSpots, displaySpots, focusSpot } from './spots.js';
 import { getPending, approve, reject } from './supabaseSpots.js';
 import { getCurrentRole } from './auth.js';
-import { subscribeToSpots, supabaseAvailable } from './supabaseClient.js';
+import { subscribeToSpots, supabaseAvailable, initSupabase } from './supabaseClient.js';
 import * as mapModule from './map.js';
 import { setupUI, renderSpotList, updateCategoryFilter, enableAutoGeolocate, showSpotListLoading } from './ui.js';
 import { showToast } from './notifications.js';
@@ -26,6 +26,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     console.log('[MAIN] Inicializando aplicación SpotMap...');
 
     try {
+        // 0. Inicializar Supabase (si está configurado, si no usa API fallback)
+        await initSupabase();
+
         // 0. Inicializar internacionalización
         initI18n();
 
@@ -60,9 +63,16 @@ document.addEventListener('DOMContentLoaded', async () => {
         // 3. Configurar interfaz de usuario
         setupUI();
 
+        // 3.5 Cargar favoritos del usuario logueado
+        const { loadUserFavorites } = await import('./social.js');
+        await loadUserFavorites();
+
         // 4. Mostrar skeleton y cargar spots
         showSpotListLoading();
         const spots = await loadSpots();
+        
+        // Re-renderizar spots ahora que tenemos favoritos cargados
+        displaySpots(spots, renderSpotList);
         
         if (spots.length === 0) {
             console.warn('[MAIN] No hay spots en la base de datos');
@@ -133,6 +143,30 @@ window.openSpotDetails = openSpotDetailsModal;
 
 // Función segura para eliminar spot con confirmación
 window.confirmDeleteSpot = async (spotId) => {
+    // Validar que esté logueado
+    const { isAuthenticated, getCurrentUser } = await import('./auth.js');
+    if (!isAuthenticated()) {
+        showToast('Debes iniciar sesión para eliminar spots', 'warning');
+        return;
+    }
+
+    // Buscar el spot actual
+    const spot = window.currentSpots?.find(s => s.id === spotId);
+    if (!spot) {
+        showToast('Spot no encontrado', 'error');
+        return;
+    }
+
+    // Validar propiedad: solo el propietario o admin puede borrar
+    const user = getCurrentUser();
+    const isAdmin = user?.role === 'admin' || user?.role === 'moderator';
+    const isOwner = spot.user_id === user?.id;
+
+    if (!isAdmin && !isOwner) {
+        showToast('Solo el propietario del spot puede eliminarlo', 'warning');
+        return;
+    }
+
     if (!confirm('¿Estás seguro de eliminar este spot? Esta acción no se puede deshacer.')) {
         return;
     }
@@ -150,6 +184,18 @@ window.confirmDeleteSpot = async (spotId) => {
         console.error('[DELETE] Error eliminando spot:', error);
         showToast('Error al eliminar spot: ' + (error.message || 'Error desconocido'), 'error');
     }
+};
+
+// Helper para verificar si un usuario puede borrar un spot
+window.canDeleteSpot = (spotId) => {
+    const { isAuthenticated, getCurrentUser } = require('./auth.js');
+    if (!isAuthenticated()) return false;
+    const spot = window.currentSpots?.find(s => s.id === spotId);
+    if (!spot) return false;
+    const user = getCurrentUser();
+    const isAdmin = user?.role === 'admin' || user?.role === 'moderator';
+    const isOwner = spot.user_id === user?.id;
+    return isAdmin || isOwner;
 };
 
 // Offline / Online feedback

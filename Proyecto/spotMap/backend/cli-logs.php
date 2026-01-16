@@ -7,9 +7,9 @@
 declare(strict_types=1);
 
 require __DIR__ . '/src/Config.php';
-require __DIR__ . '/src/AdvancedLogger.php';
+require __DIR__ . '/src/Logger.php';
 
-use SpotMap\AdvancedLogger;
+use SpotMap\Logger;
 
 // Colores para terminal
 class ConsoleColors {
@@ -35,7 +35,7 @@ $value = $argv[3] ?? null;
 
 // Cargar configuración
 \SpotMap\Config::load();
-$logger = AdvancedLogger::getInstance();
+$logger = Logger::getInstance();
 
 echo ConsoleColors::color("╔════════════════════════════════════════════════╗\n", ConsoleColors::CYAN);
 echo ConsoleColors::color("║      SpotMap - Herramienta CLI de Logs        ║\n", ConsoleColors::CYAN);
