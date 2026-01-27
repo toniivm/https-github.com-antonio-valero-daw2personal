@@ -6,8 +6,8 @@
 import { initMap } from './map.js';
 import { loadSpots, displaySpots, focusSpot } from './spots.js';
 import { getPending, approve, reject } from './supabaseSpots.js';
-import { getCurrentRole } from './auth.js';
-import { subscribeToSpots, supabaseAvailable, initSupabase } from './supabaseClient.js';
+import { getCurrentRole, getAccessToken } from './auth.js';
+import { subscribeToSpots, supabaseAvailable, initSupabase, getClient as getSupabaseClient } from './supabaseClient.js';
 import * as mapModule from './map.js';
 import { setupUI, renderSpotList, updateCategoryFilter, enableAutoGeolocate, showSpotListLoading } from './ui.js';
 import { showToast } from './notifications.js';
@@ -17,7 +17,9 @@ import { openSpotDetailsModal } from './comments.js';
 import { initI18n, t } from './i18n.js';
 import { initTheme } from './theme.js';
 import { initOAuthButtons, handleOAuthCallback } from './oauth.js';
-import { Config } from './config.js';
+import { Config, buildApiUrl } from './config.js';
+import { initMapPicker, initImagePreviews } from './spotMapPicker.js';
+import { initMapPickerModal } from './mapPickerModal.js';
 
 /**
  * Inicializar aplicación cuando el DOM esté listo
@@ -44,6 +46,13 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         // 0.4 Inicializar sistema social
         initSocial();
+
+        // 0.6 Inicializar selector de ubicación en mapa y previsualizaciones de imágenes
+        initMapPicker();
+        initImagePreviews();
+        
+        // 0.7 Inicializar modal de selección de ubicación
+        initMapPickerModal();
 
         // 0.5 Registrar Service Worker (PWA) - DESACTIVADO (causa reloads múltiples)
         // if ('serviceWorker' in navigator) {
@@ -140,52 +149,9 @@ window.openShareModal = openShareModal;
 
 // Exponer función de detalles/comentarios globalmente
 window.openSpotDetails = openSpotDetailsModal;
+window.openSpotDetailsModal = openSpotDetailsModal;
 
 // Función segura para eliminar spot con confirmación
-window.confirmDeleteSpot = async (spotId) => {
-    // Validar que esté logueado
-    const { isAuthenticated, getCurrentUser } = await import('./auth.js');
-    if (!isAuthenticated()) {
-        showToast('Debes iniciar sesión para eliminar spots', 'warning');
-        return;
-    }
-
-    // Buscar el spot actual
-    const spot = window.currentSpots?.find(s => s.id === spotId);
-    if (!spot) {
-        showToast('Spot no encontrado', 'error');
-        return;
-    }
-
-    // Validar propiedad: solo el propietario o admin puede borrar
-    const user = getCurrentUser();
-    const isAdmin = user?.role === 'admin' || user?.role === 'moderator';
-    const isOwner = spot.user_id === user?.id;
-
-    if (!isAdmin && !isOwner) {
-        showToast('Solo el propietario del spot puede eliminarlo', 'warning');
-        return;
-    }
-
-    if (!confirm('¿Estás seguro de eliminar este spot? Esta acción no se puede deshacer.')) {
-        return;
-    }
-    
-    try {
-        showToast('Eliminando spot...', 'info', { autoCloseMs: 1000 });
-        await deleteSpot(spotId);
-        mapModule.removeMarker(spotId);
-        showToast('✓ Spot eliminado correctamente', 'success');
-        
-        // Recargar lista
-        const spots = await loadSpots({ forceRefresh: true });
-        displaySpots(spots, renderSpotList);
-    } catch (error) {
-        console.error('[DELETE] Error eliminando spot:', error);
-        showToast('Error al eliminar spot: ' + (error.message || 'Error desconocido'), 'error');
-    }
-};
-
 // Helper para verificar si un usuario puede borrar un spot
 window.canDeleteSpot = (spotId) => {
     const { isAuthenticated, getCurrentUser } = require('./auth.js');
@@ -198,6 +164,52 @@ window.canDeleteSpot = (spotId) => {
     return isAdmin || isOwner;
 };
 
+// Intentar parsear JSON tolerando respuestas concatenadas
+function parseJsonSafe(text) {
+    if (!text) return null;
+    try {
+        return JSON.parse(text);
+    } catch (_) {
+        const sep = text.indexOf('}{');
+        if (sep !== -1) {
+            try { return JSON.parse(text.slice(0, sep + 1)); } catch (_) {}
+        }
+    }
+    return null;
+}
+
+// Eliminar spot usando Supabase si está disponible; fallback a API PHP
+async function deleteSpotRemote(spotId) {
+    if (supabaseAvailable()) {
+        const sb = getSupabaseClient();
+        if (sb) {
+            const { error } = await sb.from('spots').delete().eq('id', spotId);
+            if (!error) return { ok: true, source: 'supabase' };
+            console.warn('[DELETE] Supabase delete failed:', error?.message);
+        }
+    }
+
+    const headers = { 'Content-Type': 'application/json' };
+    try {
+        const token = await getAccessToken();
+        if (token) headers['Authorization'] = `Bearer ${token}`;
+    } catch (err) {
+        console.warn('[DELETE] No token available:', err?.message);
+    }
+
+    const url = buildApiUrl(`/spots/${spotId}`);
+    const response = await fetch(url, { method: 'DELETE', headers });
+    const text = await response.text();
+    const data = parseJsonSafe(text);
+
+    if (response.ok) {
+        return { ok: true, source: 'api', data };
+    }
+
+    const message = data?.message || data?.error || text || 'Error desconocido';
+    return { ok: false, status: response.status, message, data, raw: text };
+}
+
 // Offline / Online feedback
 window.addEventListener('offline', () => {
     showToast('⚠️ Has perdido la conexión. Funciones limitadas.', 'warning', { autoCloseMs: 5000 });
@@ -208,7 +220,7 @@ window.addEventListener('online', () => {
 
 console.log('[MAIN] SpotMap ES6 modules loaded. Use window.debugInfo for debugging.');
 
-async function setupModerationPanel() {
+window.setupModerationPanel = async function setupModerationPanel() {
     const role = getCurrentRole();
     if (role !== 'moderator' && role !== 'admin') return;
     const listEl = document.getElementById('pending-list');
@@ -219,7 +231,7 @@ async function setupModerationPanel() {
         document.getElementById('moderation-panel').style.display = 'none';
     });
     await refreshPending(listEl, countEl);
-}
+};
 
 async function refreshPending(listEl, countEl) {
     listEl.innerHTML = '<div class="p-2 text-muted">Cargando pending...</div>';
@@ -232,19 +244,43 @@ async function refreshPending(listEl, countEl) {
     listEl.innerHTML = '';
     pending.forEach(spot => {
         const item = document.createElement('div');
-        item.className = 'list-group-item d-flex flex-column gap-1';
+        item.className = 'list-group-item d-flex flex-column gap-1 p-2';
+        
+        // Mostrar imágenes si existen
+        let imagesHTML = '';
+        if (spot.image_path) {
+            imagesHTML += `<img src="${spot.image_path}" alt="${spot.title}" style="max-width: 100%; max-height: 100px; border-radius: 4px; margin-top: 8px;">`;
+        }
+        if (spot.image_path_2) {
+            imagesHTML += `<img src="${spot.image_path_2}" alt="${spot.title}" style="max-width: 100%; max-height: 100px; border-radius: 4px; margin-top: 4px;">`;
+        }
+        if (spot.image_url) {
+            imagesHTML += `<img src="${spot.image_url}" alt="${spot.title}" style="max-width: 100%; max-height: 100px; border-radius: 4px; margin-top: 8px;">`;
+        }
+        
         item.innerHTML = `
             <div class="d-flex justify-content-between align-items-start">
                 <strong>#${spot.id} ${spot.title}</strong>
-                <small>${new Date(spot.created_at).toLocaleDateString()}</small>
+                <small class="text-muted">${new Date(spot.created_at).toLocaleDateString()}</small>
             </div>
-            <div class="small text-muted">${spot.description || ''}</div>
-            <div class="d-flex gap-2 mt-1">
-                <button class="btn btn-sm btn-outline-success" data-action="approve">✔️ Aprobar</button>
-                <button class="btn btn-sm btn-outline-danger" data-action="reject">❌ Rechazar</button>
-                <button class="btn btn-sm btn-outline-secondary" data-action="focus">👁️ Ver</button>
+            <div class="small text-muted">${spot.description || '(sin descripción)'}</div>
+            ${imagesHTML ? `<div class="moderator-images">${imagesHTML}</div>` : '<div class="small text-muted"><em>(sin imágenes)</em></div>'}
+            <div class="d-flex gap-1 mt-2 flex-wrap">
+                <button class="btn btn-sm btn-success" data-action="approve" title="Aprobar este spot">✔️ Aprobar</button>
+                <button class="btn btn-sm btn-danger" data-action="reject" title="Rechazar este spot">❌ Rechazar</button>
+                <button class="btn btn-sm btn-info" data-action="focus" title="Ver en el mapa">🗺️ Ver</button>
+                <button class="btn btn-sm btn-warning" data-action="edit" title="Editar este spot">✏️ Editar</button>
+                <button class="btn btn-sm btn-danger" data-action="delete" title="Eliminar este spot">🗑️ Eliminar</button>
             </div>
         `;
+        
+        // Botón Ver/Focus - centrar mapa en el spot
+        item.querySelector('[data-action="focus"]').addEventListener('click', () => {
+            focusSpot(spot.id);
+            showToast(`📍 Mostrando "${spot.title}" en el mapa`, 'info');
+        });
+        
+        // Botón Aprobar
         item.querySelector('[data-action="approve"]').addEventListener('click', async () => {
             item.classList.add('opacity-50');
             const ok = await approve(spot.id);
@@ -253,26 +289,101 @@ async function refreshPending(listEl, countEl) {
                 const spots = await loadSpots({ forceRefresh: true });
                 displaySpots(spots, renderSpotList);
                 await refreshPending(listEl, countEl);
+                showToast(`✅ Spot "${spot.title}" aprobado`, 'success');
             } else {
                 item.classList.remove('opacity-50');
+                showToast('Error al aprobar el spot', 'error');
             }
         });
         item.querySelector('[data-action="reject"]').addEventListener('click', async () => {
-            item.classList.add('opacity-50');
-            const ok = await reject(spot.id);
-            if (ok) {
-                item.remove();
-                await refreshPending(listEl, countEl);
-            } else {
-                item.classList.remove('opacity-50');
+            if (confirm(`¿Rechazar el spot "${spot.title}"?`)) {
+                item.classList.add('opacity-50');
+                const ok = await reject(spot.id);
+                if (ok) {
+                    item.remove();
+                    await refreshPending(listEl, countEl);
+                    showToast(`❌ Spot "${spot.title}" rechazado`, 'info');
+                } else {
+                    item.classList.remove('opacity-50');
+                    showToast('Error al rechazar el spot', 'error');
+                }
             }
         });
         item.querySelector('[data-action="focus"]').addEventListener('click', () => {
             focusSpot(spot.id);
         });
+        
+        // Botón Editar
+        item.querySelector('[data-action="edit"]').addEventListener('click', () => {
+            window.openSpotDetailsModal(spot);
+            showToast(`📝 Abriendo detalles de "${spot.title}"`, 'info');
+        });
+        
+        // Botón Eliminar
+        item.querySelector('[data-action="delete"]').addEventListener('click', async () => {
+            if (!confirm(`⚠️ ¿Eliminar el spot "${spot.title}" de forma permanente?`)) return;
+            item.classList.add('opacity-50');
+            try {
+                const result = await deleteSpotRemote(spot.id);
+                if (result.ok) {
+                    item.remove();
+                    await refreshPending(listEl, countEl);
+                    const spots = await loadSpots({ forceRefresh: true });
+                    displaySpots(spots, renderSpotList);
+                    showToast(`✅ Spot "${spot.title}" eliminado correctamente`, 'success');
+                } else {
+                    item.classList.remove('opacity-50');
+                    console.error('[PANEL-DELETE] Error:', result.message);
+                    showToast(`Error al eliminar: ${result.message || 'Error desconocido'}`, 'error');
+                }
+            } catch (error) {
+                item.classList.remove('opacity-50');
+                console.error('[PANEL-DELETE] Exception:', error);
+                showToast('Error al conectar con el servidor', 'error');
+            }
+        });
     listEl.appendChild(item);
   });
 }
+
+/**
+ * Eliminar un spot (función global accesible desde tarjetas)
+ */
+window.confirmDeleteSpot = async function(spotId) {
+    const spots = await loadSpots();
+    const spot = spots?.find(s => s.id === spotId);
+    if (!spot) {
+        showToast('Spot no encontrado', 'error');
+        return;
+    }
+    
+    if (!confirm(`⚠️ ¿Eliminar el spot "${spot.title}" de forma permanente?`)) return;
+
+    try {
+        showToast('Eliminando spot...', 'info');
+        const result = await deleteSpotRemote(spotId);
+
+        if (result.ok) {
+            if (window.mapModule && window.mapModule.removeMarker) {
+                window.mapModule.removeMarker(spotId);
+            }
+
+            const updatedSpots = await loadSpots({ forceRefresh: true });
+            displaySpots(updatedSpots, renderSpotList);
+            showToast(`✅ Spot "${spot.title}" eliminado correctamente`, 'success');
+
+            if (window.refreshPending) {
+                window.refreshPending();
+            }
+        } else {
+            console.error('[DELETE] Error from server:', result.message);
+            showToast(`Error al eliminar: ${result.message || 'Error desconocido'}`, 'error');
+        }
+    } catch (error) {
+        console.error('[DELETE] Exception:', error);
+        showToast('Error al conectar con el servidor: ' + error.message, 'error');
+    }
+};
 
 function setupRealtime() {
   if (!supabaseAvailable()) {
