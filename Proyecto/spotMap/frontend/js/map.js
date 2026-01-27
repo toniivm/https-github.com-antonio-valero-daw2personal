@@ -24,6 +24,9 @@ export function initMap() {
             maxZoom: 19
         }).addTo(map);
 
+        // Nota: El selector de ubicación ahora usa modal (mapPickerModal.js)
+        // No es necesario listener aquí
+
         console.log('[MAP] ✓ Mapa inicializado correctamente');
         return true;
     } catch (error) {
@@ -65,11 +68,19 @@ export function addMarker(spot) {
 
     popupContent += `
             <p><small>Lat: ${spot.lat.toFixed(4)}, Lng: ${spot.lng.toFixed(4)}</small></p>
-            <button class="btn btn-sm btn-danger" onclick="window.confirmDeleteSpot(${spot.id})">Eliminar</button>
+            <button class="btn btn-sm btn-primary" onclick="window.openSpotDetails({id: ${spot.id}})">Ver detalles</button>
         </div>
     `;
 
-    const marker = L.marker([spot.lat, spot.lng])
+    // Usar circleMarker más pequeño y discreto
+    const marker = L.circleMarker([spot.lat, spot.lng], {
+        radius: 8,
+        fillColor: '#007bff',
+        color: '#fff',
+        weight: 2,
+        opacity: 1,
+        fillOpacity: 0.8
+    })
         .addTo(map)
         .bindPopup(popupContent);
 

@@ -178,22 +178,24 @@ export async function createSpot(spot) {
   return data;
 }
 
-export async function uploadSpotImage(file, spotId) {
+export async function uploadSpotImage(file, spotId, imageNumber = 1) {
   if (!supabaseAvailable()) return null;
   if (!file || !spotId) return null;
   const ext = file.name.split('.').pop().toLowerCase();
-  const path = `spot-images/spot-${spotId}-${Date.now()}.${ext}`;
-  const { error: upErr } = await supabase.storage.from('public').upload(path, file, { upsert: false });
+  const path = `spot-${spotId}-img${imageNumber}-${Date.now()}.${ext}`;
+  const { error: upErr } = await supabase.storage.from('spot-images').upload(path, file, { upsert: false });
   if (upErr) {
     console.error('[Supabase] Error subiendo imagen', upErr);
     return null;
   }
-  const { data: pub } = supabase.storage.from('public').getPublicUrl(path);
+  const { data: pub } = supabase.storage.from('spot-images').getPublicUrl(path);
   const publicUrl = pub?.publicUrl || null;
   if (!publicUrl) return null;
+  
+  const fieldToUpdate = imageNumber === 2 ? 'image_path_2' : 'image_path';
   const { data, error: updErr } = await supabase
     .from('spots')
-    .update({ image_path: publicUrl })
+    .update({ [fieldToUpdate]: publicUrl })
     .eq('id', spotId)
     .select('*')
     .single();

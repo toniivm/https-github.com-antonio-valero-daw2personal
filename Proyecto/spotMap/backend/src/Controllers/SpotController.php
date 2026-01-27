@@ -118,6 +118,13 @@ class SpotController
     public function store(): void
     {
         try {
+            // DEBUG: Log de entrada
+            Logger::info("SpotController::store() iniciado", [
+                'FILES' => array_keys($_FILES),
+                'POST' => array_keys($_POST),
+                'CONTENT_TYPE' => $_SERVER['CONTENT_TYPE'] ?? 'not set'
+            ]);
+            
             // Auth requerido para crear
             $user = Auth::requireUser();
             // Obtener datos: JSON o FormData
@@ -127,8 +134,10 @@ class SpotController
         
             if (strpos($contentType, 'multipart/form-data') !== false) {
                 $input = $_POST;
+                Logger::info("Usando FormData (multipart)", ['keys' => array_keys($_POST)]);
             } else {
                 $input = json_decode(file_get_contents('php://input'), true) ?? $_POST;
+                Logger::info("Usando JSON", ['keys' => array_keys($input)]);
             }
 
             if (!is_array($input)) {
@@ -177,51 +186,71 @@ class SpotController
                 $spotData['user_id'] = $user['id'];
             }
 
-            // Manejar foto si está presente (si Supabase: usar Storage; si no: disco local)
-            if (isset($_FILES['photo']) && $_FILES['photo']['error'] === UPLOAD_ERR_OK) {
-                $photo = $_FILES['photo'];
-                $maxSize = 5 * 1024 * 1024; // 5MB
-                $validTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
-                if ($photo['size'] > $maxSize) {
-                    ApiResponse::validation(['photo' => ['Photo cannot exceed 5MB']]);
-                    return;
-                }
-                if (!in_array($photo['type'], $validTypes)) {
-                    ApiResponse::validation(['photo' => ['Invalid photo format']]);
-                    return;
-                }
-                $ext = pathinfo($photo['name'], PATHINFO_EXTENSION);
-                $filename = uniqid('spot_') . '.' . $ext;
-
-                if (\SpotMap\DatabaseAdapter::useSupabase()) {
-                    // Subida a Supabase Storage (bucket 'spots')
-                    try {
-                        $bucket = 'spots';
-                        $path = $bucket . '/' . $filename;
-                        $fileContents = file_get_contents($photo['tmp_name']);
-                        $uploadOk = \SpotMap\SupabaseStorage::upload($path, $fileContents, $photo['type']);
-                        if ($uploadOk) {
-                            $publicUrl = \SpotMap\SupabaseStorage::publicUrl($path);
-                            $spotData['image_path'] = $publicUrl;
-                        }
-                    } catch (\Throwable $e) {
-                        ApiResponse::error('Storage upload failed: ' . $e->getMessage(), 500);
+            // Manejar hasta 2 fotos si están presentes
+            $uploadedImages = [];
+            $imagePaths = ['image1' => 'image_path', 'image2' => 'image_path_2'];
+            
+            foreach ($imagePaths as $fileKey => $dbColumn) {
+                if (isset($_FILES[$fileKey]) && $_FILES[$fileKey]['error'] === UPLOAD_ERR_OK) {
+                    $photo = $_FILES[$fileKey];
+                    $maxSize = 5 * 1024 * 1024; // 5MB
+                    $validTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+                    
+                    if ($photo['size'] > $maxSize) {
+                        ApiResponse::validation([$fileKey => ['Image cannot exceed 5MB']]);
                         return;
                     }
-                } else {
-                    $uploadDir = __DIR__ . '/../../public/uploads/spots/';
-                    if (!is_dir($uploadDir)) {
-                        mkdir($uploadDir, 0755, true);
+                    if (!in_array($photo['type'], $validTypes)) {
+                        ApiResponse::validation([$fileKey => ['Invalid image format']]);
+                        return;
                     }
-                    $uploadPath = $uploadDir . $filename;
-                    if (move_uploaded_file($photo['tmp_name'], $uploadPath)) {
-                        $spotData['image_path'] = '/uploads/spots/' . $filename;
+                    
+                    $ext = pathinfo($photo['name'], PATHINFO_EXTENSION);
+                    $filename = uniqid('spot_') . '.' . $ext;
+
+                    if (\SpotMap\DatabaseAdapter::useSupabase()) {
+                        // Subida a Supabase Storage
+                        try {
+                            $bucket = 'spots';
+                            $path = $bucket . '/' . $filename;
+                            $fileContents = file_get_contents($photo['tmp_name']);
+                            $uploadOk = \SpotMap\SupabaseStorage::upload($path, $fileContents, $photo['type']);
+                            if ($uploadOk) {
+                                $publicUrl = \SpotMap\SupabaseStorage::publicUrl($path);
+                                $spotData[$dbColumn] = $publicUrl;
+                                $uploadedImages[] = $publicUrl;
+                            }
+                        } catch (\Throwable $e) {
+                            ApiResponse::error('Storage upload failed: ' . $e->getMessage(), 500);
+                            return;
+                        }
+                    } else {
+                        // Guardar en disco local
+                        $uploadDir = __DIR__ . '/../../public/uploads/spots/';
+                        if (!is_dir($uploadDir)) {
+                            mkdir($uploadDir, 0755, true);
+                        }
+                        $uploadPath = $uploadDir . $filename;
+                        if (move_uploaded_file($photo['tmp_name'], $uploadPath)) {
+                            $relativePath = '/uploads/spots/' . $filename;
+                            $spotData[$dbColumn] = $relativePath;
+                            $uploadedImages[] = $relativePath;
+                        }
                     }
                 }
             }
 
+            // DEBUG: Log de imágenes procesadas
+            Logger::info("Imágenes procesadas", [
+                'uploaded_count' => count($uploadedImages),
+                'image_path' => $spotData['image_path'] ?? 'not set',
+                'image_path_2' => $spotData['image_path_2'] ?? 'not set'
+            ]);
+
             // Crear spot usando DatabaseAdapter
             $result = DatabaseAdapter::createSpot($spotData);
+
+            Logger::info("Spot creado", ['result' => $result]);
 
             if (isset($result['error'])) {
                 ApiResponse::error($result['error'], 500);

@@ -126,6 +126,16 @@ $controller = new SpotController();
 $monitoringController = new MonitoringController();
 $method = $_SERVER['REQUEST_METHOD'];
 
+// Soporte para _method fallback (si algunos servidores bloquean DELETE)
+if ($method === 'POST' && isset($_GET['_method'])) {
+    $method = strtoupper($_GET['_method']);
+}
+
+// Soporte para X-HTTP-Method-Override header
+if ($method === 'POST' && isset($_SERVER['HTTP_X_HTTP_METHOD_OVERRIDE'])) {
+    $method = strtoupper($_SERVER['HTTP_X_HTTP_METHOD_OVERRIDE']);
+}
+
 // Obtener parametros de la URL
 // Ejemplo: index.php?action=spots&id=1&sub=photo
 $action = $_GET['action'] ?? 'spots';
@@ -199,6 +209,15 @@ try {
         $controller->uploadPhoto($id);
         PerformanceMonitor::mark('photo_upload_end');
         $logger->info("POST /spots/{$id}/photo - Success");
+        exit;
+    }
+
+    // ⭐ POST /api?action=deleteSpot&id=1 (eliminar spot - versión simple sin DELETE)
+    if (($method === 'POST' || $method === 'GET') && $action === 'deleteSpot' && $id) {
+        PerformanceMonitor::mark('spots_delete_start');
+        $controller->destroy($id);
+        PerformanceMonitor::mark('spots_delete_end');
+        $logger->info("POST/GET /deleteSpot/{$id} - Success");
         exit;
     }
 

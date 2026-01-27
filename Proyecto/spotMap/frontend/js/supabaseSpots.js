@@ -3,12 +3,53 @@ import { supabaseAvailable, fetchApprovedSpots, listPendingSpots, approveSpot, r
 import { apiFetch } from './api.js';
 
 export async function getApproved({ forceRefresh = false } = {}) {
+  // Intentar Supabase primero
   if (supabaseAvailable()) {
-    return (await fetchApprovedSpots({ limit: 200 }))?.spots || [];
+    try {
+      const result = await fetchApprovedSpots({ limit: 200 });
+      if (result?.spots) {
+        console.log('[supabaseSpots] ✓ Spots obtenidos de Supabase');
+        return result.spots;
+      }
+    } catch (error) {
+      console.warn('[supabaseSpots] Error de Supabase, usando fallback API:', error.message);
+    }
   }
-  // Fallback API
-  const res = await apiFetch('/spots', { method: 'GET' });
-  return res?.data?.spots || [];
+  
+  // Fallback: usar API local
+  try {
+    console.log('[supabaseSpots] Intentando fallback a API local...');
+    const res = await apiFetch('/spots', { method: 'GET' });
+    
+    console.log('[supabaseSpots] Respuesta cruda de API:', JSON.stringify(res, null, 2));
+    
+    // Intentar múltiples estructuras de respuesta
+    let spots = null;
+    
+    if (Array.isArray(res)) {
+      spots = res;
+    } else if (res?.data?.spots && Array.isArray(res.data.spots)) {
+      spots = res.data.spots;
+    } else if (res?.data && Array.isArray(res.data)) {
+      spots = res.data;
+    } else if (res?.spots && Array.isArray(res.spots)) {
+      spots = res.spots;
+    } else if (res?.success && res?.data) {
+      // Última opción: si success es true y data existe
+      spots = Array.isArray(res.data) ? res.data : [];
+    }
+    
+    if (spots && Array.isArray(spots)) {
+      console.log(`[supabaseSpots] ✓ Spots obtenidos de API local: ${spots.length} items`);
+      return spots;
+    }
+    
+    console.warn('[supabaseSpots] API no retornó spots válidos:', res);
+    return [];
+  } catch (error) {
+    console.error('[supabaseSpots] Error en API local:', error);
+    return [];
+  }
 }
 
 export async function getPending() {
@@ -26,20 +67,78 @@ export async function reject(id) {
   return false;
 }
 
-export async function createSpotRecord(data, photoFile = null) {
+export async function createSpotRecord(data, photoFile1 = null, photoFile2 = null) {
+  console.log('[supabaseSpots] createSpotRecord llamado con:', {
+    data,
+    photoFile1: photoFile1 ? `${photoFile1.name} (${photoFile1.size} bytes)` : null,
+    photoFile2: photoFile2 ? `${photoFile2.name} (${photoFile2.size} bytes)` : null
+  });
+  
   if (supabaseAvailable()) {
     // Crear spot con status='pending' (moderación)
-    // Si quieres que se publiquen automáticamente, usa status='approved'
     const base = { ...data, status: 'pending' };
     const created = await sbCreateSpot(base);
-    if (!created) return null;
-    if (photoFile) {
-      const updated = await uploadSpotImage(photoFile, created.id);
-      return updated || created;
+    if (!created) {
+      console.error('[supabaseSpots] Error creando spot en Supabase');
+      return null;
     }
+    
+    console.log('[supabaseSpots] Spot creado en Supabase (ID:', created.id, ')');
+    
+    // Subir hasta 2 imágenes a Supabase Storage
+    if (photoFile1) {
+      console.log('[supabaseSpots] Subiendo imagen 1 a Supabase Storage...');
+      try {
+        const updated = await uploadSpotImage(photoFile1, created.id, 1);
+        if (updated && updated.image_path) {
+          created.image_path = updated.image_path;
+          console.log('[supabaseSpots] ✓ Imagen 1 subida:', created.image_path);
+        }
+      } catch (error) {
+        console.error('[supabaseSpots] Error subiendo imagen 1:', error);
+      }
+    }
+    
+    if (photoFile2) {
+      console.log('[supabaseSpots] Subiendo imagen 2 a Supabase Storage...');
+      try {
+        const updated = await uploadSpotImage(photoFile2, created.id, 2);
+        if (updated && updated.image_path_2) {
+          created.image_path_2 = updated.image_path_2;
+          console.log('[supabaseSpots] ✓ Imagen 2 subida:', created.image_path_2);
+        }
+      } catch (error) {
+        console.error('[supabaseSpots] Error subiendo imagen 2:', error);
+      }
+    }
+    
     return created;
   }
-  const res = await apiFetch('/spots', { method: 'POST', body: data });
+  
+  // Fallback: API local con FormData
+  console.log('[supabaseSpots] Supabase no disponible, usando API local');
+  const formData = new FormData();
+  formData.append('title', data.title);
+  formData.append('description', data.description || '');
+  formData.append('lat', data.lat);
+  formData.append('lng', data.lng);
+  formData.append('category', data.category || '');
+  formData.append('status', 'pending');
+  if (data.tags && Array.isArray(data.tags)) {
+    formData.append('tags', JSON.stringify(data.tags));
+  }
+  
+  if (photoFile1) {
+    console.log('[supabaseSpots] Agregando image1 al FormData');
+    formData.append('image1', photoFile1);
+  }
+  if (photoFile2) {
+    console.log('[supabaseSpots] Agregando image2 al FormData');
+    formData.append('image2', photoFile2);
+  }
+  
+  const res = await apiFetch('/spots', { method: 'POST', body: formData });
+  console.log('[supabaseSpots] Respuesta API local:', res);
   return res?.data || null;
 }
 

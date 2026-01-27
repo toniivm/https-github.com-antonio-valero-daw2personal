@@ -59,23 +59,33 @@ export function displaySpots(spots, renderListCallback) {
 /**
  * Crear nuevo spot
  * @param {Object} spotData - Datos del spot { title, description, lat, lng, tags, category }
- * @param {File} photoFile - Archivo de foto (opcional)
+ * @param {File} photoFile1 - Primera foto (opcional)
+ * @param {File} photoFile2 - Segunda foto (opcional)
  * @returns {Promise<Object>} Spot creado
  */
-export async function createSpot(spotData, photoFile = null) {
+export async function createSpot(spotData, photoFile1 = null, photoFile2 = null) {
   try {
     if (!spotData.title || !spotData.title.trim()) throw new Error('El título es requerido');
     if (isNaN(spotData.lat) || isNaN(spotData.lng)) throw new Error('Latitud y longitud inválidas');
     if (spotData.lat < -90 || spotData.lat > 90) throw new Error('Latitud debe estar entre -90 y 90');
     if (spotData.lng < -180 || spotData.lng > 180) throw new Error('Longitud debe estar entre -180 y 180');
-    if (photoFile) {
+    
+    // Validar imágenes
+    if (photoFile1) {
       const maxSize = 5 * 1024 * 1024;
-      if (photoFile.size > maxSize) throw new Error('La foto no puede exceder 5MB');
+      if (photoFile1.size > maxSize) throw new Error('La primera foto no puede exceder 5MB');
       const validTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
-      if (!validTypes.includes(photoFile.type)) throw new Error('Formato de foto no válido');
+      if (!validTypes.includes(photoFile1.type)) throw new Error('Formato de la primera foto no válido');
     }
+    if (photoFile2) {
+      const maxSize = 5 * 1024 * 1024;
+      if (photoFile2.size > maxSize) throw new Error('La segunda foto no puede exceder 5MB');
+      const validTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+      if (!validTypes.includes(photoFile2.type)) throw new Error('Formato de la segunda foto no válido');
+    }
+    
     console.log('[SPOTS] Creando spot (Supabase/API):', spotData.title);
-    const created = await createSpotRecord(spotData, photoFile);
+    const created = await createSpotRecord(spotData, photoFile1, photoFile2);
     if (!created) throw new Error('Error creando spot');
     Cache.remove('spots');
     return created;
@@ -172,7 +182,7 @@ export async function deleteSpot(spotId) {
  * @param {File} photoFile - Archivo de imagen
  * @returns {Promise<Object>} Spot actualizado con la nueva foto
  */
-async function uploadPhoto(spotId, photoFile) {
+export async function uploadPhoto(spotId, photoFile) {
     try {
         if (!photoFile) {
             throw new Error('Archivo de foto es requerido');
@@ -204,18 +214,6 @@ async function uploadPhoto(spotId, photoFile) {
     }
 }
 
-/**
- * Buscar spots por término
- * @param {Array} spots - Array de spots a buscar
- * @param {string} searchTerm - Término a buscar
- * @returns {Array} Spots filtrados
- */
-/**
- * Filtrar spots por categoría
- * @param {Array} spots - Array de spots
- * @param {string} category - Categoría a filtrar
- * @returns {Array} Spots de la categoría
- */
 /**
  * Obtener todas las categorías únicas
  * @param {Array} spots - Array de spots

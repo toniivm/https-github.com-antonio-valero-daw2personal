@@ -177,32 +177,36 @@ export function openSpotDetailsModal(spot) {
     modal.id = 'modalSpotDetails';
     modal.innerHTML = `
         <div class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">${escapeHtml(spot.title)}</h5>
+            <div class="modal-content bg-dark text-light">
+                <div class="modal-header border-secondary">
+                    <h5 class="modal-title text-white">${escapeHtml(spot.title)}</h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
-                    ${spot.image_path ? `<img src="${spot.image_path}" alt="${escapeHtml(spot.title)}" class="spot-detail-image">` : ''}
+                    <!-- Imágenes del spot -->
+                    <div class="spot-images-container mb-4">
+                        ${spot.image_path ? `<img src="${spot.image_path}" alt="${escapeHtml(spot.title)}" class="spot-detail-image">` : ''}
+                        ${spot.image_path_2 ? `<img src="${spot.image_path_2}" alt="${escapeHtml(spot.title)} - Imagen 2" class="spot-detail-image">` : ''}
+                    </div>
                     
                     <div class="spot-detail-info">
-                        <p class="spot-detail-description">${escapeHtml(spot.description || 'Sin descripción')}</p>
-                        <div class="spot-detail-meta">
-                            <span><i class="bi bi-geo-alt-fill"></i> ${spot.lat.toFixed(5)}, ${spot.lng.toFixed(5)}</span>
-                            ${spot.category ? `<span class="badge">${escapeHtml(spot.category)}</span>` : ''}
+                        <p class="spot-detail-description text-light">${escapeHtml(spot.description || 'Sin descripción')}</p>
+                        <div class="spot-detail-meta text-secondary">
+                            <span><i class="bi bi-geo-alt-fill"></i> ${(spot.lat || 0).toFixed(5)}, ${(spot.lng || 0).toFixed(5)}</span>
+                            ${spot.category ? `<span class="badge bg-primary">${escapeHtml(spot.category)}</span>` : ''}
                         </div>
                     </div>
 
-                    <hr class="my-4">
+                    <hr class="my-4 border-secondary">
 
                     <div class="comments-section">
-                        <h6 class="mb-3">💬 Comentarios (${getComments(spot.id).length})</h6>
+                        <h6 class="mb-3 text-light">💬 Comentarios (${getComments(spot.id).length})</h6>
                         
                         ${isAuthenticated() ? `
                         <div class="comment-form mb-4">
                             <textarea 
                                 id="comment-input-${spot.id}" 
-                                class="form-control comment-input" 
+                                class="form-control comment-input bg-secondary text-light border-secondary" 
                                 placeholder="Escribe un comentario..." 
                                 rows="3"
                             ></textarea>
@@ -211,7 +215,7 @@ export function openSpotDetailsModal(spot) {
                             </button>
                         </div>
                         ` : `
-                        <div class="alert alert-info">
+                        <div class="alert alert-info bg-info text-dark">
                             <a href="#" data-bs-toggle="modal" data-bs-target="#modalLogin">Inicia sesión</a> para comentar
                         </div>
                         `}

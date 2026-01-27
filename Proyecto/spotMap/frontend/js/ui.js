@@ -171,13 +171,26 @@ async function handleAddSpotSubmit(e) {
         const category = document.getElementById('spot-category').value.trim() || null;
         const tagsInput = document.getElementById('spot-tags').value;
         const tags = tagsInput ? tagsInput.split(',').map(t => t.trim()).filter(t => t) : [];
-        const photoFile = document.getElementById('spot-photo').files[0] || null;
+        
+        // Obtener ambas imágenes (hasta 2)
+        const photoFile1 = document.getElementById('spot-photo-1').files[0] || null;
+        const photoFile2 = document.getElementById('spot-photo-2').files[0] || null;
 
-        // Validar imagen si está presente
-        if (photoFile) {
-            const imageValidation = await validateImage(photoFile);
+        // Validar imágenes si están presentes
+        if (photoFile1) {
+            const imageValidation = await validateImage(photoFile1);
             if (!imageValidation.valid) {
-                showToast('Error en la foto: ' + imageValidation.error, 'error');
+                showToast('Error en la primera foto: ' + imageValidation.error, 'error');
+                btnSubmit.disabled = false;
+                btnSubmit.textContent = originalText;
+                return;
+            }
+        }
+        
+        if (photoFile2) {
+            const imageValidation = await validateImage(photoFile2);
+            if (!imageValidation.valid) {
+                showToast('Error en la segunda foto: ' + imageValidation.error, 'error');
                 btnSubmit.disabled = false;
                 btnSubmit.textContent = originalText;
                 return;
@@ -198,7 +211,7 @@ async function handleAddSpotSubmit(e) {
         const lat = parseFloat(latStr);
         const lng = parseFloat(lngStr);
 
-        // Crear FormData para envío con foto
+        // Crear FormData para envío con fotos
         const spotData = {
             title,
             description: description || null,
@@ -209,9 +222,10 @@ async function handleAddSpotSubmit(e) {
         };
 
         console.log('[UI] Datos validados:', spotData);
+        console.log('[UI] Imágenes:', { image1: photoFile1 ? 'sí' : 'no', image2: photoFile2 ? 'sí' : 'no' });
 
         // Crear spot (sin pasar headers, dejar que spots.js maneje)
-        const newSpot = await spotsModule.createSpot(spotData, photoFile);
+        const newSpot = await spotsModule.createSpot(spotData, photoFile1, photoFile2);
 
         console.log('[UI] ✓ Spot creado exitosamente:', newSpot);
 
@@ -226,9 +240,13 @@ async function handleAddSpotSubmit(e) {
             showToast('✓ Spot publicado correctamente', 'success');
         }
 
-        // Limpiar formulario
+        // Limpiar formulario e imágenes
         document.getElementById('form-add-spot').reset();
         document.getElementById('validation-summary').style.display = 'none';
+        
+        // Limpiar previsualizaciones
+        const { clearFormImages } = await import('./spotMapPicker.js');
+        clearFormImages();
 
         // Cerrar modal
         const modal = bootstrap.Modal.getInstance(document.getElementById('modalAddSpot'));
@@ -462,18 +480,27 @@ export function renderSpotList(spots) {
  * Renderizar card de spot en vista lista
  */
 function renderSpotCardList(spot) {
-    const imagePath = spot.image_path || '';
+    // Debug: ver qué rutas de imagen vienen
+    console.log('[UI-DEBUG] Spot image paths:', {
+        id: spot.id,
+        image_path: spot.image_path,
+        image_url: spot.image_url,
+        image_path_2: spot.image_path_2,
+        image_url_2: spot.image_url_2
+    });
+    
+    const imagePath = spot.image_path || spot.image_url || '';
     const imageHtml = imagePath 
-        ? `<img src="${escapeHtml(imagePath)}" alt="${escapeHtml(spot.title)}" class="spot-card-image" loading="lazy" onerror="this.style.display='none'">`
-        : '';
+        ? `<img src="${escapeHtml(imagePath)}" alt="${escapeHtml(spot.title)}" class="spot-card-image" loading="lazy" onerror="this.style.display='none'; console.error('Error cargando imagen:', '${imagePath}')">`
+        : '<div class="spot-card-no-image">📸 Sin imagen</div>';
     
     const isLiked = window.isSpotLiked ? window.isSpotLiked(spot.id) : false;
     
     // Verificar si puede borrar
     const user = getCurrentUser();
     const isAdmin = user?.role === 'admin' || user?.role === 'moderator';
-    const isOwner = spot.user_id === user?.id;
-    const canDelete = isAuthenticated() && (isAdmin || isOwner);
+    const canDelete = isAuthenticated() && isAdmin;
+    const canEdit = isAuthenticated() && isAdmin;
     
     return `
         <div class="spot-card" onclick="window.openSpotDetails(${JSON.stringify(spot).replace(/"/g, '&quot;')})">
@@ -489,6 +516,11 @@ function renderSpotCardList(spot) {
                     <button type="button" class="btn-social btn-details" data-spot-id="${spot.id}" title="Ver detalles" onclick="event.stopPropagation(); window.openSpotDetails(${JSON.stringify(spot).replace(/"/g, '&quot;')})">
                         <i class="bi bi-eye-fill"></i>
                     </button>
+                    ${canEdit ? `
+                        <button type="button" class="btn-social btn-edit" onclick="event.stopPropagation(); window.openSpotDetailsModal(${JSON.stringify(spot).replace(/"/g, '&quot;')})" title="Editar spot">
+                            <i class="bi bi-pencil-fill"></i>
+                        </button>
+                    ` : ''}
                     ${canDelete ? `
                         <button type="button" class="btn-social btn-delete" onclick="event.stopPropagation(); window.confirmDeleteSpot(${spot.id})" title="Eliminar spot">
                             <i class="bi bi-trash3"></i>
@@ -535,8 +567,8 @@ function renderSpotCardGrid(spot) {
     // Verificar si puede borrar
     const user = getCurrentUser();
     const isAdmin = user?.role === 'admin' || user?.role === 'moderator';
-    const isOwner = spot.user_id === user?.id;
-    const canDelete = isAuthenticated() && (isAdmin || isOwner);
+    const canDelete = isAuthenticated() && isAdmin;
+    const canEdit = isAuthenticated() && isAdmin;
     
     return `
         <div class="spot-card spot-card-grid" onclick="window.openSpotDetails(${JSON.stringify(spot).replace(/"/g, '&quot;')})">
@@ -552,6 +584,11 @@ function renderSpotCardGrid(spot) {
                     <button type="button" class="btn-social btn-details" data-spot-id="${spot.id}" title="Ver detalles" onclick="event.stopPropagation(); window.openSpotDetails(${JSON.stringify(spot).replace(/"/g, '&quot;')})">
                         <i class="bi bi-eye-fill"></i>
                     </button>
+                    ${canEdit ? `
+                        <button type="button" class="btn-social btn-edit" onclick="event.stopPropagation(); window.openSpotDetailsModal(${JSON.stringify(spot).replace(/"/g, '&quot;')})" title="Editar spot">
+                            <i class="bi bi-pencil-fill"></i>
+                        </button>
+                    ` : ''}
                     ${canDelete ? `
                         <button type="button" class="btn-social btn-delete" onclick="event.stopPropagation(); window.confirmDeleteSpot(${spot.id})" title="Eliminar spot">
                             <i class="bi bi-trash3"></i>

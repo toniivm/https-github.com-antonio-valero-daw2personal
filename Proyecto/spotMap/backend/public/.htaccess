@@ -4,8 +4,7 @@ RewriteEngine On
 RewriteCond %{HTTP:Authorization} ^(.+)$
 RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
 
-# Routing para index.php (si no existe el archivo físico)
+# Routing: Redirigir solicitudes a api.php (si no existe el archivo físico)
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
-RewriteRule ^ index.php [QSA,L]
-
+RewriteRule ^(.*)$ api.php?request=$1 [QSA,L]

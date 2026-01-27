@@ -166,20 +166,61 @@ async function handleLogin(e) {
         showToast('Iniciando sesión...', 'info', { autoCloseMs: 1000 });
         const supabase = getClient();
         if (supabase) {
-            const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-            if (error) throw error;
-            currentUser = data.user;
+            try {
+                const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+                if (error) throw error;
+                currentUser = data.user;
+                await loadProfileRole();
+                updateUIForLoggedInUser(currentUser);
+                const modal = bootstrap.Modal.getInstance(document.getElementById('modalLogin'));
+                modal?.hide();
+                showToast(`¡Bienvenido ${currentUser.email}!`, 'success');
+            } catch (supabaseError) {
+                // Fallback a login local si Supabase falla
+                console.warn('[AUTH] Supabase login falló, intentando fallback local:', supabaseError.message);
+                await loginLocal(email, password);
+            }
+        } else {
+            // Sin Supabase, usar login local
+            await loginLocal(email, password);
+        }
+    } catch (error) {
+        console.error('[AUTH] Error en login:', error);
+        showToast(error.message || 'Error al iniciar sesión', 'error');
+    }
+}
+
+/**
+ * Login local (fallback cuando Supabase no está disponible)
+ */
+async function loginLocal(email, password) {
+    try {
+        console.log('[AUTH] Usando login local...');
+        const response = await fetch('/https-github.com-antonio-valero-daw2personal/Proyecto/spotMap/backend/public/auth-login.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, password })
+        });
+        
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.error || 'Error en login local');
+        }
+        
+        const result = await response.json();
+        if (result.success && result.session) {
+            currentUser = result.user;
+            localStorage.setItem('spotmap_local_token', result.session.access_token);
+            localStorage.setItem('spotmap_local_user', JSON.stringify(result.user));
             await loadProfileRole();
             updateUIForLoggedInUser(currentUser);
             const modal = bootstrap.Modal.getInstance(document.getElementById('modalLogin'));
             modal?.hide();
             showToast(`¡Bienvenido ${currentUser.email}!`, 'success');
-        } else {
-            showToast('Modo fallback sin Supabase activo', 'warning');
         }
     } catch (error) {
-        console.error('[AUTH] Error en login:', error);
-        showToast(error.message || 'Error al iniciar sesión', 'error');
+        console.error('[AUTH] Error en login local:', error);
+        throw error;
     }
 }
 
@@ -372,7 +413,11 @@ function getStoredSession() {
  * Obtener usuario actual
  */
 export function getCurrentUser() {
-    return currentUser;
+    if (!currentUser) return null;
+    return {
+        ...currentUser,
+        role: currentRole
+    };
 }
 
 export function getCurrentRole() {
@@ -420,6 +465,15 @@ async function loadProfileRole() {
 function toggleModerationVisibility() {
     const panel = document.getElementById('moderation-panel');
     if (!panel) return;
-    panel.style.display = (currentRole === 'moderator' || currentRole === 'admin') ? 'block' : 'none';
+    
+    const isModerator = currentRole === 'moderator' || currentRole === 'admin';
+    panel.style.display = isModerator ? 'block' : 'none';
+    
+    // Si es moderador, cargar los spots pending
+    if (isModerator && window.setupModerationPanel) {
+        setTimeout(() => {
+            window.setupModerationPanel();
+        }, 100);
+    }
 }
 
