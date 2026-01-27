@@ -171,36 +171,85 @@ function escapeHtml(text) {
  */
 export function openSpotDetailsModal(spot) {
     const comments = renderComments(spot.id);
+    const commentCount = getComments(spot.id).length;
+    
+    // Validar datos del spot
+    const title = escapeHtml(spot.title || 'Sin título');
+    const description = escapeHtml(spot.description || 'Sin descripción');
+    const category = spot.category ? escapeHtml(spot.category) : 'Sin categoría';
+    const lat = (spot.lat || 0).toFixed(5);
+    const lng = (spot.lng || 0).toFixed(5);
+    
+    // Verificar si hay imágenes
+    const hasImage1 = spot.image_path && spot.image_path.trim();
+    const hasImage2 = spot.image_path_2 && spot.image_path_2.trim();
     
     const modal = document.createElement('div');
     modal.className = 'modal fade';
-    modal.id = 'modalSpotDetails';
+    modal.id = `modalSpotDetails_${spot.id}`;
+    modal.setAttribute('tabindex', '-1');
+    modal.setAttribute('aria-hidden', 'true');
     modal.innerHTML = `
-        <div class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable">
-            <div class="modal-content bg-dark text-light">
-                <div class="modal-header border-secondary">
-                    <h5 class="modal-title text-white">${escapeHtml(spot.title)}</h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        <div class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable" style="max-height: 90vh;">
+            <div class="modal-content bg-dark text-light" style="max-height: 90vh; overflow: hidden;">
+                <div class="modal-header border-secondary pb-3">
+                    <h5 class="modal-title text-white fw-bold">${title}</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
                 </div>
-                <div class="modal-body">
+                <div class="modal-body" style="overflow-y: auto;">
                     <!-- Imágenes del spot -->
-                    <div class="spot-images-container mb-4">
-                        ${spot.image_path ? `<img src="${spot.image_path}" alt="${escapeHtml(spot.title)}" class="spot-detail-image">` : ''}
-                        ${spot.image_path_2 ? `<img src="${spot.image_path_2}" alt="${escapeHtml(spot.title)} - Imagen 2" class="spot-detail-image">` : ''}
+                    ${hasImage1 || hasImage2 ? `
+                    <div class="spot-images-container mb-3">
+                        <div class="row g-2">
+                            ${hasImage1 ? `
+                            <div class="col-12 ${hasImage2 ? 'col-md-6' : ''}">
+                                <img src="${spot.image_path}" alt="${title}" class="img-fluid rounded spot-image-preview" style="max-height: 200px; object-fit: cover; width: 100%; cursor: pointer;" onclick="window.openImageFullscreen('${spot.image_path}', '${title}')">
+                            </div>
+                            ` : ''}
+                            ${hasImage2 ? `
+                            <div class="col-12 col-md-6">
+                                <img src="${spot.image_path_2}" alt="${title} - Imagen 2" class="img-fluid rounded spot-image-preview" style="max-height: 200px; object-fit: cover; width: 100%; cursor: pointer;" onclick="window.openImageFullscreen('${spot.image_path_2}', '${title} - Imagen 2')">
+                            </div>
+                            ` : ''}
+                        </div>
                     </div>
+                    ` : `
+                    <div class="alert alert-warning mb-4" role="alert">
+                        <i class="bi bi-exclamation-triangle"></i> Sin imágenes disponibles
+                    </div>
+                    `}
                     
-                    <div class="spot-detail-info">
-                        <p class="spot-detail-description text-light">${escapeHtml(spot.description || 'Sin descripción')}</p>
+                    <!-- Información del spot -->
+                    <div class="spot-detail-info mb-4">
+                        <h6 class="text-primary fw-bold mb-2">Descripción</h6>
+                        <p class="spot-detail-description text-light">${description}</p>
+                        
+                        <h6 class="text-primary fw-bold mb-2 mt-3">Información</h6>
                         <div class="spot-detail-meta text-secondary">
-                            <span><i class="bi bi-geo-alt-fill"></i> ${(spot.lat || 0).toFixed(5)}, ${(spot.lng || 0).toFixed(5)}</span>
-                            ${spot.category ? `<span class="badge bg-primary">${escapeHtml(spot.category)}</span>` : ''}
+                            <div class="mb-2">
+                                <i class="bi bi-geo-alt-fill text-info"></i> 
+                                <strong>Ubicación:</strong> ${lat}, ${lng}
+                            </div>
+                            <div class="mb-2">
+                                <i class="bi bi-tag-fill text-warning"></i> 
+                                <strong>Categoría:</strong> <span class="badge bg-primary">${category}</span>
+                            </div>
+                            ${spot.created_at ? `
+                            <div class="mb-2">
+                                <i class="bi bi-calendar text-success"></i> 
+                                <strong>Creado:</strong> ${new Date(spot.created_at).toLocaleDateString('es-ES')}
+                            </div>
+                            ` : ''}
                         </div>
                     </div>
 
                     <hr class="my-4 border-secondary">
 
+                    <!-- Sección de comentarios -->
                     <div class="comments-section">
-                        <h6 class="mb-3 text-light">💬 Comentarios (${getComments(spot.id).length})</h6>
+                        <h6 class="mb-3 text-light fw-bold">
+                            <i class="bi bi-chat-dots"></i> Comentarios (${commentCount})
+                        </h6>
                         
                         ${isAuthenticated() ? `
                         <div class="comment-form mb-4">
@@ -211,12 +260,13 @@ export function openSpotDetailsModal(spot) {
                                 rows="3"
                             ></textarea>
                             <button class="btn btn-primary btn-sm mt-2" onclick="window.submitComment(${spot.id})">
-                                Publicar comentario
+                                <i class="bi bi-send"></i> Publicar comentario
                             </button>
                         </div>
                         ` : `
-                        <div class="alert alert-info bg-info text-dark">
-                            <a href="#" data-bs-toggle="modal" data-bs-target="#modalLogin">Inicia sesión</a> para comentar
+                        <div class="alert alert-info bg-info text-dark border-0 mb-4" role="alert">
+                            <i class="bi bi-info-circle"></i> 
+                            <a href="#" data-bs-toggle="modal" data-bs-target="#modalLogin" class="alert-link">Inicia sesión</a> para comentar
                         </div>
                         `}
 
@@ -231,12 +281,17 @@ export function openSpotDetailsModal(spot) {
 
     document.body.appendChild(modal);
 
-    const bsModal = new bootstrap.Modal(modal);
-    bsModal.show();
+    try {
+        const bsModal = new bootstrap.Modal(modal);
+        bsModal.show();
 
-    modal.addEventListener('hidden.bs.modal', () => {
+        modal.addEventListener('hidden.bs.modal', () => {
+            modal.remove();
+        });
+    } catch (error) {
+        console.error('[COMMENTS] Error abriendo modal:', error);
         modal.remove();
-    });
+    }
 }
 
 /**
@@ -270,5 +325,98 @@ window.likeCommentUI = function(spotId, commentId) {
         const commentsList = document.getElementById(`comments-list-${spotId}`);
         const comments = renderComments(spotId);
         commentsList.innerHTML = comments;
+    }
+};
+
+/**
+ * Abrir imagen en tamaño completo con carrusel
+ */
+window.openImageFullscreen = function(imageSrc, imageAlt) {
+    // Obtener todas las imágenes del spot actual (búsqueda en el modal abierto)
+    const imageElements = document.querySelectorAll('.spot-image-preview');
+    const images = Array.from(imageElements).map(img => ({
+        src: img.getAttribute('onclick').match(/'([^']+)'/)[1],
+        alt: img.getAttribute('onclick').match(/'([^']*)', '([^']*)'/)[2]
+    }));
+
+    // Encontrar el índice de la imagen actual
+    let currentIndex = images.findIndex(img => img.src === imageSrc);
+    if (currentIndex === -1) {
+        currentIndex = 0;
+    }
+
+    const modal = document.createElement('div');
+    modal.className = 'modal fade';
+    modal.id = `modalImageFullscreen_${Date.now()}`;
+    modal.setAttribute('tabindex', '-1');
+    modal.setAttribute('aria-hidden', 'true');
+    modal.innerHTML = `
+        <div class="modal-dialog modal-fullscreen" style="max-width: 95vw;">
+            <div class="modal-content bg-dark" style="max-height: 95vh;">
+                <div class="modal-header border-secondary">
+                    <h5 class="modal-title text-white">${imageAlt}</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                </div>
+                <div class="modal-body d-flex align-items-center justify-content-center position-relative" style="max-height: calc(95vh - 60px); overflow: hidden;">
+                    <img id="fullscreen-image" src="${imageSrc}" alt="${imageAlt}" class="img-fluid" style="max-width: 100%; max-height: 100%; object-fit: contain;">
+                    
+                    ${images.length > 1 ? `
+                    <button class="btn btn-light btn-sm" id="btn-prev-image" style="position: absolute; left: 20px; top: 50%; transform: translateY(-50%); z-index: 1000;">
+                        <i class="bi bi-chevron-left"></i>
+                    </button>
+                    <button class="btn btn-light btn-sm" id="btn-next-image" style="position: absolute; right: 20px; top: 50%; transform: translateY(-50%); z-index: 1000;">
+                        <i class="bi bi-chevron-right"></i>
+                    </button>
+                    <div style="position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.7); color: white; padding: 8px 16px; border-radius: 20px; z-index: 1000;">
+                        <span id="image-counter">${currentIndex + 1}/${images.length}</span>
+                    </div>
+                    ` : ''}
+                </div>
+            </div>
+        </div>
+    `;
+
+    document.body.appendChild(modal);
+
+    try {
+        const bsModal = new bootstrap.Modal(modal);
+        bsModal.show();
+
+        // Si hay múltiples imágenes, agregar funcionalidad de navegación
+        if (images.length > 1) {
+            const imgElement = document.getElementById('fullscreen-image');
+            const counterElement = document.getElementById('image-counter');
+            const prevBtn = document.getElementById('btn-prev-image');
+            const nextBtn = document.getElementById('btn-next-image');
+
+            const updateImage = (index) => {
+                currentIndex = (index + images.length) % images.length;
+                imgElement.src = images[currentIndex].src;
+                imgElement.alt = images[currentIndex].alt;
+                counterElement.textContent = `${currentIndex + 1}/${images.length}`;
+            };
+
+            prevBtn.addEventListener('click', () => updateImage(currentIndex - 1));
+            nextBtn.addEventListener('click', () => updateImage(currentIndex + 1));
+
+            // Soporte para teclado
+            const handleKeyboard = (e) => {
+                if (e.key === 'ArrowLeft') updateImage(currentIndex - 1);
+                if (e.key === 'ArrowRight') updateImage(currentIndex + 1);
+            };
+            document.addEventListener('keydown', handleKeyboard);
+
+            modal.addEventListener('hidden.bs.modal', () => {
+                document.removeEventListener('keydown', handleKeyboard);
+                modal.remove();
+            });
+        } else {
+            modal.addEventListener('hidden.bs.modal', () => {
+                modal.remove();
+            });
+        }
+    } catch (error) {
+        console.error('[COMMENTS] Error abriendo imagen fullscreen:', error);
+        modal.remove();
     }
 };

@@ -196,6 +196,16 @@ html, body {
   z-index: 1201;
 }
 
+/* Asegurar que modal-backdrop no bloquee interacciones después de cerrar */
+.modal-backdrop {
+  z-index: 1200;
+}
+
+/* Forzar limpieza cuando el body no tiene modal abierto */
+body:not(.modal-open) .modal-backdrop {
+  display: none !important;
+}
+
 /* Imágenes en panel de moderación */
 .moderator-images {
   display: flex;
@@ -218,7 +228,56 @@ html, body {
   border-color: var(--color-primary);
 }
 
-/* Sidebar glassmorphism vibrante */
+/* 🚀 BOTÓN TOGGLE SIDEBAR - Diseño único con personalidad */
+.btn-toggle-sidebar {
+  position: fixed;
+  left: 400px;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 1100;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: 2px solid var(--color-primary);
+  background: rgba(14, 165, 233, 0.15);
+  backdrop-filter: var(--blur-glass);
+  -webkit-backdrop-filter: var(--blur-glass);
+  color: var(--color-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all var(--transition-smooth);
+  box-shadow: var(--shadow-lg), var(--shadow-glow);
+  font-size: 1.2rem;
+  animation: pulse-glow 3s ease-in-out infinite;
+}
+
+.btn-toggle-sidebar:hover {
+  background: var(--gradient-primary);
+  color: white;
+  transform: translateY(-50%) scale(1.15) rotate(180deg);
+  box-shadow: var(--shadow-xl), 0 0 40px rgba(14, 165, 233, 0.8);
+}
+
+.btn-toggle-sidebar i {
+  transition: transform var(--transition-smooth);
+}
+
+.btn-toggle-sidebar.collapsed i {
+  transform: rotate(180deg);
+}
+
+@keyframes pulse-glow {
+  0%, 100% {
+    box-shadow: var(--shadow-lg), 0 0 20px rgba(14, 165, 233, 0.5);
+  }
+  50% {
+    box-shadow: var(--shadow-lg), 0 0 35px rgba(14, 165, 233, 0.8);
+  }
+}
+
+/* Sidebar glassmorphism vibrante con estado colapsable */
 .sidebar {
   width: 380px;
   background: rgba(26, 26, 46, 0.95);
@@ -227,11 +286,27 @@ html, body {
   overflow-y: auto;
   border-radius: var(--radius-xl);
   border: 2px solid var(--color-border);
-  transition: all var(--transition-smooth);
+  transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
   box-shadow: var(--shadow-xl), var(--shadow-glow);
   padding: 0;
   animation: fadeIn 0.6s ease-out 0.2s both;
   position: relative;
+}
+
+/* Estado colapsado del sidebar */
+.sidebar[data-collapsed="true"] {
+  width: 70px;
+  overflow: visible;
+}
+
+.sidebar[data-collapsed="true"] .offcanvas-body > div {
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* Ajustar posición del botón cuando está colapsado */
+.sidebar[data-collapsed="true"] ~ .btn-toggle-sidebar {
+  left: 90px;
 }
 
 .sidebar::before {
@@ -241,8 +316,20 @@ html, body {
   left: 0;
   right: 0;
   height: 4px;
-  background: var(--gradient-primary);
+  background: linear-gradient(90deg, #0ea5e9, #06b6d4, #10b981, #06b6d4, #0ea5e9);
+  background-size: 200% 100%;
   border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+  animation: gradient-flow 3s ease infinite;
+  z-index: 10;
+}
+
+@keyframes gradient-flow {
+  0%, 100% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
 }
 
 .sidebar::-webkit-scrollbar {
@@ -294,6 +381,14 @@ html, body {
   color: #ffffff;
   box-shadow: inset 0 2px 4px rgba(0,0,0,0.3);
   font-weight: 500;
+  cursor: pointer;
+}
+
+.sidebar .form-control:hover, .sidebar .form-select:hover {
+  border-color: var(--color-primary);
+  background: rgba(255, 255, 255, 0.12);
+  transform: translateY(-1px);
+  box-shadow: inset 0 2px 4px rgba(0,0,0,0.3), 0 4px 8px rgba(14, 165, 233, 0.2);
 }
 
 .sidebar .form-control:focus, .sidebar .form-select:focus {
@@ -303,6 +398,7 @@ html, body {
   background: rgba(255, 255, 255, 0.12);
   transform: translateY(-2px);
   color: #ffffff;
+  cursor: text;
 }
 
 .sidebar .form-control::placeholder {
@@ -325,12 +421,33 @@ html, body {
   box-shadow: var(--shadow-md), var(--shadow-glow-cyan);
   color: white !important;
   text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+  position: relative;
+  overflow: hidden;
+}
+
+.sidebar .btn-secondary::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.3);
+  transform: translate(-50%, -50%);
+  transition: width 0.6s, height 0.6s;
+}
+
+.sidebar .btn-secondary:hover::before {
+  width: 300px;
+  height: 300px;
 }
 
 .sidebar .btn-secondary:hover {
   transform: translateY(-3px) scale(1.05);
-  box-shadow: var(--shadow-lg), var(--shadow-glow-cyan);
+  box-shadow: var(--shadow-lg), 0 0 30px rgba(249, 115, 22, 0.6);
   filter: brightness(1.2);
+  border-color: #fb923c;
 }
 
 /* Button group for view toggle */
@@ -387,8 +504,8 @@ html, body {
 
 /* Mapa con efecto moderno */
 #map {
-  flex: 1;
-  height: 100%;
+  flex: 0 0 85vh;
+  height: 85vh;
   border-radius: var(--radius-xl);
   overflow: hidden;
   box-shadow: var(--shadow-xl), var(--shadow-glow-cyan);
@@ -431,6 +548,11 @@ html, body {
     transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   }
 
+  /* Ocultar botón toggle en móvil */
+  .btn-toggle-sidebar {
+    display: none !important;
+  }
+
   .sidebar.active {
     transform: translateX(0);
     background: rgba(255, 255, 255, 0.98);
@@ -446,8 +568,8 @@ html, body {
   }
 
   #map {
-    height: 60vh; /* más espacio al mapa en tablet */
-    min-height: 360px;
+    height: 50vh; /* más espacio en tablet */
+    min-height: 300px;
     border-radius: var(--radius-md);
   }
 
@@ -472,8 +594,8 @@ html, body {
 
   #map {
     border-radius: 0;
-    height: 58vh; /* experiencia móvil optimizada */
-    min-height: 340px;
+    height: 50vh; /* más espacio en mobile */
+    min-height: 280px;
   }
 
   .sidebar {
@@ -531,11 +653,61 @@ html, body {
   }
 }
 
-/* Lista de spots - Vista lista */
+/* 🎨 Lista de spots - Diseño compacto y scrolleable con personalidad */
 .spot-list-view {
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-sm);
+  gap: 10px;
+  max-height: calc(100vh - 480px);
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding-right: 8px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-primary) rgba(255, 255, 255, 0.1);
+  position: relative;
+}
+
+/* Indicador de scroll al final de la lista */
+.spot-list-view::after {
+  content: '⬇ Desliza para ver más spots';
+  position: sticky;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 12px;
+  background: linear-gradient(to bottom, transparent, rgba(26, 26, 46, 0.98));
+  text-align: center;
+  font-size: 0.75rem;
+  color: var(--color-primary);
+  font-weight: 600;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+.spot-list-view:hover::after {
+  opacity: 1;
+}
+
+/* Scrollbar personalizado con estilo */
+.spot-list-view::-webkit-scrollbar {
+  width: 8px;
+}
+
+.spot-list-view::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 10px;
+}
+
+.spot-list-view::-webkit-scrollbar-thumb {
+  background: var(--gradient-primary);
+  border-radius: 10px;
+  transition: all 0.3s;
+}
+
+.spot-list-view::-webkit-scrollbar-thumb:hover {
+  background: var(--color-primary-hover);
+  box-shadow: 0 0 10px var(--color-primary);
 }
 
 /* Vista Grid tipo Pinterest */
@@ -556,13 +728,58 @@ html, body {
   cursor: pointer;
   border: 2px solid var(--color-border);
   border-radius: var(--radius-lg);
-  padding: var(--spacing-md);
+  padding: 12px;
   background: linear-gradient(135deg, rgba(26, 26, 46, 0.9) 0%, rgba(22, 33, 62, 0.9) 100%);
   transition: all var(--transition-smooth);
   margin-bottom: 0 !important;
   overflow: hidden;
   position: relative;
   box-shadow: var(--shadow-md);
+  min-height: 100px;
+}
+
+/* Versión compacta cuando está en lista */
+.spot-list-view .spot-card {
+  padding: 8px;
+  min-height: 75px;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.spot-list-view .spot-card img {
+  width: 70px;
+  height: 70px;
+  object-fit: cover;
+  border-radius: 8px;
+  flex-shrink: 0;
+}
+
+.spot-list-view .spot-card-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.spot-list-view .spot-card h6 {
+  font-size: 0.875rem;
+  margin-bottom: 4px;
+  line-height: 1.2;
+}
+
+.spot-list-view .spot-card p {
+  font-size: 0.75rem;
+  line-height: 1.3;
+  -webkit-line-clamp: 2;
+  margin-bottom: 4px;
+}
+
+.spot-list-view .spot-card small {
+  font-size: 0.7rem;
+}
+
+.spot-list-view .spot-card .badge {
+  padding: 2px 8px;
+  font-size: 0.65rem;
 }
 
 .spot-card::before {
@@ -579,13 +796,18 @@ html, body {
 }
 
 .spot-card:hover::before {
-  opacity: 0.1;
+  opacity: 0.15;
 }
 
 .spot-card:hover {
   border-color: var(--color-primary);
   transform: translateY(-4px) scale(1.02);
-  box-shadow: var(--shadow-lg), var(--shadow-glow);
+  box-shadow: var(--shadow-lg), 0 0 30px rgba(14, 165, 233, 0.5);
+  background: linear-gradient(135deg, rgba(30, 40, 70, 0.95) 0%, rgba(22, 33, 62, 0.95) 100%);
+}
+
+.spot-card:active {
+  transform: translateY(-2px) scale(1.01);
 }
 
 .spot-card > * {
@@ -696,8 +918,38 @@ html, body {
   background: var(--color-primary) !important;
   border-radius: var(--radius-sm);
   padding: 4px 10px;
-  font-weight: 500;
+  font-weight: 600;
   font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+/* Badges con colores según categoría */
+.spot-card .badge[data-category="mirador"],
+.spot-card .badge:contains("MIRADOR") {
+  background: linear-gradient(135deg, #f59e0b, #fb923c) !important;
+}
+
+.spot-card .badge[data-category="playa"] {
+  background: linear-gradient(135deg, #3b82f6, #60a5fa) !important;
+}
+
+.spot-card .badge[data-category="parque"],
+.spot-card .badge[data-category="naturaleza"] {
+  background: linear-gradient(135deg, #22c55e, #4ade80) !important;
+}
+
+.spot-card .badge[data-category="monumento"] {
+  background: linear-gradient(135deg, #8b5cf6, #a78bfa) !important;
+}
+
+.spot-card .badge[data-category="restaurante"] {
+  background: linear-gradient(135deg, #ef4444, #f87171) !important;
+}
+
+.spot-card .badge[data-category="cafe"] {
+  background: linear-gradient(135deg, #ec4899, #f472b6) !important;
 }
 
 /* Category chips vibrantes */
@@ -1146,8 +1398,8 @@ hr {
     top: auto !important;
     left: auto !important;
     height: 100% !important;
-    width: 360px !important;
-    max-width: 360px;
+    width: 380px !important;
+    max-width: 380px;
     box-shadow: var(--shadow-md);
     border-radius: var(--radius-lg);
     border: 1px solid var(--color-border);
@@ -1157,6 +1409,30 @@ hr {
     overflow-y: auto;
     padding: 0;
     display: block !important;
+  }
+
+  /* Estado colapsado en desktop */
+  .sidebar.offcanvas[data-collapsed="true"] {
+    width: 70px !important;
+    max-width: 70px;
+  }
+
+  /* Mostrar botón toggle solo en desktop */
+  .btn-toggle-sidebar {
+    display: flex !important;
+  }
+  
+  /* Animaciones de iconos en sidebar colapsado */
+  .sidebar[data-collapsed="true"]::after {
+    content: '⚡';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 24px;
+    opacity: 0.7;
+    animation: pulse 2s infinite;
+    pointer-events: none;
   }
 
   .sidebar.offcanvas .offcanvas-body {

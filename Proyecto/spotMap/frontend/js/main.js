@@ -1,8 +1,10 @@
 /**
  * main.js - Punto de entrada de la aplicación
  * Orquesta los módulos: map, spots, ui, auth, oauth
+ * Incluye manejo robusto de errores
  */
 
+// ===== IMPORTS CORE =====
 import { initMap } from './map.js';
 import { loadSpots, displaySpots, focusSpot } from './spots.js';
 import { getPending, approve, reject } from './supabaseSpots.js';
@@ -20,71 +22,72 @@ import { initOAuthButtons, handleOAuthCallback } from './oauth.js';
 import { Config, buildApiUrl } from './config.js';
 import { initMapPicker, initImagePreviews } from './spotMapPicker.js';
 import { initMapPickerModal } from './mapPickerModal.js';
+import { initSidebar } from './sidebar.js';
+
+// ===== ERROR HANDLING =====
+import { initGlobalErrorHandlers, safeAsync, logError } from './errorHandler.js';
 
 /**
  * Inicializar aplicación cuando el DOM esté listo
  */
 document.addEventListener('DOMContentLoaded', async () => {
-    console.log('[MAIN] Inicializando aplicación SpotMap...');
+    console.log('[MAIN] 🚀 Inicializando SpotMap v1.0.1-pro...');
 
     try {
-        // 0. Inicializar Supabase (si está configurado, si no usa API fallback)
+        // ===== FASE 0: SETUP CRÍTICO =====
+        console.log('[MAIN] Fase 0: Inicialización crítica...');
+        
+        // Inicializar manejadores globales de errores
+        initGlobalErrorHandlers();
+        
+        // 0.1 Inicializar Supabase (si está configurado, si no usa API fallback)
+        console.log('[MAIN] • Configurando Supabase...');
         await initSupabase();
 
-        // 0. Inicializar internacionalización
+        // 0.2 Inicializar internacionalización
+        console.log('[MAIN] • Inicializando i18n...');
         initI18n();
 
-        // 0.1 Inicializar sistema de temas
+        // 0.3 Inicializar sistema de temas
+        console.log('[MAIN] • Inicializando temas...');
         initTheme();
 
-        // 0.2 Inicializar sistema de autenticación
+        // ===== FASE 1: AUTENTICACIÓN =====
+        console.log('[MAIN] Fase 1: Sistema de autenticación...');
         initAuth();
-
-        // 0.3 Inicializar OAuth social login
         initOAuthButtons();
-        handleOAuthCallback(); // Procesar callback si viene de OAuth
+        handleOAuthCallback();
 
-        // 0.4 Inicializar sistema social
+        // ===== FASE 2: SISTEMAS SOCIALES Y COMPONENTES =====
+        console.log('[MAIN] Fase 2: Sistemas complementarios...');
         initSocial();
-
-        // 0.6 Inicializar selector de ubicación en mapa y previsualizaciones de imágenes
         initMapPicker();
         initImagePreviews();
-        
-        // 0.7 Inicializar modal de selección de ubicación
         initMapPickerModal();
+        initSidebar(); // 🎨 Inicializar sidebar colapsable
 
-        // 0.5 Registrar Service Worker (PWA) - DESACTIVADO (causa reloads múltiples)
-        // if ('serviceWorker' in navigator) {
-        //     navigator.serviceWorker.register('./sw.js')
-        //         .then(reg => console.log('[PWA] Service Worker registered:', reg))
-        //         .catch(err => console.warn('[PWA] Service Worker registration failed:', err));
-        // }
-
-        // 1. Inicializar mapa
+        // ===== FASE 3: MAPA (CRÍTICO) =====
+        console.log('[MAIN] Fase 3: Inicialización de mapa...');
         if (!initMap()) {
             throw new Error('No se pudo inicializar el mapa');
         }
 
-        // 2. Intentar obtener ubicación del usuario automáticamente
+        // ===== FASE 4: UI Y DATOS =====
+        console.log('[MAIN] Fase 4: Interfaz y datos...');
         enableAutoGeolocate();
-
-        // 3. Configurar interfaz de usuario
         setupUI();
 
-        // 3.5 Cargar favoritos del usuario logueado
+        // 4.1 Cargar favoritos del usuario
         const { loadUserFavorites } = await import('./social.js');
         await loadUserFavorites();
 
-        // 4. Mostrar skeleton y cargar spots
+        // 4.2 Cargar spots
         showSpotListLoading();
         const spots = await loadSpots();
-        
-        // Re-renderizar spots ahora que tenemos favoritos cargados
         displaySpots(spots, renderSpotList);
         
         if (spots.length === 0) {
-            console.warn('[MAIN] No hay spots en la base de datos');
+            console.warn('[MAIN] ⚠️ No hay spots en la BD - mostrando mensaje informativo');
             const list = document.getElementById('spot-list');
             if (list) {
                 list.innerHTML = `
@@ -97,37 +100,28 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
         }
 
-        // 5. Mostrar spots en mapa y sidebar
-        displaySpots(spots, renderSpotList);
-
-        // 5.1 Moderación: cargar pending si rol adecuado
+        // ===== FASE 5: ADVANCED =====
+        console.log('[MAIN] Fase 5: Funcionalidades avanzadas...');
         setupModerationPanel();
-
-        // 5.2 Realtime: suscribirse a cambios en spots
         setupRealtime();
-
-        // 5.3 Service Worker: listener de actualizaciones (desactivado temporalmente)
-        // if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
-        //     navigator.serviceWorker.addEventListener('controllerchange', () => {
-        //         showToast('Nueva versión disponible. Recargando...', 'info');
-        //         setTimeout(() => window.location.reload(), 1000);
-        //     });
-        // }
-
-        // 6. Actualizar categorías en filtro
         updateCategoryFilter(spots);
 
-        console.log('[MAIN] ✓ Aplicación inicializada correctamente');
-        showToast('Aplicación cargada correctamente', 'success', { autoCloseMs: 2500 });
+        // ===== COMPLETADO =====
+        console.log('[MAIN] ✅ Aplicación inicializada correctamente');
+        showToast('✅ Aplicación cargada', 'success', { autoCloseMs: 2500 });
 
     } catch (error) {
-        console.error('[MAIN] Error inicializando aplicación:', error);
-        showToast('Error iniciando aplicación: ' + error.message, 'error');
+        console.error('[MAIN] ❌ Error crítico en inicialización:', error);
+        logError('[MAIN] Initialization failed', error);
+        showToast('Error iniciando: ' + error.message, 'error');
+        
         const mapDiv = document.getElementById('map');
         if (mapDiv) {
             mapDiv.innerHTML = `
                 <div class="alert alert-danger m-3">
-                    Error iniciando la aplicación: ${error.message}
+                    <strong>❌ Error iniciando</strong><br/>
+                    ${error.message}<br/>
+                    <small class="text-muted">Comprueba la consola (F12) para más detalles</small>
                 </div>
             `;
         }

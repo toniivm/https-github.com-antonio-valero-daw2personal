@@ -173,7 +173,18 @@ async function handleLogin(e) {
                 await loadProfileRole();
                 updateUIForLoggedInUser(currentUser);
                 const modal = bootstrap.Modal.getInstance(document.getElementById('modalLogin'));
-                modal?.hide();
+                if (modal) {
+                    modal.hide();
+                    // Limpiar backdrop manualmente
+                    setTimeout(() => {
+                        document.querySelectorAll('.modal-backdrop').forEach(el => el.remove());
+                        document.body.classList.remove('modal-open');
+                        document.body.style.overflow = '';
+                        document.body.style.paddingRight = '';
+                        // Reinicializar mapa
+                        if (window.map) window.map.invalidateSize();
+                    }, 300);
+                }
                 showToast(`¡Bienvenido ${currentUser.email}!`, 'success');
             } catch (supabaseError) {
                 // Fallback a login local si Supabase falla
@@ -215,7 +226,18 @@ async function loginLocal(email, password) {
             await loadProfileRole();
             updateUIForLoggedInUser(currentUser);
             const modal = bootstrap.Modal.getInstance(document.getElementById('modalLogin'));
-            modal?.hide();
+            if (modal) {
+                modal.hide();
+                // Limpiar backdrop manualmente
+                setTimeout(() => {
+                    document.querySelectorAll('.modal-backdrop').forEach(el => el.remove());
+                    document.body.classList.remove('modal-open');
+                    document.body.style.overflow = '';
+                    document.body.style.paddingRight = '';
+                    // Reinicializar mapa
+                    if (window.map) window.map.invalidateSize();
+                }, 300);
+            }
             showToast(`¡Bienvenido ${currentUser.email}!`, 'success');
         }
     } catch (error) {
@@ -268,7 +290,18 @@ async function handleRegister(e) {
             });
             if (error) throw error;
             const modal = bootstrap.Modal.getInstance(document.getElementById('modalRegister'));
-            modal?.hide();
+            if (modal) {
+                modal.hide();
+                // Limpiar backdrop manualmente
+                setTimeout(() => {
+                    document.querySelectorAll('.modal-backdrop').forEach(el => el.remove());
+                    document.body.classList.remove('modal-open');
+                    document.body.style.overflow = '';
+                    document.body.style.paddingRight = '';
+                    // Reinicializar mapa
+                    if (window.map) window.map.invalidateSize();
+                }, 300);
+            }
             showToast('¡Cuenta creada! Revisa tu email para confirmar', 'success');
             document.getElementById('form-register').reset();
         } else {

@@ -503,7 +503,7 @@ function renderSpotCardList(spot) {
     const canEdit = isAuthenticated() && isAdmin;
     
     return `
-        <div class="spot-card" onclick="window.openSpotDetails(${JSON.stringify(spot).replace(/"/g, '&quot;')})">
+        <div class="spot-card" onclick="window.openSpotDetailsModal(${JSON.stringify(spot).replace(/"/g, '&quot;')})">
             ${imageHtml}
             <div class="spot-card-content">
                 <div class="spot-card-actions">
@@ -513,7 +513,7 @@ function renderSpotCardList(spot) {
                     <button type="button" class="btn-social btn-share" data-spot-id="${spot.id}" title="Compartir este lugar" onclick="event.stopPropagation()">
                         <i class="bi bi-share-fill"></i>
                     </button>
-                    <button type="button" class="btn-social btn-details" data-spot-id="${spot.id}" title="Ver detalles" onclick="event.stopPropagation(); window.openSpotDetails(${JSON.stringify(spot).replace(/"/g, '&quot;')})">
+                    <button type="button" class="btn-social btn-details" data-spot-id="${spot.id}" title="Ver detalles" onclick="event.stopPropagation(); window.openSpotDetailsModal(${JSON.stringify(spot).replace(/"/g, '&quot;')})">
                         <i class="bi bi-eye-fill"></i>
                     </button>
                     ${canEdit ? `
@@ -545,7 +545,7 @@ function renderSpotCardList(spot) {
                     </small>
                     <div>
                         ${spot.status === 'pending' ? '<span class="badge bg-warning text-dark">⏳ Pendiente</span>' : ''}
-                        ${spot.category ? `<span class="badge">${escapeHtml(spot.category)}</span>` : ''}
+                        ${spot.category ? `<span class="badge" data-category="${escapeHtml(spot.category.toLowerCase())}">${escapeHtml(spot.category)}</span>` : ''}
                     </div>
                 </div>
             </div>
@@ -571,7 +571,7 @@ function renderSpotCardGrid(spot) {
     const canEdit = isAuthenticated() && isAdmin;
     
     return `
-        <div class="spot-card spot-card-grid" onclick="window.openSpotDetails(${JSON.stringify(spot).replace(/"/g, '&quot;')})">
+        <div class="spot-card spot-card-grid" onclick="window.openSpotDetailsModal(${JSON.stringify(spot).replace(/"/g, '&quot;')})">
             ${imageHtml}
             <div class="spot-card-content">
                 <div class="spot-card-actions">
@@ -581,7 +581,7 @@ function renderSpotCardGrid(spot) {
                     <button type="button" class="btn-social btn-share" data-spot-id="${spot.id}" title="Compartir este lugar" onclick="event.stopPropagation()">
                         <i class="bi bi-share-fill"></i>
                     </button>
-                    <button type="button" class="btn-social btn-details" data-spot-id="${spot.id}" title="Ver detalles" onclick="event.stopPropagation(); window.openSpotDetails(${JSON.stringify(spot).replace(/"/g, '&quot;')})">
+                    <button type="button" class="btn-social btn-details" data-spot-id="${spot.id}" title="Ver detalles" onclick="event.stopPropagation(); window.openSpotDetailsModal(${JSON.stringify(spot).replace(/"/g, '&quot;')})">
                         <i class="bi bi-eye-fill"></i>
                     </button>
                     ${canEdit ? `
@@ -600,7 +600,7 @@ function renderSpotCardGrid(spot) {
                 </h6>
                 <div class="d-flex gap-1">
                     ${spot.status === 'pending' ? '<span class="badge bg-warning text-dark">⏳ Pendiente</span>' : ''}
-                    ${spot.category ? `<span class="badge">${escapeHtml(spot.category)}</span>` : ''}
+                    ${spot.category ? `<span class="badge" data-category="${escapeHtml(spot.category.toLowerCase())}">${escapeHtml(spot.category)}</span>` : ''}
                 </div>
             </div>
         </div>

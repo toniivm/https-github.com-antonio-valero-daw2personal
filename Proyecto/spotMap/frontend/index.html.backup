@@ -1,11 +1,11 @@
-<!doctype html>
+﻿<!doctype html>
 <html lang="es">
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="description" content="Discover and share amazing places around the world with SpotMap">
     <meta name="theme-color" content="#0ea5e9">
-    <title>📸 SpotMap – Descubre y comparte lugares</title>
+    <title>ðŸ“¸ SpotMap â€” Descubre y comparte lugares</title>
 
     <!-- Favicon -->
     <link rel="icon" type="image/svg+xml" href="icons/icon.svg">
@@ -25,8 +25,8 @@
     <!-- Estilos consolidados - Un solo archivo CSS optimizado -->
     <link rel="stylesheet" href="css/styles.css">
 
-    <!-- App Entry Point - main.js importa todos los módulos necesarios -->
-    <script defer type="module" src="js/main.js?v=20260128_004000"></script>
+    <!-- App Entry Point - main.js importa todos los mÃ³dulos necesarios -->
+    <script defer type="module" src="js/main.js?v=20260127_210634"></script>
     
     <!-- Bootstrap para componentes interactivos -->
     <script defer src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
@@ -35,16 +35,16 @@
   <body>
     <!-- Navbar con Auth -->
     <nav class="navbar px-3" role="navigation" aria-label="Barra principal">
-      <a class="navbar-brand" href="#" aria-label="Inicio SpotMap">📸 <span data-i18n="app.title">SpotMap</span></a>
+      <a class="navbar-brand" href="#" aria-label="Inicio SpotMap">ðŸ“¸ <span data-i18n="app.title">SpotMap</span></a>
       <div class="d-flex gap-2 align-items-center">
-        <button id="btn-language-toggle" class="btn btn-sm btn-outline-light" title="Change language">🇪🇸 ES</button>
-        <button id="btn-theme-toggle" class="btn btn-sm btn-outline-light" title="Toggle theme">🌙</button>
-        <button id="btn-toggle-sidebar" class="btn btn-sm d-lg-none" data-bs-toggle="offcanvas" data-bs-target="#sidebar" aria-controls="sidebar"><span data-i18n="nav.menu">☰ Menú</span></button>
-        <button id="btn-add-spot" class="btn btn-sm" data-i18n="nav.addSpot">+ Añadir Spot</button>
+        <button id="btn-language-toggle" class="btn btn-sm btn-outline-light" title="Change language">ðŸ‡ªðŸ‡¸ ES</button>
+        <button id="btn-theme-toggle" class="btn btn-sm btn-outline-light" title="Toggle theme">ðŸŒ™</button>
+        <button id="btn-toggle-sidebar" class="btn btn-sm d-lg-none" data-bs-toggle="offcanvas" data-bs-target="#sidebar" aria-controls="sidebar"><span data-i18n="nav.menu">â˜° MenÃº</span></button>
+        <button id="btn-add-spot" class="btn btn-sm" data-i18n="nav.addSpot">+ AÃ±adir Spot</button>
         
         <!-- Auth buttons (when logged out) -->
         <div id="auth-logged-out" class="d-flex gap-2">
-          <button id="btn-login" class="btn btn-sm btn-outline-light" data-bs-toggle="modal" data-bs-target="#modalLogin" data-i18n="nav.login">Iniciar Sesión</button>
+          <button id="btn-login" class="btn btn-sm btn-outline-light" data-bs-toggle="modal" data-bs-target="#modalLogin" data-i18n="nav.login">Iniciar SesiÃ³n</button>
           <button id="btn-register" class="btn btn-sm" data-bs-toggle="modal" data-bs-target="#modalRegister" data-i18n="nav.register">Registrarse</button>
         </div>
         
@@ -55,12 +55,12 @@
             <span id="user-name">Usuario</span>
           </button>
           <ul class="dropdown-menu dropdown-menu-end">
-            <li><a class="dropdown-item" href="#" id="btn-profile">👤 Mi Perfil</a></li>
-            <li><a class="dropdown-item" href="#" id="btn-my-spots">🗺️ Mis Spots</a></li>
-            <li><a class="dropdown-item" href="#" id="btn-favorites">❤️ Favoritos</a></li>
+            <li><a class="dropdown-item" href="#" id="btn-profile">ðŸ‘¤ Mi Perfil</a></li>
+            <li><a class="dropdown-item" href="#" id="btn-my-spots">ðŸ“ Mis Spots</a></li>
+            <li><a class="dropdown-item" href="#" id="btn-favorites">â¤ï¸ Favoritos</a></li>
             <li><hr class="dropdown-divider"></li>
-            <li><a class="dropdown-item" href="#" id="btn-settings">⚙️ Configuración</a></li>
-            <li><a class="dropdown-item text-danger" href="#" id="btn-logout">🚪 Cerrar Sesión</a></li>
+            <li><a class="dropdown-item" href="#" id="btn-settings">âš™ï¸ ConfiguraciÃ³n</a></li>
+            <li><a class="dropdown-item text-danger" href="#" id="btn-logout">ðŸšª Cerrar SesiÃ³n</a></li>
           </ul>
         </div>
       </div>
@@ -68,24 +68,19 @@
 
     <!-- Layout -->
     <main class="main-layout">
-      <!-- Botón Toggle Sidebar (solo desktop) -->
-      <button id="btn-toggle-sidebar-desktop" class="btn-toggle-sidebar" title="Colapsar/Expandir panel" aria-label="Toggle sidebar">
-        <i class="bi bi-chevron-left"></i>
-      </button>
-      
-      <!-- Panel Moderación (oculto si no moderador) -->
+      <!-- Panel ModeraciÃ³n (oculto si no moderador) -->
       <div id="moderation-panel" class="moderation-panel card shadow-sm" style="display:none; position:absolute; top:70px; right:10px; z-index:1000; width:320px; max-height:60vh; overflow:auto;">
         <div class="card-header d-flex justify-content-between align-items-center">
-          <strong>🛡️ Moderación</strong>
-          <button id="btn-close-moderation" class="btn btn-sm btn-outline-secondary">✖</button>
+          <strong>ðŸ›¡ï¸ ModeraciÃ³n</strong>
+          <button id="btn-close-moderation" class="btn btn-sm btn-outline-secondary">âœ–</button>
         </div>
         <div class="card-body p-2">
           <div id="pending-count" class="small text-muted mb-2">Pending: ...</div>
           <div id="pending-list" class="list-group small"></div>
         </div>
       </div>
-      <!-- Sidebar (responsive offcanvas en móvil, sidebar fijo en escritorio) -->
-      <aside class="offcanvas offcanvas-start sidebar" tabindex="-1" id="sidebar" aria-labelledby="sidebarLabel" role="complementary" aria-label="Panel lateral de filtros y lista" data-collapsed="false">
+      <!-- Sidebar (responsive offcanvas en mÃ³vil, sidebar fijo en escritorio) -->
+      <aside class="offcanvas offcanvas-start sidebar" tabindex="-1" id="sidebar" aria-labelledby="sidebarLabel" role="complementary" aria-label="Panel lateral de filtros y lista">
         <div class="offcanvas-header d-lg-none">
           <h5 class="offcanvas-title mb-0" id="sidebarLabel">Explorar Spots</h5>
           <button type="button" class="btn-close text-reset" data-bs-dismiss="offcanvas" aria-label="Cerrar"></button>
@@ -101,7 +96,7 @@
                     <path d="M2.5 12a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5zm0-4a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5zm0-4a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5z"/>
                   </svg>
                 </button>
-                <button type="button" class="btn btn-outline-primary" id="btn-view-grid" title="Vista cuadrícula">
+                <button type="button" class="btn btn-outline-primary" id="btn-view-grid" title="Vista cuadrÃ­cula">
                   <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
                     <path d="M1 2.5A1.5 1.5 0 0 1 2.5 1h3A1.5 1.5 0 0 1 7 2.5v3A1.5 1.5 0 0 1 5.5 7h-3A1.5 1.5 0 0 1 1 5.5v-3zm8 0A1.5 1.5 0 0 1 10.5 1h3A1.5 1.5 0 0 1 15 2.5v3A1.5 1.5 0 0 1 13.5 7h-3A1.5 1.5 0 0 1 9 5.5v-3zm-8 8A1.5 1.5 0 0 1 2.5 9h3A1.5 1.5 0 0 1 7 10.5v3A1.5 1.5 0 0 1 5.5 15h-3A1.5 1.5 0 0 1 1 13.5v-3zm8 0A1.5 1.5 0 0 1 10.5 9h3a1.5 1.5 0 0 1 1.5 1.5v3a1.5 1.5 0 0 1-1.5 1.5h-3A1.5 1.5 0 0 1 9 13.5v-3z"/>
                   </svg>
@@ -110,16 +105,16 @@
             </div>
             
             <label for="search-spot" class="visually-hidden">Buscar spots</label>
-            <input id="search-spot" class="form-control mb-3" placeholder="🔍 Buscar lugares..." aria-label="Buscar spots por título, descripción o categoría">
+            <input id="search-spot" class="form-control mb-3" placeholder="ðŸ” Buscar lugares..." aria-label="Buscar spots por tÃ­tulo, descripciÃ³n o categorÃ­a">
 
             <div id="category-chips" class="category-chips mb-3"></div>
 
-            <label for="filter-category" class="visually-hidden">Filtrar por categoría</label>
-            <select id="filter-category" class="form-select mb-3" aria-label="Filtrar por categoría">
-              <option value="all">Todas las categorías</option>
+            <label for="filter-category" class="visually-hidden">Filtrar por categorÃ­a</label>
+            <select id="filter-category" class="form-select mb-3" aria-label="Filtrar por categorÃ­a">
+              <option value="all">Todas las categorÃ­as</option>
             </select>
 
-            <button id="btn-geolocate" class="btn btn-secondary w-100 mb-3">📍 Mi Ubicación</button>
+            <button id="btn-geolocate" class="btn btn-secondary w-100 mb-3">ðŸ“ Mi UbicaciÃ³n</button>
 
             <hr>
             <div class="d-flex justify-content-between align-items-center mb-3">
@@ -140,33 +135,33 @@
       <div class="modal-dialog modal-lg" style="max-height: 90vh; margin: 1.75rem auto;">
         <div class="modal-content" style="max-height: 90vh; display: flex; flex-direction: column;">
           <div class="modal-header text-white">
-            <h5 class="modal-title">✨ Crear Nuevo Spot</h5>
+            <h5 class="modal-title">âœ¨ Crear Nuevo Spot</h5>
             <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
           </div>
           <form id="form-add-spot" novalidate style="display: flex; flex-direction: column; flex: 1; overflow: hidden;">
             <div class="modal-body" style="overflow-y: auto; flex: 1; max-height: calc(90vh - 120px);">
-              <!-- Instrucción importante -->
+              <!-- InstrucciÃ³n importante -->
               <div class="alert alert-info mb-4" role="note">
-                <strong>✓ Campos requeridos:</strong> Título, Latitud y Longitud
+                <strong>âœ“ Campos requeridos:</strong> TÃ­tulo, Latitud y Longitud
               </div>
 
-              <!-- SECCIÓN 1: INFORMACIÓN BÁSICA (REQUERIDO) -->
+              <!-- SECCIÃ“N 1: INFORMACIÃ“N BÃSICA (REQUERIDO) -->
               <div class="mb-4">
-                <h6 class="mb-3" style="color: var(--color-primary); font-weight: 600;">🗺️ Información Básica</h6>
+                <h6 class="mb-3" style="color: var(--color-primary); font-weight: 600;">ðŸ“ InformaciÃ³n BÃ¡sica</h6>
                 
                 <div class="mb-3">
                   <label class="form-label">
-                    <strong>Título del Spot</strong> <span class="text-danger">*</span>
+                    <strong>TÃ­tulo del Spot</strong> <span class="text-danger">*</span>
                   </label>
                   <input 
                     id="spot-title" 
                     class="form-control" 
-                    placeholder="Ej: Parque del Retiro, Monumento histórico, Café especial"
+                    placeholder="Ej: Parque del Retiro, Monumento histÃ³rico, CafÃ© especial"
                     required
                     minlength="3"
                     maxlength="255"
                   >
-                  <small class="form-text text-muted">Máximo 255 caracteres</small>
+                  <small class="form-text text-muted">MÃ¡ximo 255 caracteres</small>
                 </div>
 
                 <div class="row">
@@ -206,7 +201,7 @@
                     id="btn-geolocate-form" 
                     class="btn btn-sm btn-outline-primary w-100 mb-2"
                   >
-                    📍 Usar mi ubicación actual
+                    ðŸ“ Usar mi ubicaciÃ³n actual
                   </button>
                   <button 
                     type="button" 
@@ -215,36 +210,36 @@
                     data-bs-toggle="modal"
                     data-bs-target="#modalMapPicker"
                   >
-                    🗺️ Seleccionar en el mapa
+                    ðŸ—ºï¸ Seleccionar en el mapa
                   </button>
                 </div>
               </div>
 
-              <!-- Línea separadora -->
+              <!-- LÃ­nea separadora -->
               <hr>
 
-              <!-- SECCIÓN 2: DETALLES (OPCIONAL) -->
+              <!-- SECCIÃ“N 2: DETALLES (OPCIONAL) -->
               <div class="mb-4">
-                <h6 class="mb-3" style="color: var(--color-text-secondary); font-weight: 600;">📝 Detalles (Opcional)</h6>
+                <h6 class="mb-3" style="color: var(--color-text-secondary); font-weight: 600;">ðŸ“ Detalles (Opcional)</h6>
                 
                 <div class="mb-3">
-                  <label class="form-label">Descripción</label>
+                  <label class="form-label">DescripciÃ³n</label>
                   <textarea 
                     id="spot-description" 
                     class="form-control" 
                     rows="3" 
-                    placeholder="Describe el spot: qué es, qué lo hace especial, cuándo ir, etc."
+                    placeholder="Describe el spot: quÃ© es, quÃ© lo hace especial, cuÃ¡ndo ir, etc."
                     maxlength="1000"
                   ></textarea>
-                  <small class="form-text text-muted">Máximo 1000 caracteres</small>
+                  <small class="form-text text-muted">MÃ¡ximo 1000 caracteres</small>
                 </div>
 
                 <div class="mb-3">
-                  <label class="form-label">Categoría</label>
+                  <label class="form-label">CategorÃ­a</label>
                   <input 
                     id="spot-category" 
                     class="form-control" 
-                    placeholder="Ej: parque, monumento, café, restaurante, playa, mirador"
+                    placeholder="Ej: parque, monumento, cafÃ©, restaurante, playa, mirador"
                   >
                   <small class="form-text text-muted">Ayuda a otros a encontrar spots similares</small>
                 </div>
@@ -254,18 +249,18 @@
                   <input 
                     id="spot-tags" 
                     class="form-control" 
-                    placeholder="Ej: verde, familia, gratis, fotografía, naturaleza"
+                    placeholder="Ej: verde, familia, gratis, fotografÃ­a, naturaleza"
                   >
-                  <small class="form-text text-muted">Palabras clave para búsqueda</small>
+                  <small class="form-text text-muted">Palabras clave para bÃºsqueda</small>
                 </div>
               </div>
 
-              <!-- Línea separadora -->
+              <!-- LÃ­nea separadora -->
               <hr>
 
-              <!-- SECCIÓN 3: FOTOS (OPCIONAL) -->
+              <!-- SECCIÃ“N 3: FOTOS (OPCIONAL) -->
               <div class="mb-3">
-                <h6 class="mb-3" style="color: var(--color-text-secondary); font-weight: 600;">📸 Fotos del Spot (Opcional - Máximo 2)</h6>
+                <h6 class="mb-3" style="color: var(--color-text-secondary); font-weight: 600;">ðŸ“¸ Fotos del Spot (Opcional - MÃ¡ximo 2)</h6>
                 
                 <div class="mb-3">
                   <label class="form-label">Primera imagen</label>
@@ -276,7 +271,7 @@
                     accept="image/jpeg,image/png,image/webp,image/gif"
                   >
                   <small class="form-text text-muted d-block mt-1">
-                    ✓ Formatos: JPEG, PNG, WebP, GIF | Máximo: 5 MB
+                    âœ“ Formatos: JPEG, PNG, WebP, GIF | MÃ¡ximo: 5 MB
                   </small>
                   <div id="preview-photo-1" class="mt-2" style="display: none;">
                     <img src="" alt="Preview 1" style="max-width: 200px; max-height: 150px; border-radius: 4px;">
@@ -293,7 +288,7 @@
                     accept="image/jpeg,image/png,image/webp,image/gif"
                   >
                   <small class="form-text text-muted d-block mt-1">
-                    ✓ Formatos: JPEG, PNG, WebP, GIF | Máximo: 5 MB
+                    âœ“ Formatos: JPEG, PNG, WebP, GIF | MÃ¡ximo: 5 MB
                   </small>
                   <div id="preview-photo-2" class="mt-2" style="display: none;">
                     <img src="" alt="Preview 2" style="max-width: 200px; max-height: 150px; border-radius: 4px;">
@@ -302,9 +297,9 @@
                 </div>
               </div>
 
-              <!-- Resumen de validación -->
+              <!-- Resumen de validaciÃ³n -->
               <div class="alert alert-warning mt-3" role="alert" id="validation-summary" style="display: none;" aria-live="assertive">
-                <strong>⚠️ Verifica los datos:</strong>
+                <strong>âš ï¸ Verifica los datos:</strong>
                 <ul id="validation-list" class="mb-0 mt-2" style="list-style: none; padding-left: 0;"></ul>
               </div>
             </div>
@@ -312,7 +307,7 @@
             <div class="modal-footer">
               <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
               <button type="submit" class="btn btn-primary" id="btn-save-spot">
-                ✨ Crear Spot
+                âœ¨ Crear Spot
               </button>
             </div>
           </form>
@@ -325,25 +320,25 @@
       <div class="modal-dialog" style="max-width: 500px; margin: 1.75rem auto;">
         <div class="modal-content" style="max-height: 85vh; display: flex; flex-direction: column; overflow: hidden;">
           <div class="modal-header" style="flex-shrink: 0;">
-            <h5 class="modal-title" id="modalLoginLabel">🔐 Iniciar Sesión</h5>
+            <h5 class="modal-title" id="modalLoginLabel">ðŸ” Iniciar SesiÃ³n</h5>
             <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
           </div>
           <form id="form-login" style="display: flex; flex-direction: column; flex: 1; overflow: hidden;">
             <div class="modal-body" style="overflow-y: auto !important; flex: 1; -webkit-overflow-scrolling: touch;">
               <!-- Opciones OAuth Sociales -->
               <div class="mb-4">
-                <h6 class="text-center mb-3">Iniciar sesión con redes sociales</h6>
+                <h6 class="text-center mb-3">Iniciar sesiÃ³n con redes sociales</h6>
                 <div class="d-grid gap-2">
-                  <button type="button" class="btn btn-light oauth-btn" id="btn-login-google" aria-label="Iniciar sesión con Google">
+                  <button type="button" class="btn btn-light oauth-btn" id="btn-login-google" aria-label="Iniciar sesiÃ³n con Google">
                     <i class="bi bi-google"></i> Google
                   </button>
-                  <button type="button" class="btn btn-light oauth-btn" id="btn-login-facebook" aria-label="Iniciar sesión con Facebook">
+                  <button type="button" class="btn btn-light oauth-btn" id="btn-login-facebook" aria-label="Iniciar sesiÃ³n con Facebook">
                     <i class="bi bi-facebook"></i> Facebook
                   </button>
-                  <button type="button" class="btn btn-light oauth-btn" id="btn-login-twitter" aria-label="Iniciar sesión con X (Twitter)">
+                  <button type="button" class="btn btn-light oauth-btn" id="btn-login-twitter" aria-label="Iniciar sesiÃ³n con X (Twitter)">
                     <i class="bi bi-twitter"></i> X (Twitter)
                   </button>
-                  <button type="button" class="btn btn-light oauth-btn" id="btn-login-instagram" aria-label="Iniciar sesión con Instagram">
+                  <button type="button" class="btn btn-light oauth-btn" id="btn-login-instagram" aria-label="Iniciar sesiÃ³n con Instagram">
                     <i class="bi bi-instagram"></i> Instagram
                   </button>
                 </div>
@@ -357,9 +352,9 @@
                 <input type="email" class="form-control" id="login-email" required placeholder="tu@email.com" autocomplete="email">
               </div>
               <div class="mb-3">
-                <label for="login-password" class="form-label">Contraseña</label>
+                <label for="login-password" class="form-label">ContraseÃ±a</label>
                 <div class="input-group">
-                  <input type="password" class="form-control" id="login-password" required placeholder="•••••••••••••••" autocomplete="current-password">
+                  <input type="password" class="form-control" id="login-password" required placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢" autocomplete="current-password">
                   <button class="btn btn-outline-secondary" type="button" id="toggle-login-password">
                     <i class="bi bi-eye"></i>
                   </button>
@@ -372,17 +367,17 @@
                 </label>
               </div>
               <div class="text-center">
-                <a href="#" class="text-decoration-none" id="link-forgot-password">¿Olvidaste tu contraseña?</a>
+                <a href="#" class="text-decoration-none" id="link-forgot-password">Â¿Olvidaste tu contraseÃ±a?</a>
               </div>
               <hr>
               <div class="text-center">
-                <p class="mb-2">¿No tienes cuenta?</p>
+                <p class="mb-2">Â¿No tienes cuenta?</p>
                 <a href="#" class="text-decoration-none fw-bold" id="link-to-register" data-bs-toggle="modal" data-bs-target="#modalRegister">Crear cuenta nueva</a>
               </div>
             </div>
             <div class="modal-footer" style="flex-shrink: 0;">
               <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-              <button type="submit" class="btn btn-primary">Iniciar Sesión</button>
+              <button type="submit" class="btn btn-primary">Iniciar SesiÃ³n</button>
             </div>
           </form>
         </div>
@@ -394,21 +389,21 @@
       <div class="modal-dialog modal-lg" style="max-width: 700px; margin: 1.75rem auto;">
         <div class="modal-content" style="height: 80vh; display: flex; flex-direction: column; overflow: hidden;">
           <div class="modal-header" style="flex-shrink: 0;">
-            <h5 class="modal-title" id="modalMapPickerLabel">📍 Seleccionar ubicación en el mapa</h5>
+            <h5 class="modal-title" id="modalMapPickerLabel">ðŸ“ Seleccionar ubicaciÃ³n en el mapa</h5>
             <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
           </div>
           
           <div class="modal-body" style="flex: 1; padding: 0; position: relative; overflow: hidden;">
             <div id="location-picker-map" style="width: 100%; height: 100%; border-radius: 4px;"></div>
             <div style="position: absolute; top: 10px; left: 10px; background: rgba(0,0,0,0.7); color: white; padding: 10px 15px; border-radius: 4px; z-index: 1000; font-size: 14px;">
-              <i class="bi bi-info-circle me-2"></i>Haz clic en el mapa para marcar la ubicación
+              <i class="bi bi-info-circle me-2"></i>Haz clic en el mapa para marcar la ubicaciÃ³n
             </div>
           </div>
 
           <div class="modal-footer" style="flex-shrink: 0;">
             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
             <button type="button" class="btn btn-success" id="btn-confirm-location" disabled>
-              ✓ Confirmar ubicación
+              âœ”ï¸ Confirmar ubicaciÃ³n
             </button>
           </div>
         </div>
@@ -420,7 +415,7 @@
       <div class="modal-dialog" style="max-width: 500px; margin: 1.75rem auto;">
         <div class="modal-content" style="max-height: 85vh; display: flex; flex-direction: column; overflow: hidden;">
           <div class="modal-header" style="flex-shrink: 0;">
-            <h5 class="modal-title" id="modalRegisterLabel">✨ Crear Cuenta</h5>
+            <h5 class="modal-title" id="modalRegisterLabel">âœ¨ Crear Cuenta</h5>
             <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
           </div>
           <form id="form-register" style="display: flex; flex-direction: column; flex: 1; overflow: hidden;">
@@ -434,19 +429,19 @@
                 <input type="email" class="form-control" id="register-email" required placeholder="tu@email.com" autocomplete="email">
               </div>
               <div class="mb-3">
-                <label for="register-password" class="form-label">Contraseña</label>
+                <label for="register-password" class="form-label">ContraseÃ±a</label>
                 <div class="input-group">
-                  <input type="password" class="form-control" id="register-password" required placeholder="Mínimo 6 caracteres" autocomplete="new-password">
+                  <input type="password" class="form-control" id="register-password" required placeholder="MÃ­nimo 6 caracteres" autocomplete="new-password">
                   <button class="btn btn-outline-secondary" type="button" id="toggle-register-password">
                     <i class="bi bi-eye"></i>
                   </button>
                 </div>
-                <small class="form-text">Mínimo 6 caracteres</small>
+                <small class="form-text">MÃ­nimo 6 caracteres</small>
               </div>
               <div class="mb-3">
-                <label for="register-password-confirm" class="form-label">Confirmar contraseña</label>
+                <label for="register-password-confirm" class="form-label">Confirmar contraseÃ±a</label>
                 <div class="input-group">
-                  <input type="password" class="form-control" id="register-password-confirm" required placeholder="Repite tu contraseña" autocomplete="new-password">
+                  <input type="password" class="form-control" id="register-password-confirm" required placeholder="Repite tu contraseÃ±a" autocomplete="new-password">
                   <button class="btn btn-outline-secondary" type="button" id="toggle-register-password-confirm">
                     <i class="bi bi-eye"></i>
                   </button>
@@ -455,13 +450,13 @@
               <div class="form-check mb-3">
                 <input class="form-check-input" type="checkbox" id="register-terms" required>
                 <label class="form-check-label" for="register-terms">
-                  Acepto los <a href="#" class="text-decoration-none">Términos y Condiciones</a>
+                  Acepto los <a href="#" class="text-decoration-none">TÃ©rminos y Condiciones</a>
                 </label>
               </div>
               <hr>
               <div class="text-center">
-                <p class="mb-2">¿Ya tienes cuenta?</p>
-                <a href="#" class="text-decoration-none fw-bold" id="link-to-login" data-bs-toggle="modal" data-bs-target="#modalLogin">Iniciar sesión</a>
+                <p class="mb-2">Â¿Ya tienes cuenta?</p>
+                <a href="#" class="text-decoration-none fw-bold" id="link-to-login" data-bs-toggle="modal" data-bs-target="#modalLogin">Iniciar sesiÃ³n</a>
               </div>
             </div>
             <div class="modal-footer" style="flex-shrink: 0;">
@@ -473,14 +468,14 @@
       </div>
     </div>
 
-    <!-- Footer - Oculto para dar más espacio al mapa -->
+    <!-- Footer - Oculto para dar mÃ¡s espacio al mapa -->
     <footer class="app-footer" style="display: none;">
       <div class="container-fluid">
         <div class="row g-4">
           <!-- Columna 1: Sobre SpotMap -->
           <div class="col-12 col-md-4">
-            <h5 class="footer-title">📸 SpotMap</h5>
-            <p class="footer-text">Descubre y comparte lugares increíbles. Conecta con una comunidad de exploradores.</p>
+            <h5 class="footer-title">ðŸ“¸ SpotMap</h5>
+            <p class="footer-text">Descubre y comparte lugares increÃ­bles. Conecta con una comunidad de exploradores.</p>
             <div class="social-links">
               <a href="https://instagram.com" target="_blank" aria-label="Instagram" class="social-link">
                 <i class="bi bi-instagram"></i>
@@ -502,7 +497,7 @@
             <h6 class="footer-subtitle">Explora</h6>
             <ul class="footer-menu">
               <li><a href="about.html">Acerca de</a></li>
-              <li><a href="faq.html">Cómo funciona</a></li>
+              <li><a href="faq.html">CÃ³mo funciona</a></li>
               <li><a href="blog.html">Blog</a></li>
               <li><a href="#">Comunidad</a></li>
             </ul>
@@ -524,7 +519,7 @@
             <h6 class="footer-subtitle">Legal</h6>
             <ul class="footer-menu">
               <li><a href="privacy.html">Privacidad</a></li>
-              <li><a href="terms.html">Términos de uso</a></li>
+              <li><a href="terms.html">TÃ©rminos de uso</a></li>
               <li><a href="privacy.html#cookies">Cookies</a></li>
               <li><a href="about.html#licenses">Licencias</a></li>
             </ul>
@@ -547,8 +542,8 @@
         <hr class="footer-divider">
 
         <div class="footer-bottom">
-          <p class="mb-0">© 2026 SpotMap. Todos los derechos reservados.</p>
-          <p class="mb-0 text-muted small">Hecho con ❤️ para exploradores</p>
+          <p class="mb-0">Â© 2026 SpotMap. Todos los derechos reservados.</p>
+          <p class="mb-0 text-muted small">Hecho con â¤ï¸ para exploradores</p>
         </div>
       </div>
     </footer>
@@ -594,3 +589,4 @@
     </script>
   </body>
 </html>
+

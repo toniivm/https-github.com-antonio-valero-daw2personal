@@ -1,12 +1,14 @@
 /**
  * spots.js - Gestión de operaciones CRUD de spots
  * Módulo responsable de crear, leer, actualizar y eliminar spots
+ * ✅ Incluye manejo robusto de errores y validaciones
  */
 
 import * as mapModule from './map.js';
 import { apiFetch } from './api.js';
 import { Cache } from './cache.js';
 import { getApproved, createSpotRecord } from './supabaseSpots.js';
+import { logError, validateData } from './errorHandler.js';
 
 /**
  * Cargar todos los spots de la API
@@ -38,22 +40,48 @@ export async function loadSpots({ forceRefresh = false } = {}) {
  * @param {Function} renderListCallback - Función para renderizar lista
  */
 export function displaySpots(spots, renderListCallback) {
-    if (!spots || !Array.isArray(spots)) {
-        console.warn('[SPOTS] Array de spots inválido');
+    // Validar entrada
+    const validSpots = validateData(spots, 'array', []);
+    const validCallback = validateData(renderListCallback, 'function', null);
+    
+    if (validSpots.length === 0) {
+        console.warn('[SPOTS] Array de spots vacío o inválido');
+        // Aún renderizar para mostrar estado vacío
+        if (validCallback) {
+            validCallback([]);
+        }
         return;
     }
 
-    mapModule.clearAllMarkers();
+    try {
+        // Limpiar marcadores anteriores
+        mapModule.clearAllMarkers();
 
-    spots.forEach(spot => {
-        mapModule.addMarker(spot);
-    });
+        // Agregar marcadores de spots válidos
+        let validCount = 0;
+        validSpots.forEach(spot => {
+            try {
+                // Validar que spot tenga lat/lng
+                if (typeof spot.lat !== 'number' || typeof spot.lng !== 'number') {
+                    throw new Error(`Spot ${spot.id} sin coordenadas válidas`);
+                }
+                mapModule.addMarker(spot);
+                validCount++;
+            } catch (spotError) {
+                logError(`[SPOTS] Error agregando marcador`, spotError, { spotId: spot?.id });
+            }
+        });
 
-    if (renderListCallback && typeof renderListCallback === 'function') {
-        renderListCallback(spots);
+        // Renderizar lista si callback existe
+        if (validCallback) {
+            validCallback(validSpots);
+        }
+
+        console.log(`[SPOTS] ✓ ${validCount}/${validSpots.length} spots mostrados correctamente`);
+    } catch (error) {
+        logError('[SPOTS] Error en displaySpots', error, { spotsCount: validSpots.length });
+        // No re-lanzar, permitir que la app continúe
     }
-
-    console.log(`[SPOTS] ✓ ${spots.length} spots mostrados`);
 }
 
 /**
@@ -65,33 +93,62 @@ export function displaySpots(spots, renderListCallback) {
  */
 export async function createSpot(spotData, photoFile1 = null, photoFile2 = null) {
   try {
-    if (!spotData.title || !spotData.title.trim()) throw new Error('El título es requerido');
-    if (isNaN(spotData.lat) || isNaN(spotData.lng)) throw new Error('Latitud y longitud inválidas');
-    if (spotData.lat < -90 || spotData.lat > 90) throw new Error('Latitud debe estar entre -90 y 90');
-    if (spotData.lng < -180 || spotData.lng > 180) throw new Error('Longitud debe estar entre -180 y 180');
+    // Validar datos básicos
+    const title = validateData(spotData?.title, 'string', '').trim();
+    if (!title) throw new Error('El título es requerido y no puede estar vacío');
     
-    // Validar imágenes
-    if (photoFile1) {
-      const maxSize = 5 * 1024 * 1024;
-      if (photoFile1.size > maxSize) throw new Error('La primera foto no puede exceder 5MB');
-      const validTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
-      if (!validTypes.includes(photoFile1.type)) throw new Error('Formato de la primera foto no válido');
+    const lat = parseFloat(spotData?.lat);
+    const lng = parseFloat(spotData?.lng);
+    
+    if (isNaN(lat) || isNaN(lng)) {
+      throw new Error('Latitud y longitud deben ser números válidos');
     }
-    if (photoFile2) {
-      const maxSize = 5 * 1024 * 1024;
-      if (photoFile2.size > maxSize) throw new Error('La segunda foto no puede exceder 5MB');
-      const validTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
-      if (!validTypes.includes(photoFile2.type)) throw new Error('Formato de la segunda foto no válido');
+    if (lat < -90 || lat > 90) {
+      throw new Error('Latitud debe estar entre -90 y 90');
+    }
+    if (lng < -180 || lng > 180) {
+      throw new Error('Longitud debe estar entre -180 y 180');
     }
     
-    console.log('[SPOTS] Creando spot (Supabase/API):', spotData.title);
-    const created = await createSpotRecord(spotData, photoFile1, photoFile2);
-    if (!created) throw new Error('Error creando spot');
+    // Validar imágenes de forma consistente
+    const validateImage = (file, label) => {
+      if (!file) return null; // Opcional
+      const maxSize = 5 * 1024 * 1024;
+      if (file.size > maxSize) {
+        throw new Error(`${label} no puede exceder 5MB (actual: ${(file.size / 1024 / 1024).toFixed(2)}MB)`);
+      }
+      const validTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+      if (!validTypes.includes(file.type)) {
+        throw new Error(`${label} formato no válido. Use: JPEG, PNG, WebP o GIF`);
+      }
+      return file;
+    };
+
+    const validPhoto1 = validateImage(photoFile1, 'Primera foto');
+    const validPhoto2 = validateImage(photoFile2, 'Segunda foto');
+    
+    console.log(`[SPOTS] 📸 Creando spot: "${title}" en (${lat.toFixed(4)}, ${lng.toFixed(4)})`);
+    
+    // Llamar a Supabase o API
+    const created = await createSpotRecord(spotData, validPhoto1, validPhoto2);
+    
+    if (!created) {
+      throw new Error('Error inesperado: Spot no fue creado por el servidor');
+    }
+    
+    // Invalidar caché después de crear
     Cache.remove('spots');
+    
+    console.log(`[SPOTS] ✅ Spot creado exitosamente (ID: ${created.id})`);
     return created;
+    
   } catch (error) {
-    console.error('[SPOTS] Error creando spot:', error);
-    throw error;
+    logError('[SPOTS] Error creando spot', error, { 
+      title: spotData?.title,
+      hasPhoto1: !!photoFile1,
+      hasPhoto2: !!photoFile2
+    });
+    throw error; // Re-lanzar para que UI maneje
   }
 }
 
