@@ -51,6 +51,9 @@ class Security
      */
     public static function setSecurityHeaders()
     {
+        if (function_exists('header_remove')) {
+            header_remove('X-Powered-By');
+        }
         if (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') {
             header("Strict-Transport-Security: max-age=31536000; includeSubDomains; preload");
         }
@@ -60,6 +63,7 @@ class Security
         header("X-XSS-Protection: 1; mode=block");
         header("Referrer-Policy: strict-origin-when-cross-origin");
         header("Permissions-Policy: geolocation=(self), camera=()");
+        header("X-Permitted-Cross-Domain-Policies: none");
 
         // CSP dinámica
         Config::load();

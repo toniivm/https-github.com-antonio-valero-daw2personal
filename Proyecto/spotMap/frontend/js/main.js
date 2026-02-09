@@ -8,7 +8,7 @@
 import { initMap } from './map.js';
 import { loadSpots, displaySpots, focusSpot } from './spots.js';
 import { getPending, approve, reject } from './supabaseSpots.js';
-import { getCurrentRole, getAccessToken } from './auth.js';
+import { getCurrentRole, getAccessToken, isAuthenticated, getCurrentUser } from './auth.js';
 import { subscribeToSpots, supabaseAvailable, initSupabase, getClient as getSupabaseClient } from './supabaseClient.js';
 import * as mapModule from './map.js';
 import { setupUI, renderSpotList, updateCategoryFilter, enableAutoGeolocate, showSpotListLoading } from './ui.js';
@@ -148,7 +148,6 @@ window.openSpotDetailsModal = openSpotDetailsModal;
 // Función segura para eliminar spot con confirmación
 // Helper para verificar si un usuario puede borrar un spot
 window.canDeleteSpot = (spotId) => {
-    const { isAuthenticated, getCurrentUser } = require('./auth.js');
     if (!isAuthenticated()) return false;
     const spot = window.currentSpots?.find(s => s.id === spotId);
     if (!spot) return false;
@@ -214,7 +213,7 @@ window.addEventListener('online', () => {
 
 console.log('[MAIN] SpotMap ES6 modules loaded. Use window.debugInfo for debugging.');
 
-window.setupModerationPanel = async function setupModerationPanel() {
+async function setupModerationPanel() {
     const role = getCurrentRole();
     if (role !== 'moderator' && role !== 'admin') return;
     const listEl = document.getElementById('pending-list');
@@ -224,8 +223,11 @@ window.setupModerationPanel = async function setupModerationPanel() {
     closeBtn?.addEventListener('click', () => {
         document.getElementById('moderation-panel').style.display = 'none';
     });
+    window.refreshPending = () => refreshPending(listEl, countEl);
     await refreshPending(listEl, countEl);
-};
+}
+
+window.setupModerationPanel = setupModerationPanel;
 
 async function refreshPending(listEl, countEl) {
     listEl.innerHTML = '<div class="p-2 text-muted">Cargando pending...</div>';

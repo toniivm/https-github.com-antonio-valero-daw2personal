@@ -8,23 +8,31 @@ namespace SpotMap;
  */
 class Auth
 {
-    public static function requireUser(): array
+    public static function getBearerToken(): ?string
     {
-        // Apache no pasa HTTP_AUTHORIZATION por defecto, probamos varias fuentes
-        $hdr = $_SERVER['HTTP_AUTHORIZATION'] 
+        $hdr = $_SERVER['HTTP_AUTHORIZATION']
             ?? (function_exists('apache_request_headers') ? (apache_request_headers()['Authorization'] ?? '') : '')
             ?? (function_exists('getallheaders') ? (getallheaders()['Authorization'] ?? '') : '')
             ?? $_SERVER['REDIRECT_HTTP_AUTHORIZATION']
             ?? '';
 
         if (!str_starts_with($hdr, 'Bearer ')) {
+            return null;
+        }
+        return substr($hdr, 7);
+    }
+
+    public static function requireUser(): array
+    {
+        // Apache no pasa HTTP_AUTHORIZATION por defecto, probamos varias fuentes
+        $token = self::getBearerToken();
+        if (!$token) {
             if (function_exists('apache_request_headers')) {
                 error_log('[AUTH] Headers Apache: ' . print_r(apache_request_headers(), true));
             }
             error_log('[AUTH] _SERVER keys: ' . implode(', ', array_keys($_SERVER)));
             ApiResponse::unauthorized('Missing bearer token');
         }
-        $token = substr($hdr, 7);
         $user = self::fetchUser($token);
         if (!$user) {
             ApiResponse::unauthorized('Invalid or expired token');

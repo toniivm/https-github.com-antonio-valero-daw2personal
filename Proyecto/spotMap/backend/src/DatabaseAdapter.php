@@ -134,10 +134,31 @@ class DatabaseAdapter
         }
     }
 
-    public static function createSpot(array $data): array
+    public static function listSpotsByStatus(string $status, int $limit = 100, int $offset = 0, ?string $userToken = null): array
+    {
+        if (!self::useSupabase()) {
+            return ['error' => 'Pending list requires Supabase backend'];
+        }
+        try {
+            $spots = self::getClient()->listSpotsByStatus($status, $limit, $offset, $userToken);
+            return ['spots' => $spots, 'total' => count($spots)];
+        } catch (\Throwable $e) {
+            return ['error' => $e->getMessage()];
+        }
+    }
+
+    public static function getProfileRole(string $userId): ?string
+    {
+        if (!self::useSupabase()) {
+            return null;
+        }
+        return self::getClient()->getProfileRole($userId);
+    }
+
+    public static function createSpot(array $data, ?string $userToken = null): array
     {
         if (self::useSupabase()) {
-            return self::getClient()->createSpot($data);
+            return self::getClient()->createSpot($data, $userToken);
         } else {
             $pdo = self::getClient();
             $stmt = $pdo->prepare('
@@ -162,10 +183,10 @@ class DatabaseAdapter
         }
     }
 
-    public static function updateSpot(int $id, array $data): array
+    public static function updateSpot(int $id, array $data, ?string $userToken = null): array
     {
         if (self::useSupabase()) {
-            $result = self::getClient()->updateSpot($id, $data);
+            $result = self::getClient()->updateSpot($id, $data, $userToken);
             if (!$result) {
                 return ['error' => 'Update failed'];
             }
@@ -181,10 +202,10 @@ class DatabaseAdapter
         }
     }
 
-    public static function deleteSpot(int $id): array
+    public static function deleteSpot(int $id, ?string $userToken = null): array
     {
         if (self::useSupabase()) {
-            $success = self::getClient()->deleteSpot($id);
+            $success = self::getClient()->deleteSpot($id, $userToken);
             return $success ? ['success' => true] : ['error' => 'Delete failed'];
         } else {
             $pdo = self::getClient();
@@ -195,16 +216,16 @@ class DatabaseAdapter
     }
 
     /* ===== Extended Features (Supabase only) ===== */
-    public static function favorite(string $userId, int $spotId): array
+    public static function favorite(string $userId, int $spotId, ?string $userToken = null): array
     {
         if (!self::useSupabase()) return ['error' => 'Favorites unsupported'];
-        self::getClient()->favoriteSpot($userId, $spotId);
+        self::getClient()->favoriteSpot($userId, $spotId, $userToken);
         return ['success' => true];
     }
-    public static function unfavorite(string $userId, int $spotId): array
+    public static function unfavorite(string $userId, int $spotId, ?string $userToken = null): array
     {
         if (!self::useSupabase()) return ['error' => 'Favorites unsupported'];
-        self::getClient()->unfavoriteSpot($userId, $spotId);
+        self::getClient()->unfavoriteSpot($userId, $spotId, $userToken);
         return ['success' => true];
     }
     public static function favoritesOf(int $spotId): array
@@ -217,41 +238,41 @@ class DatabaseAdapter
         if (!self::useSupabase()) return [];
         return self::getClient()->listComments($spotId);
     }
-    public static function addComment(string $userId, int $spotId, string $body): array
+    public static function addComment(string $userId, int $spotId, string $body, ?string $userToken = null): array
     {
         if (!self::useSupabase()) return ['error' => 'Comments unsupported'];
-        return self::getClient()->addComment($userId, $spotId, $body);
+        return self::getClient()->addComment($userId, $spotId, $body, $userToken);
     }
-    public static function deleteComment(int $commentId): array
+    public static function deleteComment(int $commentId, ?string $userToken = null): array
     {
         if (!self::useSupabase()) return ['error' => 'Comments unsupported'];
-        self::getClient()->deleteComment($commentId);
+        self::getClient()->deleteComment($commentId, $userToken);
         return ['success' => true];
     }
-    public static function rate(string $userId, int $spotId, int $score): array
+    public static function rate(string $userId, int $spotId, int $score, ?string $userToken = null): array
     {
         if (!self::useSupabase()) return ['error' => 'Ratings unsupported'];
-        return self::getClient()->rateSpot($userId, $spotId, $score);
+        return self::getClient()->rateSpot($userId, $spotId, $score, $userToken);
     }
     public static function ratingAggregate(int $spotId): array
     {
         if (!self::useSupabase()) return ['count' => 0, 'average' => 0];
         return self::getClient()->getRatingAggregate($spotId);
     }
-    public static function report(string $userId, int $spotId, string $reason): array
+    public static function report(string $userId, int $spotId, string $reason, ?string $userToken = null): array
     {
         if (!self::useSupabase()) return ['error' => 'Reports unsupported'];
-        return self::getClient()->reportSpot($userId, $spotId, $reason);
+        return self::getClient()->reportSpot($userId, $spotId, $reason, $userToken);
     }
-    public static function listReports(string $status = 'pending'): array
+    public static function listReports(string $status = 'pending', ?string $userToken = null): array
     {
         if (!self::useSupabase()) return [];
-        return self::getClient()->listReports($status);
+        return self::getClient()->listReports($status, $userToken);
     }
-    public static function moderateReport(int $reportId, string $newStatus, string $moderatorId, ?string $note = null): array
+    public static function moderateReport(int $reportId, string $newStatus, string $moderatorId, ?string $note = null, ?string $userToken = null): array
     {
         if (!self::useSupabase()) return ['error' => 'Reports unsupported'];
-        self::getClient()->moderateReport($reportId, $newStatus, $moderatorId, $note);
+        self::getClient()->moderateReport($reportId, $newStatus, $moderatorId, $note, $userToken);
         return ['success' => true];
     }
 }

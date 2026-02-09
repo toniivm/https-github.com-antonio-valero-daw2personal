@@ -22,7 +22,7 @@ class ApiResponseTest extends TestCase
         $out = ob_get_clean();
         $json = json_decode($out, true);
         $this->assertFalse($json['success']);
-        $this->assertEquals('Bad', $json['error']['message']);
-        $this->assertEquals(400, $json['error']['code']);
+        $this->assertEquals('Bad', $json['message']);
+        $this->assertEquals(400, $json['status']);
     }
 }

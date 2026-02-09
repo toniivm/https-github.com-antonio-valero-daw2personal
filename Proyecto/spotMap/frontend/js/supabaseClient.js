@@ -7,6 +7,8 @@
 
 let supabase = null;
 let isReady = false;
+let supportsStatusColumn = null;
+let supportsUserIdColumn = null;
 
 export async function initSupabase() {
   try {
@@ -31,6 +33,14 @@ export { supabase };
 
 export function supabaseAvailable() {
   return isReady && supabase !== null;
+}
+
+export function supportsStatus() {
+  return supportsStatusColumn !== false;
+}
+
+export function supportsUserId() {
+  return supportsUserIdColumn !== false;
 }
 
 export async function getSession() {
@@ -119,15 +129,41 @@ export async function fetchApprovedSpots({ limit = 50, offset = 0 } = {}) {
   try {
     const session = await getSession();
     const userId = session?.user?.id;
+    let supportsUserPending = fetchApprovedSpots._supportsUserPending ?? true;
+    let approved = [];
+    let err1 = null;
+    let count = null;
     
     // 1. Traer todos los spots approved (públicos)
-    const { data: approved, error: err1, count } = await supabase
-      .from('spots')
-      .select('*', { count: 'exact' })
-      .eq('status', 'approved')
-      .range(offset, offset + limit - 1)
-      .order('created_at', { ascending: false });
-    
+    if (supportsStatusColumn !== false) {
+      const res = await supabase
+        .from('spots')
+        .select('*', { count: 'exact' })
+        .eq('status', 'approved')
+        .range(offset, offset + limit - 1)
+        .order('created_at', { ascending: false });
+      approved = res.data || [];
+      err1 = res.error || null;
+      count = res.count ?? null;
+    }
+
+    if (err1 && String(err1.message || '').includes('column spots.status does not exist')) {
+      console.warn('[Supabase] status column missing, falling back to unfiltered spots');
+      supportsStatusColumn = false;
+      err1 = null;
+    }
+
+    if (supportsStatusColumn === false) {
+      const res = await supabase
+        .from('spots')
+        .select('*', { count: 'exact' })
+        .range(offset, offset + limit - 1)
+        .order('created_at', { ascending: false });
+      approved = res.data || [];
+      err1 = res.error || null;
+      count = res.count ?? null;
+    }
+
     if (err1) {
       console.error('[Supabase] Error fetchApprovedSpots', err1);
       return null;
@@ -135,7 +171,7 @@ export async function fetchApprovedSpots({ limit = 50, offset = 0 } = {}) {
     
     // 2. Si hay usuario logueado, también traer sus spots pending
     let userPending = [];
-    if (userId) {
+    if (userId && supportsUserPending && supportsStatusColumn !== false && supportsUserIdColumn !== false) {
       const { data: pending, error: err2 } = await supabase
         .from('spots')
         .select('*')
@@ -145,6 +181,17 @@ export async function fetchApprovedSpots({ limit = 50, offset = 0 } = {}) {
       
       if (!err2 && pending) {
         userPending = pending;
+      } else if (err2) {
+        const msg = String(err2?.message || '');
+        console.warn('[Supabase] Pending-by-user query failed, disabling for this session', msg);
+        if (msg.includes('column spots.user_id does not exist')) {
+          supportsUserIdColumn = false;
+        }
+        if (msg.includes('column spots.status does not exist')) {
+          supportsStatusColumn = false;
+        }
+        fetchApprovedSpots._supportsUserPending = false;
+        supportsUserPending = false;
       }
     }
     
@@ -166,11 +213,24 @@ export async function fetchApprovedSpots({ limit = 50, offset = 0 } = {}) {
 
 export async function createSpot(spot) {
   if (!supabaseAvailable()) return null;
-  const { data, error } = await supabase
+  const dataToInsert = { ...spot };
+  if (supportsStatusColumn === false) {
+    delete dataToInsert.status;
+  }
+  let { data, error } = await supabase
     .from('spots')
-    .insert(spot)
+    .insert(dataToInsert)
     .select('*')
     .single();
+  if (error && String(error.message || '').includes('column spots.status does not exist')) {
+    supportsStatusColumn = false;
+    delete dataToInsert.status;
+    ({ data, error } = await supabase
+      .from('spots')
+      .insert(dataToInsert)
+      .select('*')
+      .single());
+  }
   if (error) {
     console.error('[Supabase] Error creando spot', error);
     return null;

@@ -2,6 +2,11 @@
 
 ## 🚀 Acceso Rápido
 
+### Base REST (API principal)
+```
+http://localhost/https-github.com-antonio-valero-daw2personal/Proyecto/spotMap/backend/public/index.php
+```
+
 ### Interfaz Interactiva Swagger UI
 ```
 http://localhost/https-github.com-antonio-valero-daw2personal/Proyecto/spotMap/backend/public/api.php?docs
@@ -130,7 +135,7 @@ Para probar endpoints protegidos:
 
 ### Desarrollo (XAMPP Local)
 ```
-http://localhost/https-github.com-antonio-valero-daw2personal/Proyecto/spotMap/backend/public
+http://localhost/https-github.com-antonio-valero-daw2personal/Proyecto/spotMap/backend/public/index.php
 ```
 
 ### Producción

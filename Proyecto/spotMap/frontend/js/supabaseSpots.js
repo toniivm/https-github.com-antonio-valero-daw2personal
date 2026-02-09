@@ -1,5 +1,5 @@
 // supabaseSpots.js - Capa de acceso a spots con Supabase y fallback API
-import { supabaseAvailable, fetchApprovedSpots, listPendingSpots, approveSpot, rejectSpot, createSpot as sbCreateSpot, uploadSpotImage } from './supabaseClient.js';
+import { supabaseAvailable, supportsStatus, fetchApprovedSpots, listPendingSpots, approveSpot, rejectSpot, createSpot as sbCreateSpot, uploadSpotImage } from './supabaseClient.js';
 import { apiFetch } from './api.js';
 
 export async function getApproved({ forceRefresh = false } = {}) {
@@ -54,6 +54,24 @@ export async function getApproved({ forceRefresh = false } = {}) {
 
 export async function getPending() {
   if (!supabaseAvailable()) return [];
+  if (!supportsStatus()) {
+    console.warn('[supabaseSpots] Status column missing; pending list disabled');
+    return [];
+  }
+
+  // Prefer backend admin endpoint when available (uses service key on server)
+  try {
+    const { getAccessToken } = await import('./auth.js');
+    const token = await getAccessToken();
+    if (token) {
+      const res = await apiFetch('/api/admin/pending', { method: 'GET', token });
+      const spots = res?.data?.spots || res?.spots || [];
+      if (Array.isArray(spots)) return spots;
+    }
+  } catch (err) {
+    console.warn('[supabaseSpots] Admin pending via API failed, fallback Supabase:', err?.message);
+  }
+
   return await listPendingSpots();
 }
 
@@ -75,8 +93,8 @@ export async function createSpotRecord(data, photoFile1 = null, photoFile2 = nul
   });
   
   if (supabaseAvailable()) {
-    // Crear spot con status='pending' (moderación)
-    const base = { ...data, status: 'pending' };
+    // Crear spot con status='pending' (moderación) si la columna existe
+    const base = supportsStatus() ? { ...data, status: 'pending' } : { ...data };
     const created = await sbCreateSpot(base);
     if (!created) {
       console.error('[supabaseSpots] Error creando spot en Supabase');

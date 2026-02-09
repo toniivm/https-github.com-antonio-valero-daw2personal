@@ -33,13 +33,13 @@ class SupabaseClient
     /**
      * Realizar petición HTTP a Supabase REST API
      */
-    private function request(string $method, string $endpoint, $body = null): array
+    private function request(string $method, string $endpoint, $body = null, ?string $userToken = null): array
     {
         $url = rtrim($this->url, '/') . '/rest/v1/' . ltrim($endpoint, '/');
-        
+        $auth = $userToken ?: $this->key;
         $headers = [
             'apikey: ' . $this->key,
-            'Authorization: Bearer ' . $this->key,
+            'Authorization: Bearer ' . $auth,
             'Content-Type: application/json',
             'Prefer: return=representation'
         ];
@@ -65,12 +65,13 @@ class SupabaseClient
         return json_decode($response, true) ?? [];
     }
 
-    private function requestNoReturn(string $method, string $endpoint): int
+    private function requestNoReturn(string $method, string $endpoint, ?string $userToken = null): int
     {
         $url = rtrim($this->url, '/') . '/rest/v1/' . ltrim($endpoint, '/');
+        $auth = $userToken ?: $this->key;
         $headers = [
             'apikey: ' . $this->key,
-            'Authorization: Bearer ' . $this->key,
+            'Authorization: Bearer ' . $auth,
             'Content-Type: application/json'
         ];
         $ch = curl_init($url);
@@ -108,6 +109,19 @@ class SupabaseClient
         return $this->request('GET', $endpoint);
     }
 
+    public function listSpotsByStatus(string $status, int $limit = 100, int $offset = 0, ?string $userToken = null): array
+    {
+        $params = [
+            'select=*',
+            'status=eq.' . urlencode($status),
+            'order=created_at.desc',
+            'limit=' . $limit,
+            'offset=' . $offset
+        ];
+        $endpoint = $this->table . '?' . implode('&', $params);
+        return $this->request('GET', $endpoint, null, $userToken);
+    }
+
     /**
      * Obtener un spot por ID
      */
@@ -119,16 +133,16 @@ class SupabaseClient
     }
 
     /* Favorites */
-    public function favoriteSpot(string $userId, int $spotId): bool
+    public function favoriteSpot(string $userId, int $spotId, ?string $userToken = null): bool
     {
         $endpoint = $this->extraTables['favorites'];
-        $this->request('POST', $endpoint, ['user_id' => $userId, 'spot_id' => $spotId]);
+        $this->request('POST', $endpoint, ['user_id' => $userId, 'spot_id' => $spotId], $userToken);
         return true;
     }
-    public function unfavoriteSpot(string $userId, int $spotId): bool
+    public function unfavoriteSpot(string $userId, int $spotId, ?string $userToken = null): bool
     {
         $endpoint = $this->extraTables['favorites'] . "?user_id=eq.$userId&spot_id=eq.$spotId";
-        $this->request('DELETE', $endpoint);
+        $this->request('DELETE', $endpoint, null, $userToken);
         return true;
     }
     public function listFavorites(int $spotId): array
@@ -143,24 +157,24 @@ class SupabaseClient
         $endpoint = $this->extraTables['comments'] . "?spot_id=eq.$spotId&select=*&order=created_at.asc";
         return $this->request('GET', $endpoint);
     }
-    public function addComment(string $userId, int $spotId, string $body): array
+    public function addComment(string $userId, int $spotId, string $body, ?string $userToken = null): array
     {
         $endpoint = $this->extraTables['comments'];
-        $res = $this->request('POST', $endpoint, ['user_id' => $userId, 'spot_id' => $spotId, 'body' => $body]);
+        $res = $this->request('POST', $endpoint, ['user_id' => $userId, 'spot_id' => $spotId, 'content' => $body], $userToken);
         return $res[0] ?? $res;
     }
-    public function deleteComment(int $commentId): bool
+    public function deleteComment(int $commentId, ?string $userToken = null): bool
     {
         $endpoint = $this->extraTables['comments'] . "?id=eq.$commentId";
-        $this->request('DELETE', $endpoint);
+        $this->request('DELETE', $endpoint, null, $userToken);
         return true;
     }
 
     /* Ratings */
-    public function rateSpot(string $userId, int $spotId, int $score): array
+    public function rateSpot(string $userId, int $spotId, int $score, ?string $userToken = null): array
     {
         $endpoint = $this->extraTables['ratings'];
-        $res = $this->request('POST', $endpoint, ['user_id' => $userId, 'spot_id' => $spotId, 'score' => $score]);
+        $res = $this->request('POST', $endpoint, ['user_id' => $userId, 'spot_id' => $spotId, 'score' => $score], $userToken);
         return $res[0] ?? $res;
     }
     public function getRatingAggregate(int $spotId): array
@@ -173,18 +187,18 @@ class SupabaseClient
     }
 
     /* Reports */
-    public function reportSpot(string $userId, int $spotId, string $reason): array
+    public function reportSpot(string $userId, int $spotId, string $reason, ?string $userToken = null): array
     {
         $endpoint = $this->extraTables['reports'];
-        $res = $this->request('POST', $endpoint, ['user_id' => $userId, 'spot_id' => $spotId, 'reason' => $reason]);
+        $res = $this->request('POST', $endpoint, ['user_id' => $userId, 'spot_id' => $spotId, 'reason' => $reason], $userToken);
         return $res[0] ?? $res;
     }
-    public function listReports(string $status = 'pending'): array
+    public function listReports(string $status = 'pending', ?string $userToken = null): array
     {
         $endpoint = $this->extraTables['reports'] . "?status=eq.$status&select=*";
-        return $this->request('GET', $endpoint);
+        return $this->request('GET', $endpoint, null, $userToken);
     }
-    public function moderateReport(int $reportId, string $newStatus, string $moderatorId, ?string $note = null): bool
+    public function moderateReport(int $reportId, string $newStatus, string $moderatorId, ?string $note = null, ?string $userToken = null): bool
     {
         $endpoint = $this->extraTables['reports'] . "?id=eq.$reportId";
         $this->request('PATCH', $endpoint, [
@@ -192,41 +206,41 @@ class SupabaseClient
             'moderated_by' => $moderatorId,
             'moderated_at' => date('c'),
             'moderation_note' => $note
-        ]);
+        ], $userToken);
         return true;
     }
 
     /**
      * Crear nuevo spot
      */
-    public function createSpot(array $data): array
+    public function createSpot(array $data, ?string $userToken = null): array
     {
         // Convertir tags a JSON si es array
         if (isset($data['tags']) && is_array($data['tags'])) {
             $data['tags'] = json_encode($data['tags']);
         }
 
-        $result = $this->request('POST', $this->table, $data);
+        $result = $this->request('POST', $this->table, $data, $userToken);
         return $result[0] ?? $result;
     }
 
     /**
      * Actualizar spot
      */
-    public function updateSpot(int $id, array $data): array
+    public function updateSpot(int $id, array $data, ?string $userToken = null): array
     {
         $endpoint = "{$this->table}?id=eq.{$id}";
-        $result = $this->request('PATCH', $endpoint, $data);
+        $result = $this->request('PATCH', $endpoint, $data, $userToken);
         return $result[0] ?? $result;
     }
 
     /**
      * Eliminar spot
      */
-    public function deleteSpot(int $id): bool
+    public function deleteSpot(int $id, ?string $userToken = null): bool
     {
         $endpoint = "{$this->table}?id=eq.{$id}";
-        $this->request('DELETE', $endpoint);
+        $this->request('DELETE', $endpoint, null, $userToken);
         return true;
     }
 
@@ -245,6 +259,16 @@ class SupabaseClient
     {
         $endpoint = 'spot_popularity?select=*';
         return $this->request('GET', $endpoint);
+    }
+
+    public function getProfileRole(string $userId): ?string
+    {
+        if ($userId === '') {
+            return null;
+        }
+        $endpoint = 'profiles?select=role&user_id=eq.' . urlencode($userId) . '&limit=1';
+        $result = $this->request('GET', $endpoint);
+        return $result[0]['role'] ?? null;
     }
 
     /* Global stats helpers */

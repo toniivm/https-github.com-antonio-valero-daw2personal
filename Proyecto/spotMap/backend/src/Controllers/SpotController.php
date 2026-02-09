@@ -6,6 +6,7 @@ use SpotMap\ApiResponse;
 use SpotMap\Validator;
 use SpotMap\Cache;
 use SpotMap\Auth;
+use SpotMap\Logger;
 
 class SpotController
 {
@@ -127,6 +128,7 @@ class SpotController
             
             // Auth requerido para crear
             $user = Auth::requireUser();
+            $token = Auth::getBearerToken();
             // Obtener datos: JSON o FormData
             $contentType = $_SERVER['CONTENT_TYPE'] ?? '';
             
@@ -181,8 +183,8 @@ class SpotController
                 'category' => isset($input['category']) ? trim($input['category']) : null,
                 'tags' => isset($input['tags']) && is_array($input['tags']) ? $input['tags'] : []
             ];
-            // Ownership
-            if (\SpotMap\Config::get('OWNERSHIP_ENABLED') && isset($user['id'])) {
+            // Ownership: always set when using Supabase
+            if (\SpotMap\DatabaseAdapter::useSupabase() && isset($user['id'])) {
                 $spotData['user_id'] = $user['id'];
             }
 
@@ -248,7 +250,7 @@ class SpotController
             ]);
 
             // Crear spot usando DatabaseAdapter
-            $result = DatabaseAdapter::createSpot($spotData);
+            $result = DatabaseAdapter::createSpot($spotData, $token);
 
             Logger::info("Spot creado", ['result' => $result]);
 
@@ -272,6 +274,7 @@ class SpotController
     {
         try {
             $user = Auth::requireUser();
+            $token = Auth::getBearerToken();
             if ($id <= 0) ApiResponse::error('Invalid ID', 400);
             $existing = DatabaseAdapter::getSpotById($id);
             if (isset($existing['error'])) ApiResponse::notFound('Spot not found');
@@ -291,7 +294,7 @@ class SpotController
                 $fields['tags'] = $input['tags'];
             }
             if (!$fields) ApiResponse::error('No fields to update', 400);
-            $updated = DatabaseAdapter::updateSpot($id, $fields);
+            $updated = DatabaseAdapter::updateSpot($id, $fields, $token);
             Cache::delete("spot_{$id}");
             Cache::flushPattern('spots_*');
             ApiResponse::success($updated, 'Spot updated');
@@ -366,6 +369,7 @@ class SpotController
         try {
             // Auth requerido para eliminar
             $user = Auth::requireUser();
+            $token = Auth::getBearerToken();
             if ($id <= 0) {
                 ApiResponse::error('Invalid ID', 400);
                 return;
@@ -398,7 +402,7 @@ class SpotController
             }
 
             // Eliminar de la base de datos
-            $result = DatabaseAdapter::deleteSpot($id);
+            $result = DatabaseAdapter::deleteSpot($id, $token);
 
             if (isset($result['error'])) {
                 ApiResponse::error($result['error'], 500);
@@ -422,6 +426,7 @@ class SpotController
         try {
             // Auth requerido para subir foto
             $user = Auth::requireUser();
+            $token = Auth::getBearerToken();
             if ($id <= 0) {
                 ApiResponse::error('Invalid ID', 400);
                 return;
@@ -511,7 +516,7 @@ class SpotController
             }
 
             // Actualizar base de datos
-            $result = DatabaseAdapter::updateSpot($id, ['image_path' => $relativePath]);
+            $result = DatabaseAdapter::updateSpot($id, ['image_path' => $relativePath], $token);
 
             if (isset($result['error'])) {
                 ApiResponse::error($result['error'], 500);

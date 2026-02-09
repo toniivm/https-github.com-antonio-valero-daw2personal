@@ -11,7 +11,7 @@
 
 SpotMap es una aplicación web **enterprise-ready** de mapeo colaborativo de puntos de interés. El proyecto ha atravesado 4 fases de desarrollo, pasando de un MVP a un sistema con:
 
-✅ **86+ tests** (50 backend + 36 frontend) - 100% pasando  
+✅ **Tests incluidos en repo** (backend)  
 ✅ **Seguridad empresarial** - Obfuscación, encriptación, anti-scraping  
 ✅ **Producción HTTPS/SSL** - CSP, HSTS, gzip, rate limiting  
 ✅ **Monitoring en tiempo real** - Logging, alertas, dashboard  
@@ -23,13 +23,11 @@ SpotMap es una aplicación web **enterprise-ready** de mapeo colaborativo de pun
 ### Fase 1: Testing & QA ✅
 **Objetivo:** Validar funcionalidad con tests automatizados
 
-- ✅ 50+ tests PHPUnit (backend)
-- ✅ 36 tests Jest (frontend)
-- ✅ 100% tasa de aprobación
-- ✅ ~75% cobertura de código
-- ✅ Integración con PHPStan (análisis estático)
+- ✅ Tests PHPUnit incluidos (backend)
+- ⚠️ Jest configurado, tests de frontend no incluidos en el repo
+- ⚠️ Cobertura no reportada en el repositorio
 
-**Archivos:** `backend/phpunit.xml.dist`, `frontend/jest.config.js`, `backend/tests/*`, `frontend/tests/*`
+**Archivos:** `backend/phpunit.xml.dist`, `frontend/jest.config.js`, `backend/tests/*`
 
 ### Fase 2: Seguridad Avanzada ✅
 **Objetivo:** Proteger el proyecto como "proyecto de la vida"
@@ -70,7 +68,7 @@ SpotMap es una aplicación web **enterprise-ready** de mapeo colaborativo de pun
 - ✅ Health checks automáticos
 - ✅ Alertas email + webhook
 
-**Archivos:** `backend/src/AdvancedLogger.php`, `backend/src/PerformanceMonitor.php`, `backend/src/ErrorTracker.php`, `backend/src/Controllers/MonitoringController.php`, `backend/public/monitoring.html`, `backend/cli-logs.php`, `backend/health-check.php`, `MONITORING.md`, `CLI_TOOLS.md`
+**Archivos:** `backend/src/AdvancedLogger.php`, `backend/src/PerformanceMonitor.php`, `backend/src/ErrorTracker.php`, `backend/src/Controllers/MonitoringController.php`, `backend/public/monitoring.html`, `backend/cli-logs.php`, `backend/health-check.php`, `backend/CLI_TOOLS.md`
 
 ---
 
@@ -81,16 +79,16 @@ SpotMap es una aplicación web **enterprise-ready** de mapeo colaborativo de pun
 |------|-------------|--------|--------|
 | **Backend** | 20+ clases PHP | 5000+ | ✅ |
 | **Frontend** | 18+ módulos JS | 3000+ | ✅ |
-| **Tests** | 86+ tests | 2000+ | ✅ |
+| **Tests** | 3 tests (backend) | N/A | ✅ |
 | **Seguridad** | 5 capas | 1000+ | ✅ |
 | **Monitoreo** | 8 componentes | 3100+ | ✅ |
 | **Documentación** | 10+ archivos | 1500+ | ✅ |
 | **TOTAL** | **~150+ archivos** | **~16,000** | **✅** |
 
 ### Cobertura
-- **Líneas testeadas:** ~4000+ (25% del código)
-- **Funciones cubiertas:** ~60+ (80%)
-- **Clases cubiertas:** ~35+ (90%)
+- **Líneas testeadas:** No reportado
+- **Funciones cubiertas:** No reportado
+- **Clases cubiertas:** No reportado
 
 ### Performance
 - **Requests/min:** 60 (rate limiting)
@@ -329,15 +327,15 @@ php backend/health-check.php
 
 | Documento | Propósito | Tamaño |
 |-----------|-----------|--------|
-| README.md | Descripción general | 256 líneas |
-| SETUP.md | Guía de instalación | 400+ líneas |
-| SECURITY.md | Detalles de seguridad | 300+ líneas |
-| DEPLOYMENT_GUIDE.md | Guía de despliegue | 400+ líneas |
-| MONITORING.md | Sistema de monitoreo | 300+ líneas |
-| CLI_TOOLS.md | Referencia de herramientas | 400+ líneas |
-| API_DOCUMENTATION.md | API REST | 500+ líneas |
-| TESTING.md | Guía de testing | 250+ líneas |
-| LICENSE | Licencia propietaria | 50+ líneas |
+| README.md | Descripción general | N/A |
+| SECURITY.md | Detalles de seguridad | N/A |
+| DEPLOYMENT_GUIDE.md | Guía de despliegue | N/A |
+| DOCKER.md | Docker y orquestación | N/A |
+| API_DOCUMENTATION.md | API REST | N/A |
+| PROJECT_OVERVIEW.md | Estado y arquitectura | N/A |
+| backend/CLI_TOOLS.md | Referencia de herramientas | N/A |
+| docs/SPOTMAP_DOCUMENTO_FINAL_PROYECTO.md | Documento final | N/A |
+| LICENSE | Licencia propietaria | N/A |
 
 ---
 
@@ -410,7 +408,7 @@ php backend/health-check.php
 | Disponibilidad | 99.9% | ✅ 99.9% |
 | Response time | < 100ms | ✅ 45-75ms |
 | Error rate | < 1% | ✅ 0.2% |
-| Test coverage | > 70% | ✅ 75% |
+| Test coverage | > 70% | ⚠️ No reportado |
 | OWASP score | A | ✅ A |
 | Uptime | 99.9% | ✅ 99.95% |
 

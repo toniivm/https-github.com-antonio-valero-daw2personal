@@ -18,6 +18,7 @@ require __DIR__ . '/../src/Metrics.php';
 require __DIR__ . '/../src/Cache.php';
 require __DIR__ . '/../src/Auth.php';
 require __DIR__ . '/../src/Roles.php';
+require __DIR__ . '/../src/Security.php';
 require __DIR__ . '/../src/Controllers/FavoritesController.php';
 require __DIR__ . '/../src/Controllers/CommentsController.php';
 require __DIR__ . '/../src/Controllers/RatingsController.php';
@@ -34,6 +35,7 @@ use SpotMap\Controllers\SpotController;
 use SpotMap\Metrics;
 use SpotMap\Cache;
 use SpotMap\Auth;
+use SpotMap\Security;
 use SpotMap\Controllers\FavoritesController;
 use SpotMap\Controllers\CommentsController;
 use SpotMap\Controllers\RatingsController;
@@ -43,6 +45,9 @@ use SpotMap\Controllers\AccountController;
 
 // Inicializar configuración
 Config::load();
+
+// Security headers (CSP, HSTS, etc)
+Security::setSecurityHeaders();
 
 // CORS mejorado
 $allowedOrigins = explode(',', Config::get('CORS_ORIGINS', 'http://localhost,http://localhost:3000'));
@@ -316,14 +321,14 @@ if ($uri === '/api/metrics/prometheus') {
 }
 
 // Admin reports listing
-if ($uri === '/api/admin/reports' && $method === 'GET') {
+if (($uri === '/api/admin/reports' || str_ends_with($uri, '/api/admin/reports')) && $method === 'GET') {
     $rep = new ReportsController();
     $rep->list();
     exit;
 }
 // Admin report moderation
-if ($method === 'POST' && preg_match('#^/api/admin/reports/(\d+)$#', $uri)) {
-    $reportId = (int)preg_replace('#^/api/admin/reports/(\d+)$#', '$1', $uri);
+if ($method === 'POST' && preg_match('#/api/admin/reports/(\d+)$#', $uri)) {
+    $reportId = (int)preg_replace('#^.*?/api/admin/reports/(\d+)$#', '$1', $uri);
     $rep = new ReportsController();
     $rep->moderate($reportId);
     exit;
@@ -343,9 +348,16 @@ if ($uri === '/api/account/delete' && $method === 'POST') {
     exit;
 }
 // Admin global stats
-if ($uri === '/api/admin/stats' && $method === 'GET') {
+if (($uri === '/api/admin/stats' || str_ends_with($uri, '/api/admin/stats')) && $method === 'GET') {
     $adm = new AdminController();
     $adm->stats();
+    exit;
+}
+
+// Admin pending spots
+if (($uri === '/api/admin/pending' || str_ends_with($uri, '/api/admin/pending')) && $method === 'GET') {
+    $adm = new AdminController();
+    $adm->pendingSpots();
     exit;
 }
 

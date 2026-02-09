@@ -50,6 +50,7 @@ export function initMap() {
         // Nota: El selector de ubicación ahora usa modal (mapPickerModal.js)
         // No es necesario listener aquí
 
+        window.map = map; // Expose for legacy callers (auth.js)
         console.log('[MAP] ✓ Mapa inicializado correctamente');
         return true;
     } catch (error) {

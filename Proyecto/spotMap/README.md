@@ -212,11 +212,14 @@ curl http://localhost/.../backend/public/index.php/api/status | jq
 
 ## 📚 Documentación
 
-- [`backend/SETUP.md`](./backend/SETUP.md) — Instalación paso a paso
-- [`backend/PLANETSCALE.md`](./backend/PLANETSCALE.md) — Guía PlanetScale
-- [`backend/MONITORING.md`](./backend/MONITORING.md) — Sistema de Monitoreo y Alertas
+- [`API_DOCUMENTATION.md`](./API_DOCUMENTATION.md) — Referencia de la API
+- [`PROJECT_OVERVIEW.md`](./PROJECT_OVERVIEW.md) — Estado y arquitectura
+- [`DEPLOYMENT_GUIDE.md`](./DEPLOYMENT_GUIDE.md) — Despliegue seguro
+- [`DOCKER.md`](./DOCKER.md) — Docker y orquestación
+- [`SECURITY.md`](./SECURITY.md) — Seguridad
 - [`backend/CLI_TOOLS.md`](./backend/CLI_TOOLS.md) — Herramientas de CLI
 - [`backend/init-db/schema.sql`](./backend/init-db/schema.sql) — Esquema de BD
+- [`docs/SPOTMAP_DOCUMENTO_FINAL_PROYECTO.md`](./docs/SPOTMAP_DOCUMENTO_FINAL_PROYECTO.md) — Documento final
 
 ## 📊 Monitoreo en Tiempo Real
 
@@ -253,7 +256,7 @@ php backend/health-check.php
 - **MonitoringController** — API REST para datos de monitoreo
 - **monitoring.html** — Dashboard visual profesional
 
-Ver [`backend/MONITORING.md`](./backend/MONITORING.md) y [`backend/CLI_TOOLS.md`](./backend/CLI_TOOLS.md) para documentación completa.
+Ver [`backend/CLI_TOOLS.md`](./backend/CLI_TOOLS.md) para documentación completa.
 
 ## 🐛 Troubleshooting
 
@@ -284,7 +287,7 @@ php backend\migrate.php up
 
 ## 🚢 Deploy
 
-Para producción, ver [`backend/SETUP.md`](./backend/SETUP.md) — Sección "Seguridad".
+Para producción, ver [`DEPLOYMENT_GUIDE.md`](./DEPLOYMENT_GUIDE.md) — Sección "Security Headers".
 
 Recomendaciones:
 - Usar BD gestionada (PlanetScale, Cloud SQL, RDS).

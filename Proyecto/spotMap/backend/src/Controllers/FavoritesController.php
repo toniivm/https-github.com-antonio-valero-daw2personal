@@ -11,8 +11,9 @@ class FavoritesController
     public function favorite(int $spotId): void
     {
         $user = Auth::requireUser();
+        $token = Auth::getBearerToken();
         if ($spotId <= 0) ApiResponse::error('Invalid spot', 400);
-        $res = DatabaseAdapter::favorite($user['id'], $spotId);
+        $res = DatabaseAdapter::favorite($user['id'], $spotId, $token);
         if (isset($res['error'])) ApiResponse::error($res['error'], 400);
         Cache::flushPattern('spots_*');
         ApiResponse::success($res, 'Favorited');
@@ -20,8 +21,9 @@ class FavoritesController
     public function unfavorite(int $spotId): void
     {
         $user = Auth::requireUser();
+        $token = Auth::getBearerToken();
         if ($spotId <= 0) ApiResponse::error('Invalid spot', 400);
-        $res = DatabaseAdapter::unfavorite($user['id'], $spotId);
+        $res = DatabaseAdapter::unfavorite($user['id'], $spotId, $token);
         if (isset($res['error'])) ApiResponse::error($res['error'], 400);
         Cache::flushPattern('spots_*');
         ApiResponse::success($res, 'Unfavorited');

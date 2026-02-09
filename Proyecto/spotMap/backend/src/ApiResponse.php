@@ -39,7 +39,9 @@ class ApiResponse
             header('Content-Type: application/json');
         }
         echo json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
-        exit;
+        if (!defined('SPOTMAP_TESTING') || SPOTMAP_TESTING !== true) {
+            exit;
+        }
     }
 
     public static function error($message = 'Error', $statusCode = 400, $errors = null, $meta = null)
@@ -61,7 +63,9 @@ class ApiResponse
             header('Content-Type: application/json');
         }
         echo json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
-        exit;
+        if (!defined('SPOTMAP_TESTING') || SPOTMAP_TESTING !== true) {
+            exit;
+        }
     }
 
     public static function notFound($message = 'Resource not found')
