@@ -2294,3 +2294,145 @@ hr {
   color: var(--color-text-primary) !important;
 }
 
+/* === Nuevos componentes de filtrado === */
+
+/* Tag Chips - etiquetas clicables */
+.tag-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.tag-chip {
+  padding: 6px 12px;
+  border-radius: 20px;
+  border: 1px solid var(--color-border);
+  background-color: transparent;
+  color: var(--color-text-primary);
+  cursor: pointer;
+  font-size: 0.85rem;
+  transition: all var(--transition-fast);
+  white-space: nowrap;
+}
+
+.tag-chip:hover {
+  border-color: var(--color-primary);
+  background-color: var(--color-primary-light);
+}
+
+.tag-chip.active {
+  background-color: var(--color-primary);
+  color: white;
+  border-color: var(--color-primary);
+}
+
+/* Distance filter container */
+#distance-filter-container {
+  padding: 12px;
+  border-radius: 10px;
+  background-color: rgba(14, 165, 233, 0.1);
+  border: 1px solid var(--color-border);
+  transition: all var(--transition-smooth);
+}
+
+/* Range slider personalizado */
+.form-range {
+  height: 6px;
+  border-radius: 3px;
+  background-color: var(--color-bg-card);
+}
+
+.form-range::-webkit-slider-thumb {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background-color: var(--color-primary);
+  border: 2px solid var(--color-bg);
+  cursor: pointer;
+  box-shadow: 0 0 8px rgba(14, 165, 233, 0.5);
+  transition: all var(--transition-fast);
+}
+
+.form-range::-webkit-slider-thumb:hover {
+  box-shadow: 0 0 12px rgba(14, 165, 233, 0.8);
+}
+
+.form-range::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background-color: var(--color-primary);
+  border: 2px solid var(--color-bg);
+  cursor: pointer;
+  box-shadow: 0 0 8px rgba(14, 165, 233, 0.5);
+}
+
+/* Spot card extra - rating y distancia */
+.spot-card-extra {
+  display: flex;
+  gap: 10px;
+  font-size: 0.85rem;
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid var(--color-border-light);
+}
+
+.spot-rating,
+.spot-distance {
+  color: var(--color-text-secondary);
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.spot-rating {
+  font-weight: 500;
+  color: var(--color-secondary);
+}
+
+.spot-distance {
+  color: var(--color-info);
+}
+
+/* Form validation */
+.form-control.is-invalid,
+.form-control.is-invalid:focus {
+  border-color: var(--color-danger);
+  background-image: none;
+}
+
+.form-control.is-invalid:focus {
+  box-shadow: 0 0 0 0.2rem rgba(239, 68, 68, 0.25);
+}
+
+.form-check-input:checked {
+  background-color: var(--color-primary);
+  border-color: var(--color-primary);
+}
+
+.form-check-input:focus {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 0.25rem rgba(14, 165, 233, 0.25);
+}
+
+/* Character count styling */
+#spot-title-count,
+#spot-description-count {
+  display: block;
+  margin-top: 4px;
+  font-size: 0.8rem;
+  color: var(--color-text-muted);
+}
+
+/* "My Spots" container (hidden by default, shown when authenticated) */
+#my-spots-container {
+  padding: 10px 0;
+  border-bottom: 1px solid var(--color-border-light);
+}
+
+/* Filter state transitions */
+.form-select,
+.form-control {
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast), background-color var(--transition-fast);
+}
+

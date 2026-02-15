@@ -11,14 +11,13 @@ namespace SpotMap\Controllers;
 
 use SpotMap\Logger;
 use SpotMap\ApiResponse;
+use SpotMap\Database;
 
 class MonitoringController {
     private $logger;
-    private $apiResponse;
 
     public function __construct() {
         $this->logger = Logger::getInstance();
-        $this->apiResponse = new \SpotMap\ApiResponse();
     }
 
     /**
@@ -27,14 +26,14 @@ class MonitoringController {
     public function getLogs() {
         // Require admin authentication
         if (!$this->isAdmin()) {
-            return $this->apiResponse->error('Unauthorized', 403);
+            ApiResponse::error('Unauthorized', 403);
         }
 
         $limit = (int)($_GET['limit'] ?? 100);
         $level = $_GET['level'] ?? null;
         $logs = $this->logger->getLogs($limit, $level);
 
-        return $this->apiResponse->success($logs);
+        ApiResponse::success($logs);
     }
 
     /**
@@ -42,11 +41,11 @@ class MonitoringController {
      */
     public function getMetrics() {
         if (!$this->isAdmin()) {
-            return $this->apiResponse->error('Unauthorized', 403);
+            ApiResponse::error('Unauthorized', 403);
         }
 
         $metrics = $this->logger->getMetricsSummary();
-        return $this->apiResponse->success($metrics);
+        ApiResponse::success($metrics);
     }
 
     /**
@@ -54,13 +53,13 @@ class MonitoringController {
      */
     public function getAlerts() {
         if (!$this->isAdmin()) {
-            return $this->apiResponse->error('Unauthorized', 403);
+            ApiResponse::error('Unauthorized', 403);
         }
 
         $limit = (int)($_GET['limit'] ?? 50);
         $alerts = $this->logger->getAlerts($limit);
 
-        return $this->apiResponse->success($alerts);
+        ApiResponse::success($alerts);
     }
 
     /**
@@ -84,7 +83,7 @@ class MonitoringController {
             ]
         ];
 
-        return $this->apiResponse->success($health);
+        ApiResponse::success($health);
     }
 
     /**
@@ -92,9 +91,8 @@ class MonitoringController {
      */
     private function getDatabaseHealth() {
         try {
-            $db = new \SpotMap\Database();
             $start = microtime(true);
-            $db->query("SELECT 1");
+            Database::pdo()->query("SELECT 1");
             $time = (microtime(true) - $start) * 1000;
 
             return [
@@ -140,40 +138,4 @@ class MonitoringController {
         $token = substr($token, 7);
         return hash_equals($adminToken, $token);
     }
-}
-
-// Route handling
-$method = $_SERVER['REQUEST_METHOD'];
-$path = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
-
-$controller = new MonitoringController();
-
-switch ($path) {
-    case '/api/monitoring/logs':
-        if ($method === 'GET') {
-            echo json_encode($controller->getLogs());
-        }
-        break;
-
-    case '/api/monitoring/metrics':
-        if ($method === 'GET') {
-            echo json_encode($controller->getMetrics());
-        }
-        break;
-
-    case '/api/monitoring/alerts':
-        if ($method === 'GET') {
-            echo json_encode($controller->getAlerts());
-        }
-        break;
-
-    case '/api/monitoring/health':
-        if ($method === 'GET') {
-            echo json_encode($controller->getHealth());
-        }
-        break;
-
-    default:
-        http_response_code(404);
-        echo json_encode(['error' => 'Not found']);
 }

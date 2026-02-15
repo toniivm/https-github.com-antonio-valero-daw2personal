@@ -2,6 +2,7 @@
 // Refactor: ahora usa index.php REST en lugar de api.php con parámetros action.
 // Utiliza detección dinámica del base path mediante config.js
 import { buildApiUrl, Config } from './config.js';
+import { logError } from './errorHandler.js';
 
 
 /**
@@ -80,7 +81,8 @@ export async function apiFetch(endpoint, {
       } else {
         payload = await response.text();
       }
-      const error = new Error(payload?.message || 'Error en la API');
+      const message = payload?.message || payload?.error?.message || payload?.error || payload || 'Error en la API';
+      const error = new Error(message);
       error.status = response.status;
       error.details = payload;
       throw error;
@@ -97,6 +99,7 @@ export async function apiFetch(endpoint, {
     if (err.name === 'AbortError') {
       throw new Error('La petición ha superado el tiempo límite');
     }
+    logError('[apiFetch] Request failed', err, { endpoint, method, timeout });
     console.error(`[apiFetch] Error en ${endpoint}:`, err);
     throw err;
   }

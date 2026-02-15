@@ -146,6 +146,14 @@ class SpotController
                 ApiResponse::error('Invalid request data', 400);
                 return;
             }
+
+            $hasUpload = (isset($_FILES['image1']) && $_FILES['image1']['error'] === UPLOAD_ERR_OK)
+                || (isset($_FILES['image2']) && $_FILES['image2']['error'] === UPLOAD_ERR_OK);
+            $hasImagePath = !empty($input['image_path']) || !empty($input['image_path_2']);
+            if (!$hasUpload && !$hasImagePath) {
+                ApiResponse::validation(['images' => ['Se requiere al menos una imagen']]);
+                return;
+            }
         
             // Parsear JSON fields si es necesario
             if (isset($input['tags']) && is_string($input['tags'])) {
@@ -183,8 +191,8 @@ class SpotController
                 'category' => isset($input['category']) ? trim($input['category']) : null,
                 'tags' => isset($input['tags']) && is_array($input['tags']) ? $input['tags'] : []
             ];
-            // Ownership: always set when using Supabase
-            if (\SpotMap\DatabaseAdapter::useSupabase() && isset($user['id'])) {
+            // Ownership: set whenever user id is available
+            if (isset($user['id'])) {
                 $spotData['user_id'] = $user['id'];
             }
 
@@ -278,12 +286,9 @@ class SpotController
             if ($id <= 0) ApiResponse::error('Invalid ID', 400);
             $existing = DatabaseAdapter::getSpotById($id);
             if (isset($existing['error'])) ApiResponse::notFound('Spot not found');
-            if (\SpotMap\Config::get('OWNERSHIP_ENABLED') && isset($existing['user_id']) && $existing['user_id'] !== ($user['id'] ?? null)) {
-                // Allow moderators/admins
-                $role = \SpotMap\Roles::getUserRole($user);
-                if (!in_array($role, ['moderator','admin'])) {
-                    ApiResponse::unauthorized('Not owner');
-                }
+            $role = \SpotMap\Roles::getUserRole($user);
+            if ($role !== 'admin') {
+                ApiResponse::unauthorized('Admin only');
             }
             $input = json_decode(file_get_contents('php://input'), true) ?? [];
             $fields = [];
@@ -383,9 +388,10 @@ class SpotController
                 return;
             }
 
-            // Ownership check
-            if (\SpotMap\Config::get('OWNERSHIP_ENABLED') && isset($spot['user_id']) && isset($user['id']) && $spot['user_id'] !== $user['id']) {
-                ApiResponse::unauthorized('Not owner of spot');
+            // Admin only
+            $role = \SpotMap\Roles::getUserRole($user);
+            if ($role !== 'admin') {
+                ApiResponse::unauthorized('Admin only');
             }
 
             // Eliminar imagen previa (Supabase Storage o local)

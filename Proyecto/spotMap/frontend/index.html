@@ -40,6 +40,8 @@
         <button id="btn-language-toggle" class="btn btn-sm btn-outline-light" title="Change language">🇪🇸 ES</button>
         <button id="btn-theme-toggle" class="btn btn-sm btn-outline-light" title="Toggle theme">🌙</button>
         <button id="btn-toggle-sidebar" class="btn btn-sm d-lg-none" data-bs-toggle="offcanvas" data-bs-target="#sidebar" aria-controls="sidebar"><span data-i18n="nav.menu">☰ Menú</span></button>
+        <!-- Botón de moderación (solo visible para moderadores) -->
+        <button id="btn-moderation-panel" class="btn btn-sm btn-warning" style="display: none; gap: 0.5rem; align-items: center;" title="Panel de moderación de spots">🛡️ Moderación</button>
         <button id="btn-add-spot" class="btn btn-sm" data-i18n="nav.addSpot">+ Añadir Spot</button>
         
         <!-- Auth buttons (when logged out) -->
@@ -119,6 +121,40 @@
               <option value="all">Todas las categorías</option>
             </select>
 
+            <!-- === NUEVOS FILTROS === -->
+            
+            <!-- Filtro por tags -->
+            <label for="filter-tag" class="form-label" style="font-weight: 500;">🏷️ Etiquetas</label>
+            <select id="filter-tag" class="form-select mb-3" aria-label="Filtrar por etiquetas">
+              <option value="all">Todas las etiquetas</option>
+            </select>
+
+            <!-- Tags chips (se generan dinámicamente) -->
+            <div id="tag-chips" class="tag-chips mb-3" aria-label="Selecciona etiquetas para filtrar"></div>
+
+            <!-- Filtro de distancia -->
+            <div class="mb-3">
+              <label for="filter-distance-toggle" class="form-check-label" style="font-weight: 500;">
+                <input type="checkbox" id="filter-distance-toggle" class="form-check-input">
+                📏 Filtrar por distancia
+              </label>
+              <div id="distance-filter-container" style="display: none; margin-top: 10px;">
+                <label for="filter-distance" class="form-label">
+                  Distancia máxima: <span id="filter-distance-value">50</span> km
+                </label>
+                <input type="range" id="filter-distance" class="form-range" min="1" max="200" value="50" aria-label="Ajusta la distancia máxima para filtrar">
+                <small class="form-text text-muted">Necesita activar tu ubicación</small>
+              </div>
+            </div>
+
+            <!-- Toggle "Mis Spots" (solo si autenticado) -->
+            <div class="mb-3" id="my-spots-container" style="display: none;">
+              <label for="toggle-my-spots" class="form-check-label">
+                <input type="checkbox" id="toggle-my-spots" class="form-check-input">
+                🗺️ Solo mis spots
+              </label>
+            </div>
+
             <button id="btn-geolocate" class="btn btn-secondary w-100 mb-3">📍 Mi Ubicación</button>
 
             <hr>
@@ -166,7 +202,7 @@
                     minlength="3"
                     maxlength="255"
                   >
-                  <small class="form-text text-muted">Máximo 255 caracteres</small>
+                  <small id="spot-title-count" class="form-text text-muted">0/255</small>
                 </div>
 
                 <div class="row">
@@ -236,7 +272,7 @@
                     placeholder="Describe el spot: qué es, qué lo hace especial, cuándo ir, etc."
                     maxlength="1000"
                   ></textarea>
-                  <small class="form-text text-muted">Máximo 1000 caracteres</small>
+                  <small id="spot-description-count" class="form-text text-muted">0/1000</small>
                 </div>
 
                 <div class="mb-3">

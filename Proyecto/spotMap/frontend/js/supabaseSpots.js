@@ -93,8 +93,24 @@ export async function createSpotRecord(data, photoFile1 = null, photoFile2 = nul
   });
   
   if (supabaseAvailable()) {
-    // Crear spot con status='pending' (moderación) si la columna existe
-    const base = supportsStatus() ? { ...data, status: 'pending' } : { ...data };
+    // Determinar status según rol del usuario
+    let status = 'pending'; // Por defecto: pending (necesita aprobación)
+    try {
+      const { getCurrentUser } = await import('./auth.js');
+      const user = getCurrentUser();
+      // Admins y moderadores crean spots directamente como 'approved'
+      if (user?.role === 'admin' || user?.role === 'moderator') {
+        status = 'approved';
+        console.log('[supabaseSpots] Usuario es', user.role, '-> status: approved');
+      } else {
+        console.log('[supabaseSpots] Usuario es usuario normal -> status: pending');
+      }
+    } catch (err) {
+      console.warn('[supabaseSpots] No se pudo determinar rol del usuario, usando pending');
+    }
+    
+    // Crear spot con status determinado
+    const base = supportsStatus() ? { ...data, status } : { ...data };
     const created = await sbCreateSpot(base);
     if (!created) {
       console.error('[supabaseSpots] Error creando spot en Supabase');
@@ -135,13 +151,26 @@ export async function createSpotRecord(data, photoFile1 = null, photoFile2 = nul
   
   // Fallback: API local con FormData
   console.log('[supabaseSpots] Supabase no disponible, usando API local');
+  
+  // Determinar status según rol del usuario
+  let status = 'pending';
+  try {
+    const { getCurrentUser } = await import('./auth.js');
+    const user = getCurrentUser();
+    if (user?.role === 'admin' || user?.role === 'moderator') {
+      status = 'approved';
+    }
+  } catch (err) {
+    console.warn('[supabaseSpots] No se pudo determinar rol del usuario');
+  }
+  
   const formData = new FormData();
   formData.append('title', data.title);
   formData.append('description', data.description || '');
   formData.append('lat', data.lat);
   formData.append('lng', data.lng);
   formData.append('category', data.category || '');
-  formData.append('status', 'pending');
+  formData.append('status', status);
   if (data.tags && Array.isArray(data.tags)) {
     formData.append('tags', JSON.stringify(data.tags));
   }

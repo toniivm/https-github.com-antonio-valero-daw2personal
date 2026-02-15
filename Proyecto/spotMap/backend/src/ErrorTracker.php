@@ -35,6 +35,9 @@ class ErrorTracker {
      * Handle errors
      */
     public function handleError($errno, $errstr, $errfile, $errline) {
+        if (!(error_reporting() & $errno)) {
+            return false;
+        }
         $errorType = $this->getErrorType($errno);
         
         $context = [
@@ -71,6 +74,10 @@ class ErrorTracker {
      * Handle exceptions
      */
     public function handleException(\Throwable $e) {
+        $debug = getenv('APP_DEBUG') === 'true';
+        if (class_exists('\\SpotMap\\Config')) {
+            $debug = $debug || (bool)\SpotMap\Config::get('DEBUG', false);
+        }
         $context = [
             'exception' => get_class($e),
             'file' => $e->getFile(),
@@ -90,12 +97,30 @@ class ErrorTracker {
             'timestamp' => time()
         ];
 
-        // Send error response
+        $errors = $debug ? [
+            'detail' => $e->getMessage(),
+            'exception' => get_class($e),
+            'file' => $e->getFile(),
+            'line' => $e->getLine(),
+            'trace' => $e->getTraceAsString()
+        ] : null;
+
+        if (class_exists('\\SpotMap\\ApiResponse')) {
+            \SpotMap\ApiResponse::serverError('Internal Server Error', $errors);
+            return;
+        }
+
+        if (ob_get_level() > 0) {
+            ob_clean();
+        }
         http_response_code(500);
+        if (!headers_sent()) {
+            header('Content-Type: application/json; charset=utf-8');
+        }
         echo json_encode([
             'error' => 'Internal Server Error',
             'code' => 500,
-            'message' => getenv('APP_DEBUG') === 'true' ? $e->getMessage() : null
+            'message' => $debug ? $e->getMessage() : null
         ]);
     }
 
@@ -109,7 +134,8 @@ class ErrorTracker {
             return;
         }
 
-        if ($error['type'] === E_FATAL_ERROR || $error['type'] === E_PARSE) {
+        $fatalTypes = [E_ERROR, E_PARSE, E_CORE_ERROR, E_COMPILE_ERROR];
+        if (in_array($error['type'], $fatalTypes, true)) {
             $this->handleError(
                 $error['type'],
                 $error['message'],

@@ -8,6 +8,7 @@ let pickerMap = null;
 let selectedMarker = null;
 let selectedLat = null;
 let selectedLng = null;
+let shouldRestoreAddSpot = false;
 
 /**
  * Inicializar el mapa del selector en el modal
@@ -26,6 +27,8 @@ export function initMapPickerModal() {
   // Evento al abrir el modal
   modalElement.addEventListener('show.bs.modal', function() {
     console.log('[MapPickerModal] Opening map picker modal');
+    const addModalEl = document.getElementById('modalAddSpot');
+    shouldRestoreAddSpot = addModalEl?.classList.contains('show') || false;
     
     // Crear el mapa si no existe
     if (!pickerMap) {
@@ -43,6 +46,25 @@ export function initMapPickerModal() {
     console.log('[MapPickerModal] Closing map picker modal');
     resetPicker();
   });
+
+  modalElement.addEventListener('hidden.bs.modal', function() {
+    if (shouldRestoreAddSpot) {
+      shouldRestoreAddSpot = false;
+      const addModalEl = document.getElementById('modalAddSpot');
+      if (addModalEl) {
+        const addModal = bootstrap.Modal.getOrCreateInstance(addModalEl);
+        setTimeout(() => {
+          addModal.show();
+        }, 150);
+      }
+    }
+  });
+
+  if (btnMapPicker) {
+    btnMapPicker.addEventListener('click', function() {
+      shouldRestoreAddSpot = true;
+    });
+  }
 
   // Botón confirmar ubicación
   btnConfirmLocation.addEventListener('click', function() {

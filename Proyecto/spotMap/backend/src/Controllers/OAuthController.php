@@ -11,11 +11,11 @@ use SpotMap\Security;
  */
 class OAuthController
 {
-    private Database $db;
+    private \PDO $db;
 
     public function __construct()
     {
-        $this->db = Database::getInstance();
+        $this->db = Database::pdo();
     }
 
     /**

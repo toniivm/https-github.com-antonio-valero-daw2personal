@@ -5,6 +5,7 @@
 
 import { showToast } from './notifications.js';
 import { getCurrentUser, isAuthenticated } from './auth.js';
+import { updateSpot } from './spots.js';
 
 // Storage de comentarios (localStorage para demo, luego Supabase)
 const COMMENTS_KEY = 'spotmap_comments';
@@ -174,9 +175,16 @@ export function openSpotDetailsModal(spot) {
     const commentCount = getComments(spot.id).length;
     
     // Validar datos del spot
-    const title = escapeHtml(spot.title || 'Sin título');
-    const description = escapeHtml(spot.description || 'Sin descripción');
-    const category = spot.category ? escapeHtml(spot.category) : 'Sin categoría';
+    const rawTitle = spot.title || 'Sin título';
+    const rawDescription = spot.description || 'Sin descripción';
+    const rawCategory = spot.category || '';
+    const rawTags = Array.isArray(spot.tags)
+        ? spot.tags.join(', ')
+        : (typeof spot.tags === 'string' ? spot.tags : '');
+
+    const title = escapeHtml(rawTitle);
+    const description = escapeHtml(rawDescription);
+    const category = rawCategory ? escapeHtml(rawCategory) : 'Sin categoría';
     const lat = (spot.lat || 0).toFixed(5);
     const lng = (spot.lng || 0).toFixed(5);
     
@@ -184,6 +192,10 @@ export function openSpotDetailsModal(spot) {
     const hasImage1 = spot.image_path && spot.image_path.trim();
     const hasImage2 = spot.image_path_2 && spot.image_path_2.trim();
     
+    const canManageSpot = typeof window.canEditSpot === 'function'
+        ? window.canEditSpot(spot.id)
+        : false;
+
     const modal = document.createElement('div');
     modal.className = 'modal fade';
     modal.id = `modalSpotDetails_${spot.id}`;
@@ -193,7 +205,7 @@ export function openSpotDetailsModal(spot) {
         <div class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable" style="max-height: 90vh;">
             <div class="modal-content bg-dark text-light" style="max-height: 90vh; overflow: hidden;">
                 <div class="modal-header border-secondary pb-3">
-                    <h5 class="modal-title text-white fw-bold">${title}</h5>
+                    <h5 class="modal-title text-white fw-bold" id="spot-title-${spot.id}">${title}</h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
                 </div>
                 <div class="modal-body" style="overflow-y: auto;">
@@ -203,12 +215,12 @@ export function openSpotDetailsModal(spot) {
                         <div class="row g-2">
                             ${hasImage1 ? `
                             <div class="col-12 ${hasImage2 ? 'col-md-6' : ''}">
-                                <img src="${spot.image_path}" alt="${title}" class="img-fluid rounded spot-image-preview" style="max-height: 200px; object-fit: cover; width: 100%; cursor: pointer;" onclick="window.openImageFullscreen('${spot.image_path}', '${title}')">
+                                <img id="spot-image-1-${spot.id}" src="${spot.image_path}" alt="${title}" class="img-fluid rounded spot-image-preview" style="max-height: 200px; object-fit: cover; width: 100%; cursor: pointer;" onclick="window.openImageFullscreen('${spot.image_path}', '${title}')">
                             </div>
                             ` : ''}
                             ${hasImage2 ? `
                             <div class="col-12 col-md-6">
-                                <img src="${spot.image_path_2}" alt="${title} - Imagen 2" class="img-fluid rounded spot-image-preview" style="max-height: 200px; object-fit: cover; width: 100%; cursor: pointer;" onclick="window.openImageFullscreen('${spot.image_path_2}', '${title} - Imagen 2')">
+                                <img id="spot-image-2-${spot.id}" src="${spot.image_path_2}" alt="${title} - Imagen 2" class="img-fluid rounded spot-image-preview" style="max-height: 200px; object-fit: cover; width: 100%; cursor: pointer;" onclick="window.openImageFullscreen('${spot.image_path_2}', '${title} - Imagen 2')">
                             </div>
                             ` : ''}
                         </div>
@@ -222,7 +234,7 @@ export function openSpotDetailsModal(spot) {
                     <!-- Información del spot -->
                     <div class="spot-detail-info mb-4">
                         <h6 class="text-primary fw-bold mb-2">Descripción</h6>
-                        <p class="spot-detail-description text-light">${description}</p>
+                        <p class="spot-detail-description text-light" id="spot-desc-${spot.id}">${description}</p>
                         
                         <h6 class="text-primary fw-bold mb-2 mt-3">Información</h6>
                         <div class="spot-detail-meta text-secondary">
@@ -232,7 +244,7 @@ export function openSpotDetailsModal(spot) {
                             </div>
                             <div class="mb-2">
                                 <i class="bi bi-tag-fill text-warning"></i> 
-                                <strong>Categoría:</strong> <span class="badge bg-primary">${category}</span>
+                                <strong>Categoría:</strong> <span class="badge bg-primary" id="spot-category-${spot.id}">${category}</span>
                             </div>
                             ${spot.created_at ? `
                             <div class="mb-2">
@@ -242,6 +254,47 @@ export function openSpotDetailsModal(spot) {
                             ` : ''}
                         </div>
                     </div>
+
+                    ${canManageSpot ? `
+                    <hr class="my-4 border-secondary">
+                    <div class="spot-edit-section">
+                        <h6 class="text-primary fw-bold mb-3">Editar spot</h6>
+                        <div class="mb-3">
+                            <label class="form-label">Título</label>
+                            <input id="edit-title-${spot.id}" class="form-control bg-secondary text-light border-secondary" value="${escapeHtml(rawTitle)}">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Descripción</label>
+                            <textarea id="edit-desc-${spot.id}" class="form-control bg-secondary text-light border-secondary" rows="3">${escapeHtml(rawDescription)}</textarea>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Categoría</label>
+                                <input id="edit-category-${spot.id}" class="form-control bg-secondary text-light border-secondary" value="${escapeHtml(rawCategory)}">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Etiquetas (coma)</label>
+                                <input id="edit-tags-${spot.id}" class="form-control bg-secondary text-light border-secondary" value="${escapeHtml(rawTags)}">
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Foto 1</label>
+                                <input id="edit-photo-1-${spot.id}" type="file" accept="image/*" class="form-control bg-secondary text-light border-secondary">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Foto 2</label>
+                                <input id="edit-photo-2-${spot.id}" type="file" accept="image/*" class="form-control bg-secondary text-light border-secondary">
+                            </div>
+                        </div>
+                        <div class="d-flex gap-2">
+                            <button class="btn btn-success btn-sm" onclick="window.submitSpotEdit(${spot.id})">
+                                <i class="bi bi-check2-circle"></i> Guardar cambios
+                            </button>
+                            <small class="text-muted align-self-center">En API local solo se reemplaza la Foto 1.</small>
+                        </div>
+                    </div>
+                    ` : ''}
 
                     <hr class="my-4 border-secondary">
 
@@ -293,6 +346,67 @@ export function openSpotDetailsModal(spot) {
         modal.remove();
     }
 }
+
+/**
+ * UI: Submit spot edit
+ */
+window.submitSpotEdit = async function(spotId) {
+    try {
+        const titleInput = document.getElementById(`edit-title-${spotId}`);
+        const descInput = document.getElementById(`edit-desc-${spotId}`);
+        const categoryInput = document.getElementById(`edit-category-${spotId}`);
+        const tagsInput = document.getElementById(`edit-tags-${spotId}`);
+        const photo1Input = document.getElementById(`edit-photo-1-${spotId}`);
+        const photo2Input = document.getElementById(`edit-photo-2-${spotId}`);
+
+        if (!titleInput || !descInput || !categoryInput || !tagsInput) {
+            showToast('No se pudieron leer los campos de edición', 'error');
+            return;
+        }
+
+        const title = titleInput.value.trim();
+        if (!title) {
+            showToast('El título es obligatorio', 'warning');
+            return;
+        }
+
+        const description = descInput.value.trim();
+        const category = categoryInput.value.trim();
+        const tagsRaw = tagsInput.value.trim();
+        const tags = tagsRaw ? tagsRaw.split(',').map(t => t.trim()).filter(Boolean) : [];
+
+        const photoFile1 = photo1Input?.files?.[0] || null;
+        const photoFile2 = photo2Input?.files?.[0] || null;
+
+        showToast('Guardando cambios...', 'info', { autoCloseMs: 1200 });
+
+        const updated = await updateSpot(spotId, { title, description, category, tags }, photoFile1, photoFile2);
+
+        // Refrescar UI principal
+        const { loadSpots, displaySpots } = await import('./spots.js');
+        const { renderSpotList } = await import('./ui.js');
+        const spots = await loadSpots({ forceRefresh: true });
+        displaySpots(spots, renderSpotList);
+
+        // Actualizar modal actual
+        const titleEl = document.getElementById(`spot-title-${spotId}`);
+        const descEl = document.getElementById(`spot-desc-${spotId}`);
+        const categoryEl = document.getElementById(`spot-category-${spotId}`);
+        if (titleEl) titleEl.textContent = updated?.title || title;
+        if (descEl) descEl.textContent = updated?.description || description || 'Sin descripción';
+        if (categoryEl) categoryEl.textContent = updated?.category || category || 'Sin categoría';
+
+        const img1 = document.getElementById(`spot-image-1-${spotId}`);
+        const img2 = document.getElementById(`spot-image-2-${spotId}`);
+        if (img1 && updated?.image_path) img1.src = updated.image_path;
+        if (img2 && updated?.image_path_2) img2.src = updated.image_path_2;
+
+        showToast('Spot actualizado ✅', 'success');
+    } catch (error) {
+        console.error('[COMMENTS] Error actualizando spot:', error);
+        showToast(error.message || 'Error actualizando spot', 'error');
+    }
+};
 
 /**
  * UI: Submit comment

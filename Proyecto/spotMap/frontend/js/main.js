@@ -7,11 +7,13 @@
 // ===== IMPORTS CORE =====
 import { initMap } from './map.js';
 import { loadSpots, displaySpots, focusSpot } from './spots.js';
+import * as spotsModule from './spots.js';
 import { getPending, approve, reject } from './supabaseSpots.js';
 import { getCurrentRole, getAccessToken, isAuthenticated, getCurrentUser } from './auth.js';
 import { subscribeToSpots, supabaseAvailable, initSupabase, getClient as getSupabaseClient } from './supabaseClient.js';
 import * as mapModule from './map.js';
-import { setupUI, renderSpotList, updateCategoryFilter, enableAutoGeolocate, showSpotListLoading } from './ui.js';
+import * as uiModule from './ui.js';
+import { setupUI, renderSpotList, updateCategoryFilter, updateTagFilter, enableAutoGeolocate, showSpotListLoading } from './ui.js';
 import { showToast } from './notifications.js';
 import { initAuth } from './auth.js';
 import { initSocial, isSpotLiked, toggleLike, openShareModal } from './social.js';
@@ -23,6 +25,7 @@ import { Config, buildApiUrl } from './config.js';
 import { initMapPicker, initImagePreviews } from './spotMapPicker.js';
 import { initMapPickerModal } from './mapPickerModal.js';
 import { initSidebar } from './sidebar.js';
+import { initModeration } from './moderation.js';
 
 // ===== ERROR HANDLING =====
 import { initGlobalErrorHandlers, safeAsync, logError } from './errorHandler.js';
@@ -102,9 +105,19 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         // ===== FASE 5: ADVANCED =====
         console.log('[MAIN] Fase 5: Funcionalidades avanzadas...');
-        setupModerationPanel();
+        initModeration();
         setupRealtime();
         updateCategoryFilter(spots);
+        updateTagFilter(spots);
+
+        // === EXPORTAR A WINDOW PARA DEBUG ===
+        window.spotsModule = spotsModule;
+        window.mapModule = mapModule;
+        window.uiModule = uiModule;
+        window.applyFilters = uiModule.applyFilters;
+        window.filterState = uiModule.filterState;
+        
+        console.log('[MAIN] 🐛 Debug tools disponibles: window.spotsModule, window.applyFilters, etc');
 
         // ===== COMPLETADO =====
         console.log('[MAIN] ✅ Aplicación inicializada correctamente');
@@ -149,12 +162,15 @@ window.openSpotDetailsModal = openSpotDetailsModal;
 // Helper para verificar si un usuario puede borrar un spot
 window.canDeleteSpot = (spotId) => {
     if (!isAuthenticated()) return false;
-    const spot = window.currentSpots?.find(s => s.id === spotId);
-    if (!spot) return false;
     const user = getCurrentUser();
-    const isAdmin = user?.role === 'admin' || user?.role === 'moderator';
-    const isOwner = spot.user_id === user?.id;
-    return isAdmin || isOwner;
+    return user?.role === 'admin';
+};
+
+// Solo admin puede editar
+window.canEditSpot = (spotId) => {
+    if (!isAuthenticated()) return false;
+    const user = getCurrentUser();
+    return user?.role === 'admin';
 };
 
 // Intentar parsear JSON tolerando respuestas concatenadas

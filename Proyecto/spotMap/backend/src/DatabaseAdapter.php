@@ -8,6 +8,7 @@ class DatabaseAdapter
 {
     private static $useSupabase = null;
     private static $supabase = null;
+    private static $hasUserIdColumn = null;
 
     public static function useSupabase(): bool
     {
@@ -161,11 +162,7 @@ class DatabaseAdapter
             return self::getClient()->createSpot($data, $userToken);
         } else {
             $pdo = self::getClient();
-            $stmt = $pdo->prepare('
-                INSERT INTO spots (title, description, latitude, longitude, tags, category, image_path)
-                VALUES (:title, :desc, :lat, :lng, :tags, :cat, :image_path)
-            ');
-            $stmt->execute([
+            $params = [
                 ':title' => $data['title'],
                 ':desc' => $data['description'] ?? null,
                 ':lat' => $data['lat'],
@@ -173,7 +170,22 @@ class DatabaseAdapter
                 ':tags' => isset($data['tags']) ? json_encode($data['tags']) : null,
                 ':cat' => $data['category'] ?? null,
                 ':image_path' => $data['image_path'] ?? null
-            ]);
+            ];
+
+            if (self::hasUserIdColumn() && isset($data['user_id'])) {
+                $stmt = $pdo->prepare('
+                    INSERT INTO spots (user_id, title, description, latitude, longitude, tags, category, image_path)
+                    VALUES (:user_id, :title, :desc, :lat, :lng, :tags, :cat, :image_path)
+                ');
+                $params[':user_id'] = $data['user_id'];
+            } else {
+                $stmt = $pdo->prepare('
+                    INSERT INTO spots (title, description, latitude, longitude, tags, category, image_path)
+                    VALUES (:title, :desc, :lat, :lng, :tags, :cat, :image_path)
+                ');
+            }
+
+            $stmt->execute($params);
             $id = (int)$pdo->lastInsertId();
             // Asegurar que lat/lng estén presentes en respuesta
             $out = array_merge(['id' => $id], $data);
@@ -181,6 +193,23 @@ class DatabaseAdapter
             if (!isset($out['lng']) && isset($data['longitude'])) $out['lng'] = (float)$data['longitude'];
             return $out;
         }
+    }
+
+    private static function hasUserIdColumn(): bool
+    {
+        if (self::$hasUserIdColumn !== null) {
+            return self::$hasUserIdColumn;
+        }
+
+        try {
+            $pdo = self::getClient();
+            $stmt = $pdo->query("SHOW COLUMNS FROM spots LIKE 'user_id'");
+            self::$hasUserIdColumn = (bool)$stmt->fetch();
+        } catch (\Throwable $e) {
+            self::$hasUserIdColumn = false;
+        }
+
+        return self::$hasUserIdColumn;
     }
 
     public static function updateSpot(int $id, array $data, ?string $userToken = null): array
@@ -193,8 +222,41 @@ class DatabaseAdapter
             return self::getSpotById($id);
         } else {
             $pdo = self::getClient();
-            $stmt = $pdo->prepare('UPDATE spots SET image_path = :path, updated_at = NOW() WHERE id = :id');
-            $success = $stmt->execute([':path' => $data['image_path'], ':id' => $id]);
+            $fields = [];
+            $params = [':id' => $id];
+
+            if (isset($data['title'])) {
+                $fields[] = 'title = :title';
+                $params[':title'] = $data['title'];
+            }
+            if (isset($data['description'])) {
+                $fields[] = 'description = :description';
+                $params[':description'] = $data['description'];
+            }
+            if (isset($data['category'])) {
+                $fields[] = 'category = :category';
+                $params[':category'] = $data['category'];
+            }
+            if (isset($data['tags'])) {
+                $fields[] = 'tags = :tags';
+                $params[':tags'] = is_array($data['tags']) ? json_encode($data['tags']) : $data['tags'];
+            }
+            if (isset($data['image_path'])) {
+                $fields[] = 'image_path = :image_path';
+                $params[':image_path'] = $data['image_path'];
+            }
+            if (isset($data['image_path_2'])) {
+                $fields[] = 'image_path_2 = :image_path_2';
+                $params[':image_path_2'] = $data['image_path_2'];
+            }
+
+            if (!$fields) {
+                return ['error' => 'No fields to update'];
+            }
+
+            $sql = 'UPDATE spots SET ' . implode(', ', $fields) . ', updated_at = NOW() WHERE id = :id';
+            $stmt = $pdo->prepare($sql);
+            $success = $stmt->execute($params);
             if (!$success) {
                 return ['error' => 'Update failed'];
             }

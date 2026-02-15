@@ -124,8 +124,12 @@ export async function createSpot(spotData, photoFile1 = null, photoFile2 = null)
       return file;
     };
 
-    const validPhoto1 = validateImage(photoFile1, 'Primera foto');
-    const validPhoto2 = validateImage(photoFile2, 'Segunda foto');
+        if (!photoFile1 && !photoFile2) {
+            throw new Error('Debes agregar al menos una imagen');
+        }
+
+        const validPhoto1 = validateImage(photoFile1, 'Primera foto');
+        const validPhoto2 = validateImage(photoFile2, 'Segunda foto');
     
     console.log(`[SPOTS] 📸 Creando spot: "${title}" en (${lat.toFixed(4)}, ${lng.toFixed(4)})`);
     
@@ -311,11 +315,15 @@ export function searchSpots(spots, searchTerm = '') {
     }
 
     const term = searchTerm.toLowerCase();
-    return spots.filter(spot => 
-        (spot.title && spot.title.toLowerCase().includes(term)) ||
-        (spot.description && spot.description.toLowerCase().includes(term)) ||
-        (spot.category && spot.category.toLowerCase().includes(term))
-    );
+    return spots.filter(spot => {
+        const tags = normalizeTags(spot.tags);
+        return (
+            (spot.title && spot.title.toLowerCase().includes(term)) ||
+            (spot.description && spot.description.toLowerCase().includes(term)) ||
+            (spot.category && spot.category.toLowerCase().includes(term)) ||
+            tags.some(t => t.toLowerCase().includes(term))
+        );
+    });
 }
 
 /**
@@ -330,6 +338,100 @@ export function filterByCategory(spots, category = 'all') {
     }
 
     return spots.filter(spot => spot.category === category);
+}
+
+/**
+ * Obtener tags únicos
+ * @param {Array} spots
+ * @returns {Array}
+ */
+export function getTags(spots) {
+    const tags = new Set();
+    
+    console.log('[SPOTS-DEBUG] getTags() - Procesando', spots.length, 'spots');
+    
+    spots.forEach((spot, idx) => {
+        console.log(`[SPOTS-DEBUG] Spot ${idx}:`, {
+            id: spot.id,
+            title: spot.title,
+            tagsField: spot.tags,
+            tagsType: typeof spot.tags
+        });
+        
+        const normalizedTags = normalizeTags(spot.tags);
+        console.log(`[SPOTS-DEBUG] → Tags normalizados:`, normalizedTags);
+        
+        normalizedTags.forEach(tag => tags.add(tag));
+    });
+    
+    const result = Array.from(tags).sort();
+    console.log('[SPOTS-DEBUG] getTags() resultado final:', result);
+    return result;
+}
+
+/**
+ * Filtrar por tag
+ * @param {Array} spots
+ * @param {string} tag
+ * @returns {Array}
+ */
+export function filterByTag(spots, tag = 'all') {
+    if (!tag || tag === 'all') {
+        return spots;
+    }
+    return spots.filter(spot => normalizeTags(spot.tags).includes(tag));
+}
+
+/**
+ * Filtrar por propietario
+ * @param {Array} spots
+ * @param {string} userId
+ * @returns {Array}
+ */
+export function filterByOwner(spots, userId) {
+    if (!userId) return [];
+    return spots.filter(spot => String(spot.user_id || '') === String(userId));
+}
+
+/**
+ * Filtrar por distancia (km)
+ * @param {Array} spots
+ * @param {Object} origin
+ * @param {number} maxKm
+ * @returns {Array}
+ */
+export function filterByDistance(spots, origin, maxKm) {
+    if (!origin || !maxKm) return spots;
+    return spots.filter(spot => {
+        if (typeof spot.lat !== 'number' || typeof spot.lng !== 'number') return false;
+        const distance = calculateDistanceKm(origin.lat, origin.lng, spot.lat, spot.lng);
+        return distance <= maxKm;
+    });
+}
+
+export function calculateDistanceKm(lat1, lng1, lat2, lng2) {
+    const toRad = (v) => (v * Math.PI) / 180;
+    const R = 6371;
+    const dLat = toRad(lat2 - lat1);
+    const dLng = toRad(lng2 - lng1);
+    const a = Math.sin(dLat / 2) ** 2 +
+        Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLng / 2) ** 2;
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return R * c;
+}
+
+function normalizeTags(tags) {
+    if (!tags) return [];
+    if (Array.isArray(tags)) return tags.filter(Boolean);
+    if (typeof tags === 'string') {
+        try {
+            const parsed = JSON.parse(tags);
+            if (Array.isArray(parsed)) return parsed.filter(Boolean);
+        } catch (_) {
+            return tags.split(',').map(t => t.trim()).filter(Boolean);
+        }
+    }
+    return [];
 }
 
 /**
@@ -354,4 +456,98 @@ export function paginate(spots, pageNumber = 1, pageSize = 20) {
         hasNext: page < pages,
         hasPrev: page > 1
     };
+}
+
+/**
+ * Actualizar un spot (campos parciales) y opcionalmente fotos
+ * @param {number} spotId - ID del spot
+ * @param {Object} data - Campos a actualizar
+ * @param {File|null} photoFile1 - Primera foto (opcional)
+ * @param {File|null} photoFile2 - Segunda foto (opcional)
+ * @returns {Promise<Object>} Spot actualizado
+ */
+export async function updateSpot(spotId, data = {}, photoFile1 = null, photoFile2 = null) {
+    try {
+        if (!spotId || spotId <= 0) {
+            throw new Error('ID de spot inválido');
+        }
+
+        const payload = {};
+        if (typeof data.title === 'string') payload.title = data.title.trim();
+        if (typeof data.description === 'string') payload.description = data.description.trim();
+        if (typeof data.category === 'string') payload.category = data.category.trim();
+        if (Array.isArray(data.tags)) payload.tags = data.tags;
+
+        const { supabaseAvailable, getClient, uploadSpotImage } = await import('./supabaseClient.js');
+
+        if (supabaseAvailable()) {
+            const supabase = getClient();
+            let updated = null;
+
+            if (Object.keys(payload).length > 0) {
+                const { data: res, error } = await supabase
+                    .from('spots')
+                    .update(payload)
+                    .eq('id', spotId)
+                    .select('*')
+                    .single();
+
+                if (error) {
+                    throw new Error(error.message || 'Error actualizando spot');
+                }
+                updated = res;
+            }
+
+            if (photoFile1) {
+                const img1 = await uploadSpotImage(photoFile1, spotId, 1);
+                if (img1) updated = img1;
+            }
+
+            if (photoFile2) {
+                const img2 = await uploadSpotImage(photoFile2, spotId, 2);
+                if (img2) updated = img2;
+            }
+
+            if (!updated) {
+                updated = { id: spotId, ...payload };
+            }
+
+            Cache.remove('spots');
+            return updated;
+        }
+
+        // Fallback API local
+        const { getAccessToken } = await import('./auth.js');
+        const token = await getAccessToken();
+        if (!token) {
+            throw new Error('Debes iniciar sesión para editar spots');
+        }
+
+        let updated = null;
+        if (Object.keys(payload).length > 0) {
+            const res = await apiFetch(`/spots/${spotId}`, {
+                method: 'PUT',
+                token,
+                body: payload
+            });
+            updated = res?.data || res;
+        }
+
+        if (photoFile1) {
+            const formData = new FormData();
+            formData.append('photo', photoFile1);
+            await apiFetch(`/spots/${spotId}/photo`, {
+                method: 'POST',
+                token,
+                body: formData
+            });
+        }
+
+        Cache.remove('spots');
+        return updated || { id: spotId, ...payload };
+
+    } catch (error) {
+        logError('[SPOTS] Error actualizando spot', error, { spotId });
+        throw error;
+    }
 }

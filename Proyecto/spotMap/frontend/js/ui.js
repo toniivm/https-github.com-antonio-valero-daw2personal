@@ -11,6 +11,76 @@ import { validateImage } from './imageValidator.js';
 import { isAuthenticated, getCurrentUser } from './auth.js';
 
 /**
+ * Estado centralizado de filtros
+ */
+export const filterState = {
+    search: '',
+    category: 'all',
+    tag: 'all',
+    onlyMine: false,
+    distanceKm: 50,
+    enableDistance: false,
+    userLocation: null
+};
+
+/**
+ * Aplicar filtros en cascada
+ */
+export async function applyFilters() {
+    try {
+        let spots = await spotsModule.loadSpots();
+        
+        if (!spots) {
+            console.warn('[UI] No hay spots disponibles');
+            renderSpotList([]);
+            return;
+        }
+        
+        // Filtro de búsqueda
+        if (filterState.search && filterState.search.trim()) {
+            spots = spotsModule.searchSpots(spots, filterState.search);
+            console.log(`[UI] Búsqueda filtrada: ${spots.length} spots`);
+        }
+        
+        // Filtro de categoría
+        if (filterState.category && filterState.category !== 'all') {
+            spots = spotsModule.filterByCategory(spots, filterState.category);
+            console.log(`[UI] Categoría filtrada: ${spots.length} spots`);
+        }
+        
+        // Filtro de tags
+        if (filterState.tag && filterState.tag !== 'all') {
+            spots = spotsModule.filterByTag(spots, filterState.tag);
+            console.log(`[UI] Tags filtrados: ${spots.length} spots`);
+        }
+        
+        // Filtro "Solo mis spots"
+        if (filterState.onlyMine) {
+            const user = getCurrentUser();
+            if (user && user.id) {
+                spots = spotsModule.filterByOwner(spots, user.id);
+                console.log(`[UI] Mis spots: ${spots.length} spots`);
+            } else {
+                console.warn('[UI] Usuario no autenticado, no se puede mostrar Mis Spots');
+                spots = [];
+            }
+        }
+        
+        // Filtro de distancia
+        if (filterState.enableDistance && filterState.userLocation) {
+            spots = spotsModule.filterByDistance(spots, filterState.userLocation, filterState.distanceKm);
+            console.log(`[UI] Distancia filtrada: ${spots.length} spots`);
+        }
+        
+        console.log(`[UI] Resultado final: ${spots.length} spots mostrados`);
+        renderSpotList(spots);
+    } catch (error) {
+        console.error('[UI] Error aplicando filtros:', error);
+        showToast(`Error al filtrar: ${error.message}`, 'error');
+    }
+}
+
+/**
  * Configurar todos los event listeners de la UI
  */
 export function setupUI() {
@@ -33,6 +103,18 @@ export function setupUI() {
             // Accesibilidad: asegurar que aria-hidden no permanezca activo mientras hay foco dentro
             modalEl.addEventListener('shown.bs.modal', () => {
                 modalEl.removeAttribute('aria-hidden');
+                // Inicializar contadores de caracteres
+                const spotTitle = document.getElementById('spot-title');
+                const spotDescription = document.getElementById('spot-description');
+                const spotTitleCount = document.getElementById('spot-title-count');
+                const spotDescriptionCount = document.getElementById('spot-description-count');
+                
+                if (spotTitle && spotTitleCount) {
+                    spotTitleCount.textContent = `${spotTitle.value.length}/255`;
+                }
+                if (spotDescription && spotDescriptionCount) {
+                    spotDescriptionCount.textContent = `${spotDescription.value.length}/1000`;
+                }
             });
             modalEl.addEventListener('hidden.bs.modal', () => {
                 modalEl.setAttribute('aria-hidden', 'true');
@@ -109,6 +191,144 @@ export function setupUI() {
     const btnGeolocateForm = document.getElementById('btn-geolocate-form');
     if (btnGeolocateForm) {
         btnGeolocateForm.addEventListener('click', handleGeolocate);
+    }
+
+    // === Nuevos filtros ===
+    
+    // Toggle "Mis Spots"
+    const toggleMySpots = document.getElementById('toggle-my-spots');
+    if (toggleMySpots) {
+        toggleMySpots.addEventListener('change', (e) => {
+            filterState.onlyMine = e.target.checked;
+            applyFilters();
+        });
+    }
+
+    // Filtro por tags
+    const filterTag = document.getElementById('filter-tag');
+    if (filterTag) {
+        filterTag.addEventListener('change', async (e) => {
+            filterState.tag = e.target.value;
+            
+            // Actualizar chips de tags si existen
+            const tagChips = document.querySelectorAll('.tag-chip');
+            tagChips.forEach(chip => {
+                chip.classList.toggle('active', chip.dataset.tag === filterState.tag);
+            });
+            
+            applyFilters();
+        });
+    }
+
+    // Chips de tags (clickeables)
+    document.addEventListener('click', (e) => {
+        const tagChip = e.target.closest('.tag-chip');
+        if (!tagChip) return;
+        
+        e.preventDefault();
+        const tag = tagChip.dataset.tag;
+        
+        // Toggle: si ya está activo, deseleccionar
+        if (filterState.tag === tag) {
+            filterState.tag = 'all';
+        } else {
+            filterState.tag = tag;
+        }
+        
+        // Actualizar select si existe
+        const filterTag = document.getElementById('filter-tag');
+        if (filterTag) {
+            filterTag.value = filterState.tag;
+        }
+        
+        applyFilters();
+    });
+
+    // Filtro de distancia
+    const filterDistance = document.getElementById('filter-distance');
+    const filterDistanceToggle = document.getElementById('filter-distance-toggle');
+    const filterDistanceValue = document.getElementById('filter-distance-value');
+    const distanceFilterContainer = document.getElementById('distance-filter-container');
+
+    console.log('[UI] Elementos de distancia:', {
+        filterDistance: filterDistance ? 'encontrado' : 'NO ENCONTRADO',
+        filterDistanceToggle: filterDistanceToggle ? 'encontrado' : 'NO ENCONTRADO',
+        filterDistanceValue: filterDistanceValue ? 'encontrado' : 'NO ENCONTRADO',
+        distanceFilterContainer: distanceFilterContainer ? 'encontrado' : 'NO ENCONTRADO'
+    });
+
+    if (filterDistanceToggle) {
+        filterDistanceToggle.addEventListener('change', (e) => {
+            filterState.enableDistance = e.target.checked;
+            console.log('[UI] Filtro de distancia:', filterState.enableDistance);
+            
+            // Mostrar/ocultar el contenedor de distancia
+            if (distanceFilterContainer) {
+                distanceFilterContainer.style.display = e.target.checked ? 'block' : 'none';
+                console.log('[UI] Contenedor de distancia:', e.target.checked ? 'visible' : 'oculto');
+            }
+            
+            if (filterState.enableDistance) {
+                // Obtener geolocalización del usuario
+                if (!navigator.geolocation) {
+                    showToast('Geolocalización no disponible', 'warning');
+                    e.target.checked = false;
+                    filterState.enableDistance = false;
+                    if (distanceFilterContainer) {
+                        distanceFilterContainer.style.display = 'none';
+                    }
+                    return;
+                }
+                
+                console.log('[UI] Solicitando ubicación del usuario...');
+                navigator.geolocation.getCurrentPosition(
+                    (position) => {
+                        filterState.userLocation = {
+                            lat: position.coords.latitude,
+                            lng: position.coords.longitude
+                        };
+                        console.log('[UI] ✓ Ubicación obtenida:', filterState.userLocation);
+                        showToast(`📍 Ubicación obtenida: ${filterState.userLocation.lat.toFixed(3)}, ${filterState.userLocation.lng.toFixed(3)}`, 'success');
+                        applyFilters();
+                    },
+                    (error) => {
+                        console.error('[UI] Error de geolocalización:', error.message);
+                        showToast('No se pudo obtener tu ubicación: ' + error.message, 'warning');
+                        e.target.checked = false;
+                        filterState.enableDistance = false;
+                        if (distanceFilterContainer) {
+                            distanceFilterContainer.style.display = 'none';
+                        }
+                    },
+                    { timeout: 5000 }
+                );
+            } else {
+                applyFilters();
+            }
+        });
+    }
+
+    if (filterDistance) {
+        filterDistance.addEventListener('input', (e) => {
+            filterState.distanceKm = parseInt(e.target.value);
+            if (filterDistanceValue) {
+                filterDistanceValue.textContent = `${filterState.distanceKm} km`;
+            }
+            if (filterState.enableDistance) {
+                applyFilters();
+            }
+        });
+    }
+
+    // === Validación en vivo del formulario ===
+    setupFormLiveValidation();
+
+    // === Mostrar "Mi Spots" solo si autenticado ===
+    if (isAuthenticated()) {
+        const mySpotsContainer = document.getElementById('my-spots-container');
+        if (mySpotsContainer) {
+            mySpotsContainer.style.display = 'block';
+        }
     }
 
     console.log('[UI] ✓ Interfaz configurada');
@@ -195,6 +415,13 @@ async function handleAddSpotSubmit(e) {
                 btnSubmit.textContent = originalText;
                 return;
             }
+        }
+
+        if (!photoFile1 && !photoFile2) {
+            showToast('Debes agregar al menos una imagen', 'warning');
+            btnSubmit.disabled = false;
+            btnSubmit.textContent = originalText;
+            return;
         }
 
         // Validar datos
@@ -376,14 +603,8 @@ async function handleSearch(e) {
     const searchTerm = e.target.value;
     console.log('[UI] Buscando:', searchTerm);
 
-    try {
-        const spots = await spotsModule.loadSpots();
-        const filtered = spotsModule.searchSpots(spots, searchTerm);
-        renderSpotList(filtered);
-
-    } catch (error) {
-        console.error('[UI] Error buscando spots:', error);
-    }
+    filterState.search = searchTerm;
+    applyFilters();
 }
 
 /**
@@ -393,14 +614,8 @@ async function handleCategoryFilter(e) {
     const category = e.target.value;
     console.log('[UI] Filtrando por categoría:', category);
 
-    try {
-        const spots = await spotsModule.loadSpots();
-        const filtered = spotsModule.filterByCategory(spots, category);
-        renderSpotList(filtered);
-
-    } catch (error) {
-        console.error('[UI] Error filtrando spots:', error);
-    }
+    filterState.category = category;
+    applyFilters();
 }
 
 /**
@@ -496,11 +711,38 @@ function renderSpotCardList(spot) {
     
     const isLiked = window.isSpotLiked ? window.isSpotLiked(spot.id) : false;
     
-    // Verificar si puede borrar
-    const user = getCurrentUser();
-    const isAdmin = user?.role === 'admin' || user?.role === 'moderator';
-    const canDelete = isAuthenticated() && isAdmin;
-    const canEdit = isAuthenticated() && isAdmin;
+    // Verificar si puede borrar/editar (admin o propietario)
+    const canDelete = typeof window.canDeleteSpot === 'function'
+        ? window.canDeleteSpot(spot.id)
+        : (() => {
+            const user = getCurrentUser();
+            const isAdmin = user?.role === 'admin' || user?.role === 'moderator';
+            const isOwner = user?.id && spot?.user_id && String(user.id) === String(spot.user_id);
+            return isAuthenticated() && (isAdmin || isOwner);
+        })();
+    const canEdit = typeof window.canEditSpot === 'function'
+        ? window.canEditSpot(spot.id)
+        : (isAuthenticated() && getCurrentUser()?.role === 'admin');
+    
+    // Calcular distancia desde ubicación del usuario si está disponible
+    let distanceHtml = '';
+    if (filterState.userLocation && spot.lat && spot.lng) {
+        const distance = spotsModule.calculateDistanceKm(
+            filterState.userLocation.lat,
+            filterState.userLocation.lng,
+            spot.lat,
+            spot.lng
+        );
+        distanceHtml = `<span class="spot-distance" title="Distancia aproximada">📏 ${distance.toFixed(1)} km</span>`;
+    }
+    
+    // Rating
+    const rating = spot.rating || 0;
+    const ratingCount = spot.rating_count || 0;
+    let ratingHtml = '';
+    if (rating > 0 || ratingCount > 0) {
+        ratingHtml = `<span class="spot-rating" title="Calificación">⭐ ${rating.toFixed(1)} (${ratingCount})</span>`;
+    }
     
     return `
         <div class="spot-card" onclick="window.openSpotDetailsModal(${JSON.stringify(spot).replace(/"/g, '&quot;')})">
@@ -539,6 +781,10 @@ function renderSpotCardList(spot) {
                         Este spot está siendo revisado por nuestro equipo de moderación. Aparecerá públicamente en breve.
                     </div>
                 ` : ''}
+                <div class="spot-card-extra">
+                    ${ratingHtml}
+                    ${distanceHtml}
+                </div>
                 <div class="d-flex justify-content-between align-items-center">
                     <small class="spot-card-meta">
                         📍 ${spot.lat.toFixed(3)}, ${spot.lng.toFixed(3)}
@@ -564,11 +810,38 @@ function renderSpotCardGrid(spot) {
     
     const isLiked = window.isSpotLiked ? window.isSpotLiked(spot.id) : false;
     
-    // Verificar si puede borrar
-    const user = getCurrentUser();
-    const isAdmin = user?.role === 'admin' || user?.role === 'moderator';
-    const canDelete = isAuthenticated() && isAdmin;
-    const canEdit = isAuthenticated() && isAdmin;
+    // Verificar si puede borrar/editar (admin o propietario)
+    const canDelete = typeof window.canDeleteSpot === 'function'
+        ? window.canDeleteSpot(spot.id)
+        : (() => {
+            const user = getCurrentUser();
+            const isAdmin = user?.role === 'admin' || user?.role === 'moderator';
+            const isOwner = user?.id && spot?.user_id && String(user.id) === String(spot.user_id);
+            return isAuthenticated() && (isAdmin || isOwner);
+        })();
+    const canEdit = typeof window.canEditSpot === 'function'
+        ? window.canEditSpot(spot.id)
+        : (isAuthenticated() && getCurrentUser()?.role === 'admin');
+    
+    // Calcular distancia desde ubicación del usuario si está disponible
+    let distanceHtml = '';
+    if (filterState.userLocation && spot.lat && spot.lng) {
+        const distance = spotsModule.calculateDistanceKm(
+            filterState.userLocation.lat,
+            filterState.userLocation.lng,
+            spot.lat,
+            spot.lng
+        );
+        distanceHtml = `<span class="spot-distance" title="Distancia aproximada">📏 ${distance.toFixed(1)} km</span>`;
+    }
+    
+    // Rating
+    const rating = spot.rating || 0;
+    const ratingCount = spot.rating_count || 0;
+    let ratingHtml = '';
+    if (rating > 0 || ratingCount > 0) {
+        ratingHtml = `<span class="spot-rating" title="Calificación">⭐ ${rating.toFixed(1)}</span>`;
+    }
     
     return `
         <div class="spot-card spot-card-grid" onclick="window.openSpotDetailsModal(${JSON.stringify(spot).replace(/"/g, '&quot;')})">
@@ -598,6 +871,10 @@ function renderSpotCardGrid(spot) {
                 <h6 class="spot-card-title mb-1">
                     ${escapeHtml(spot.title)}
                 </h6>
+                <div class="spot-card-extra">
+                    ${ratingHtml}
+                    ${distanceHtml}
+                </div>
                 <div class="d-flex gap-1">
                     ${spot.status === 'pending' ? '<span class="badge bg-warning text-dark">⏳ Pendiente</span>' : ''}
                     ${spot.category ? `<span class="badge" data-category="${escapeHtml(spot.category.toLowerCase())}">${escapeHtml(spot.category)}</span>` : ''}
@@ -636,6 +913,53 @@ export function updateCategoryFilter(spots) {
                 ${escapeHtml(cat)}
             </button>
         `).join('');
+    }
+}
+
+/**
+ * Actualizar filtro y chips de etiquetas
+ * @param {Array} spots - Array de spots
+ */
+export function updateTagFilter(spots) {
+    const filterTag = document.getElementById('filter-tag');
+    const tagChips = document.getElementById('tag-chips');
+    
+    if (!filterTag && !tagChips) {
+        console.warn('[UI] Elementos de filtro de tags no encontrados');
+        return;
+    }
+
+    try {
+        const tags = spotsModule.getTags(spots);
+        console.log(`[UI] Tags extraídos: ${tags.length} etiquetas`, tags);
+        
+        // Actualizar select
+        if (filterTag) {
+            const currentValue = filterTag.value;
+            const options = [
+                '<option value="all">Todas las etiquetas</option>',
+                ...tags.map(tag => `<option value="${escapeHtml(tag)}">${escapeHtml(tag)}</option>`)
+            ];
+            filterTag.innerHTML = options.join('');
+            filterTag.value = currentValue;
+        }
+        
+        // Actualizar chips visuales
+        if (tagChips) {
+            if (tags.length > 0) {
+                tagChips.innerHTML = tags.slice(0, 8).map(tag => `
+                    <button type="button" class="tag-chip" data-tag="${escapeHtml(tag)}" title="${escapeHtml(tag)}">
+                        ${escapeHtml(tag)}
+                    </button>
+                `).join('');
+                console.log(`[UI] Chips generados: ${Math.min(8, tags.length)} mostrados`);
+            } else {
+                tagChips.innerHTML = '';
+                console.log('[UI] Sin etiquetas disponibles');
+            }
+        }
+    } catch (error) {
+        console.error('[UI] Error al actualizar filtro de tags:', error);
     }
 }
 
@@ -748,3 +1072,69 @@ window.deleteSpot = async function(spotId) {
 window.focusSpot = function(spotId) {
     spotsModule.focusSpot(spotId);
 };
+/**
+ * Configurar validación en vivo del formulario de spot
+ */
+function setupFormLiveValidation() {
+    // Contador de caracteres del título
+    const spotTitle = document.getElementById('spot-title');
+    const spotTitleCount = document.getElementById('spot-title-count');
+    
+    if (spotTitle && spotTitleCount) {
+        console.log('[UI] Configurando validación de título');
+        const updateTitleCount = () => {
+            const length = spotTitle.value.length;
+            spotTitleCount.textContent = `${length}/255`;
+            spotTitle.classList.toggle('is-invalid', length > 255);
+        };
+        
+        spotTitle.addEventListener('input', updateTitleCount);
+        spotTitle.addEventListener('blur', () => {
+            if (spotTitle.value.length < 3 && spotTitle.value.length > 0) {
+                spotTitle.classList.add('is-invalid');
+            }
+        });
+    } else {
+        console.warn('[UI] Elementos de título no encontrados para validación');
+    }
+    
+    // Contador de caracteres de la descripción
+    const spotDescription = document.getElementById('spot-description');
+    const spotDescriptionCount = document.getElementById('spot-description-count');
+    
+    if (spotDescription && spotDescriptionCount) {
+        console.log('[UI] Configurando validación de descripción');
+        const updateDescriptionCount = () => {
+            const length = spotDescription.value.length;
+            spotDescriptionCount.textContent = `${length}/1000`;
+            spotDescription.classList.toggle('is-invalid', length > 1000);
+        };
+        
+        spotDescription.addEventListener('input', updateDescriptionCount);
+    } else {
+        console.warn('[UI] Elementos de descripción no encontrados para validación');
+    }
+    
+    // Validación de coordenadas
+    const spotLat = document.getElementById('spot-lat');
+    const spotLng = document.getElementById('spot-lng');
+    
+    if (spotLat && spotLng) {
+        console.log('[UI] Configurando validación de coordenadas');
+        const validateCoords = () => {
+            const lat = parseFloat(spotLat.value);
+            const lng = parseFloat(spotLng.value);
+            
+            const latValid = lat >= -90 && lat <= 90;
+            const lngValid = lng >= -180 && lng <= 180;
+            
+            spotLat.classList.toggle('is-invalid', !latValid && spotLat.value !== '');
+            spotLng.classList.toggle('is-invalid', !lngValid && spotLng.value !== '');
+        };
+        
+        spotLat.addEventListener('blur', validateCoords);
+        spotLng.addEventListener('blur', validateCoords);
+    } else {
+        console.warn('[UI] Elementos de coordenadas no encontrados para validación');
+    }
+}

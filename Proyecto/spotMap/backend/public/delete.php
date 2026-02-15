@@ -13,11 +13,14 @@ require __DIR__ . '/../src/SupabaseClient.php';
 require __DIR__ . '/../src/SupabaseStorage.php';
 require __DIR__ . '/../src/DatabaseAdapter.php';
 require __DIR__ . '/../src/ApiResponse.php';
+require __DIR__ . '/../src/Roles.php';
 
 use SpotMap\Database;
 use SpotMap\DatabaseAdapter;
 use SpotMap\Logger;
 use SpotMap\Auth;
+use SpotMap\ApiResponse;
+use SpotMap\Roles;
 
 // CORS headers
 header('Access-Control-Allow-Origin: *');
@@ -30,8 +33,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     exit;
 }
 
-header("Content-Type: application/json; charset=utf-8");
-
 \SpotMap\Config::load();
 $logger = Logger::getInstance();
 
@@ -43,17 +44,13 @@ try {
     // Autenticación requerida
     $user = Auth::requireUser();
     if (!$user) {
-        http_response_code(401);
-        echo json_encode(['success' => false, 'error' => 'No autenticado']);
-        exit;
+        ApiResponse::unauthorized('No autenticado');
     }
     
     $id = isset($_GET['id']) ? (int)$_GET['id'] : (isset($_POST['id']) ? (int)$_POST['id'] : null);
     
     if (!$id || $id <= 0) {
-        http_response_code(400);
-        echo json_encode(['success' => false, 'error' => 'ID inválido']);
-        exit;
+        ApiResponse::error('ID inválido', 400);
     }
     
     // Log antes de eliminar
@@ -63,19 +60,13 @@ try {
     $spot = DatabaseAdapter::getSpotById($id);
     
     if (!$spot || isset($spot['error'])) {
-        http_response_code(404);
-        echo json_encode(['success' => false, 'error' => 'Spot no encontrado']);
-        exit;
+        ApiResponse::notFound('Spot no encontrado');
     }
     
-    // Verificar propiedad
-    $isAdmin = isset($user['role']) && in_array($user['role'], ['admin', 'moderator']);
-    $isOwner = isset($spot['user_id']) && isset($user['id']) && $spot['user_id'] === $user['id'];
-    
-    if (!$isAdmin && !$isOwner) {
-        http_response_code(403);
-        echo json_encode(['success' => false, 'error' => 'No tienes permiso para eliminar este spot']);
-        exit;
+    // Solo admin
+    $role = Roles::getUserRole($user);
+    if ($role !== 'admin') {
+        ApiResponse::error('No tienes permiso para eliminar este spot', 403);
     }
     
     // Eliminar imágenes de Supabase si existen
@@ -100,18 +91,14 @@ try {
     $result = DatabaseAdapter::deleteSpot($id);
     
     if (isset($result['error'])) {
-        http_response_code(500);
-        echo json_encode(['success' => false, 'error' => $result['error']]);
         $logger->error("Error deleteting spot in DB", ['id' => $id, 'error' => $result['error']]);
-        exit;
+        ApiResponse::serverError('Error eliminando spot', ['detail' => $result['error']]);
     }
     
-    http_response_code(200);
-    echo json_encode(['success' => true, 'id' => $id, 'message' => 'Spot eliminado correctamente']);
+    ApiResponse::success(['id' => $id], 'Spot eliminado correctamente', 200);
     $logger->info("Spot eliminado exitosamente", ['id' => $id, 'user_id' => $user['id'] ?? 'unknown']);
     
 } catch (\Exception $e) {
     $logger->error("Error en delete.php", ['error' => $e->getMessage(), 'trace' => $e->getTraceAsString()]);
-    http_response_code(500);
-    echo json_encode(['success' => false, 'error' => 'Error: ' . $e->getMessage()]);
+    ApiResponse::serverError('Error en delete.php', ['detail' => $e->getMessage()]);
 }
