@@ -37,11 +37,35 @@ class Auth
         if (!$user) {
             ApiResponse::unauthorized('Invalid or expired token');
         }
-        // Inject role placeholder if missing
-        if (!isset($user['role'])) {
-            $user['role'] = 'user';
+        
+        // Cargar rol desde tabla profiles (CRÍTICO para moderación)
+        if (isset($user['id'])) {
+            $role = self::loadUserRole($user['id']);
+            $user['role'] = $role ?? \SpotMap\Constants::DEFAULT_ROLE;
+        } else {
+            $user['role'] = \SpotMap\Constants::DEFAULT_ROLE;
         }
+        
         return $user;
+    }
+
+    /**
+     * Cargar rol del usuario desde tabla profiles
+     */
+    public static function loadUserRole(string $userId): ?string
+    {
+        try {
+            // Intentar cargar desde Supabase
+            if (\SpotMap\DatabaseAdapter::useSupabase()) {
+                $supabase = new \SpotMap\SupabaseClient();
+                return $supabase->getProfileRole($userId);
+            }
+        } catch (\Throwable $e) {
+            error_log('[AUTH] Error cargando rol de Supabase: ' . $e->getMessage());
+        }
+        
+        // Fallback: consultar BD local si existe
+        return null;
     }
 
     public static function fetchUser(string $token): ?array

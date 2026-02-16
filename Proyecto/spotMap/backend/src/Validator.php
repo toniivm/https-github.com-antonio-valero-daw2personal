@@ -124,6 +124,72 @@ class Validator
     }
 
     /**
+     * Valida que un valor esté en una lista permitida (enum)
+     */
+    public function in($value, $field, $allowed = [])
+    {
+        if (empty($value)) {
+            return $this; // No validar si está vacío
+        }
+
+        if (!in_array($value, $allowed)) {
+            $options = implode(', ', $allowed);
+            $this->errors[$field][] = "$field must be one of: $options";
+        }
+
+        return $this;
+    }
+
+    /**
+     * Valida un array con restricciones
+     */
+    public function array($value, $field, $maxItems = null, $maxItemLength = null)
+    {
+        if (!is_array($value)) {
+            if (!empty($value)) { // Skip if null/empty
+                $this->errors[$field][] = "$field must be an array";
+            }
+            return $this;
+        }
+
+        if ($maxItems && count($value) > $maxItems) {
+            $this->errors[$field][] = "$field must not exceed $maxItems items";
+        }
+
+        if ($maxItemLength) {
+            foreach ($value as $i => $item) {
+                if (is_string($item) && strlen($item) > $maxItemLength) {
+                    $this->errors[$field][] = "$field[$i] must not exceed $maxItemLength characters";
+                }
+            }
+        }
+
+        return $this;
+    }
+
+    /**
+     * Sanitizar string (remove XSS attempts)
+     */
+    public function sanitize(string $value): string
+    {
+        return htmlspecialchars(trim($value), ENT_QUOTES, 'UTF-8');
+    }
+
+    /**
+     * Limpiar valor de entrada (trim + sanitize)
+     */
+    public function clean($value)
+    {
+        if (is_string($value)) {
+            return $this->sanitize($value);
+        }
+        if (is_array($value)) {
+            return array_map([$this, 'clean'], $value);
+        }
+        return $value;
+    }
+
+    /**
      * Alias para errors() (compatible con tests)
      */
     public function getErrors()

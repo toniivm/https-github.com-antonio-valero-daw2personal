@@ -7,6 +7,7 @@ use SpotMap\Validator;
 use SpotMap\Cache;
 use SpotMap\Auth;
 use SpotMap\Logger;
+use SpotMap\Constants;
 
 class SpotController
 {
@@ -169,6 +170,21 @@ class SpotController
             $validator->string($input['title'] ?? '', 'title', 1, 255);
             $validator->numeric($input['lat'] ?? '', 'lat');
             $validator->numeric($input['lng'] ?? '', 'lng');
+            
+            // Validación adicional: description (max 1000 caracteres)
+            if (!empty($input['description'])) {
+                $validator->string($input['description'], 'description', 0, Constants::SPOT_DESCRIPTION_MAX);
+            }
+            
+            // Validación adicional: category (si existe, debe estar en lista permitida)
+            if (!empty($input['category'])) {
+                $validator->in($input['category'], 'category', Constants::SPOT_CATEGORIES);
+            }
+            
+            // Validación adicional: tags (max 10 tags, cada uno max 50 caracteres)
+            if (!empty($input['tags'])) {
+                $validator->array($input['tags'], 'tags', Constants::TAG_MAX_COUNT, Constants::TAG_MAX_LENGTH);
+            }
 
             if (isset($input['lat']) && is_numeric($input['lat'])) {
                 $validator->latitude($input['lat'], 'lat');
@@ -191,10 +207,16 @@ class SpotController
                 'category' => isset($input['category']) ? trim($input['category']) : null,
                 'tags' => isset($input['tags']) && is_array($input['tags']) ? $input['tags'] : []
             ];
+            
             // Ownership: set whenever user id is available
             if (isset($user['id'])) {
                 $spotData['user_id'] = $user['id'];
             }
+            
+            // Status assignment: usuarios normales → pending, moderadores → approved
+            $userRole = $user['role'] ?? Constants::DEFAULT_ROLE;
+            $spotData['status'] = Constants::isModerator($userRole) ? 'approved' : 'pending';
+            Logger::info("Status asignado basado en rol", ['role' => $userRole, 'status' => $spotData['status']]);
 
             // Manejar hasta 2 fotos si están presentes
             $uploadedImages = [];
@@ -283,26 +305,94 @@ class SpotController
         try {
             $user = Auth::requireUser();
             $token = Auth::getBearerToken();
-            if ($id <= 0) ApiResponse::error('Invalid ID', 400);
+            
+            if ($id <= 0) {
+                ApiResponse::error('Invalid ID', 400);
+                return;
+            }
+
+            // Verificar que el spot existe
             $existing = DatabaseAdapter::getSpotById($id);
-            if (isset($existing['error'])) ApiResponse::notFound('Spot not found');
-            $role = \SpotMap\Roles::getUserRole($user);
-            if ($role !== 'admin') {
-                ApiResponse::unauthorized('Admin only');
+            if (isset($existing['error'])) {
+                ApiResponse::notFound('Spot not found');
+                return;
             }
+
+            // Verificar autoridad: propietario o admin/moderador
+            $userRole = $user['role'] ?? 'user';
+            $isOwner = (isset($existing['user_id']) && $existing['user_id'] === $user['id']);
+            $isModeratorOrAdmin = in_array($userRole, ['moderator', 'admin']);
+            
+            if (!$isOwner && !$isModeratorOrAdmin) {
+                ApiResponse::unauthorized('Only owner or moderator can update spot');
+                return;
+            }
+
             $input = json_decode(file_get_contents('php://input'), true) ?? [];
+            
+            if (empty($input)) {
+                ApiResponse::error('No fields to update', 400);
+                return;
+            }
+
+            // Validar campos actualizables
+            $validator = new Validator();
             $fields = [];
-            foreach (['title','description','category'] as $f) {
-                if (isset($input[$f])) $fields[$f] = trim($input[$f]);
+            
+            // Validar title si existe
+            if (isset($input['title'])) {
+                $validator->string($input['title'], 'title', 1, 255);
+                $fields['title'] = trim($input['title']);
             }
-            if (isset($input['tags']) && is_array($input['tags'])) {
-                $fields['tags'] = $input['tags'];
+            
+            // Validar description si existe
+            if (isset($input['description'])) {
+                $validator->string($input['description'], 'description', 0, 1000);
+                $fields['description'] = trim($input['description']);
             }
-            if (!$fields) ApiResponse::error('No fields to update', 400);
+            
+            // Validar category si existe
+            if (isset($input['category'])) {
+                $validator->in($input['category'], 'category', Constants::SPOT_CATEGORIES);
+                $fields['category'] = trim($input['category']);
+            }
+            
+            // Validar tags si existe
+            if (isset($input['tags'])) {
+                $validator->array($input['tags'], 'tags', Constants::TAG_MAX_COUNT, Constants::TAG_MAX_LENGTH);
+                $fields['tags'] = is_array($input['tags']) ? $input['tags'] : [];
+            }
+            
+            // Solo moderators/admin pueden cambiar status
+            if (isset($input['status']) && $isModeratorOrAdmin) {
+                $validator->in($input['status'], 'status', Constants::SPOT_STATUS);
+                $fields['status'] = $input['status'];
+            }
+
+            if ($validator->fails()) {
+                ApiResponse::validation($validator->errors());
+                return;
+            }
+
+            if (empty($fields)) {
+                ApiResponse::error('No valid fields to update', 400);
+                return;
+            }
+
+            // Actualizar en BD
             $updated = DatabaseAdapter::updateSpot($id, $fields, $token);
+            
+            if (isset($updated['error'])) {
+                ApiResponse::error($updated['error'], 500);
+                return;
+            }
+
+            // Limpiar caché
             Cache::delete("spot_{$id}");
             Cache::flushPattern('spots_*');
-            ApiResponse::success($updated, 'Spot updated');
+            
+            ApiResponse::success($updated, 'Spot updated successfully');
+
         } catch (\Exception $e) {
             ApiResponse::serverError($e->getMessage());
         }

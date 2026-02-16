@@ -695,18 +695,9 @@ export function renderSpotList(spots) {
  * Renderizar card de spot en vista lista
  */
 function renderSpotCardList(spot) {
-    // Debug: ver qué rutas de imagen vienen
-    console.log('[UI-DEBUG] Spot image paths:', {
-        id: spot.id,
-        image_path: spot.image_path,
-        image_url: spot.image_url,
-        image_path_2: spot.image_path_2,
-        image_url_2: spot.image_url_2
-    });
-    
     const imagePath = spot.image_path || spot.image_url || '';
     const imageHtml = imagePath 
-        ? `<img src="${escapeHtml(imagePath)}" alt="${escapeHtml(spot.title)}" class="spot-card-image" loading="lazy" onerror="this.style.display='none'; console.error('Error cargando imagen:', '${imagePath}')">`
+        ? `<img src="${escapeHtml(imagePath)}" alt="${escapeHtml(spot.title)}" class="spot-card-image" loading="lazy" onerror="this.style.display='none';">`
         : '<div class="spot-card-no-image">📸 Sin imagen</div>';
     
     const isLiked = window.isSpotLiked ? window.isSpotLiked(spot.id) : false;
@@ -992,42 +983,9 @@ window.filterByChip = async function(category) {
 };
 
 /**
- * Habilitar geolocalización automática al cargar
+ * Geolocalización deshabilitada automáticamente.
+ * Solo se solicita cuando el usuario habilita el filtro de distancia.
  */
-export function enableAutoGeolocate() {
-    console.log('[UI] Intentando geolocalización automática...');
-
-    if (!navigator.geolocation) {
-        console.warn('[UI] Geolocalización no soportada');
-        return;
-    }
-
-    navigator.geolocation.getCurrentPosition(
-        (position) => {
-            const map = mapModule.getMap();
-            const lat = position.coords.latitude;
-            const lng = position.coords.longitude;
-            map.setView([lat, lng], 12);
-            
-            // Agregar marcador de usuario
-            L.marker([lat, lng], {
-                icon: L.icon({
-                    iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-blue.png',
-                    shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
-                    iconSize: [25, 41],
-                    iconAnchor: [12, 41],
-                    popupAnchor: [1, -34],
-                    shadowSize: [41, 41]
-                })
-            }).addTo(map).bindPopup('Tu ubicación');
-
-            console.log('[UI] ✓ Geolocalización automática completada');
-        },
-        (error) => {
-            console.warn('[UI] Geolocalización automática rechazada:', error);
-        }
-    );
-}
 
 /**
  * Función debounce para búsqueda

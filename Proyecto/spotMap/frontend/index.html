@@ -41,7 +41,30 @@
         <button id="btn-theme-toggle" class="btn btn-sm btn-outline-light" title="Toggle theme">🌙</button>
         <button id="btn-toggle-sidebar" class="btn btn-sm d-lg-none" data-bs-toggle="offcanvas" data-bs-target="#sidebar" aria-controls="sidebar"><span data-i18n="nav.menu">☰ Menú</span></button>
         <!-- Botón de moderación (solo visible para moderadores) -->
-        <button id="btn-moderation-panel" class="btn btn-sm btn-warning" style="display: none; gap: 0.5rem; align-items: center;" title="Panel de moderación de spots">🛡️ Moderación</button>
+        <button id="btn-moderation-panel" class="btn btn-sm btn-warning" style="display: none; gap: 0.5rem; align-items-center;" title="Panel de moderación de spots">🛡️ Moderación</button>
+        <!-- Botón de notificaciones (solo visible cuando está logueado) -->
+        <div id="notifications-button" class="dropdown" style="display: none;">
+          <button class="btn btn-sm btn-outline-light position-relative" type="button" id="btn-notifications" data-bs-toggle="dropdown" aria-expanded="false" title="Notificaciones">
+            🔔
+            <span id="notifications-badge" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="display: none; font-size: 0.6rem;">
+              0
+            </span>
+          </button>
+          <div class="dropdown-menu dropdown-menu-end p-0" aria-labelledby="btn-notifications" style="width: 320px; max-height: 400px; overflow-y: auto;">
+            <div class="dropdown-header d-flex justify-content-between align-items-center py-2">
+              <strong>Notificaciones</strong>
+              <button id="btn-mark-all-read" class="btn btn-sm btn-link text-decoration-none p-0" title="Marcar todas como leídas">
+                Marcar leídas
+              </button>
+            </div>
+            <div class="dropdown-divider my-0"></div>
+            <div id="notifications-list" class="list-group list-group-flush">
+              <div class="text-center text-muted py-3 small">
+                No hay notificaciones
+              </div>
+            </div>
+          </div>
+        </div>
         <button id="btn-add-spot" class="btn btn-sm" data-i18n="nav.addSpot">+ Añadir Spot</button>
         
         <!-- Auth buttons (when logged out) -->

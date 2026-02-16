@@ -348,25 +348,12 @@ export function filterByCategory(spots, category = 'all') {
 export function getTags(spots) {
     const tags = new Set();
     
-    console.log('[SPOTS-DEBUG] getTags() - Procesando', spots.length, 'spots');
-    
-    spots.forEach((spot, idx) => {
-        console.log(`[SPOTS-DEBUG] Spot ${idx}:`, {
-            id: spot.id,
-            title: spot.title,
-            tagsField: spot.tags,
-            tagsType: typeof spot.tags
-        });
-        
+    spots.forEach((spot) => {
         const normalizedTags = normalizeTags(spot.tags);
-        console.log(`[SPOTS-DEBUG] → Tags normalizados:`, normalizedTags);
-        
         normalizedTags.forEach(tag => tags.add(tag));
     });
     
-    const result = Array.from(tags).sort();
-    console.log('[SPOTS-DEBUG] getTags() resultado final:', result);
-    return result;
+    return Array.from(tags).sort();
 }
 
 /**

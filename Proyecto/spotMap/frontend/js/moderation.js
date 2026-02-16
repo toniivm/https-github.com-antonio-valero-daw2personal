@@ -4,8 +4,8 @@
  */
 
 import { getCurrentUser, isAuthenticated } from './auth.js';
-import { supabaseAvailable } from './supabaseClient.js';
-import { showToast } from './ui.js';
+import { showToast } from './notifications.js';
+import { getPending, approve, reject } from './supabaseSpots.js';
 
 let pendingSpots = [];
 
@@ -31,22 +31,10 @@ export async function loadPendingSpots() {
     }
 
     try {
-        if (supabaseAvailable()) {
-            const { getClient } = await import('./supabaseClient.js');
-            const supabase = getClient();
-            
-            const { data, error } = await supabase
-                .from('spots')
-                .select('*')
-                .eq('status', 'pending')
-                .order('created_at', { ascending: false });
-            
-            if (error) throw error;
-            
-            pendingSpots = data || [];
-            console.log(`[MODERATION] ✅ ${pendingSpots.length} spots pendientes cargados`);
-            return pendingSpots;
-        }
+        const data = await getPending();
+        pendingSpots = data || [];
+        console.log(`[MODERATION] ✅ ${pendingSpots.length} spots pendientes cargados`);
+        return pendingSpots;
     } catch (error) {
         console.error('[MODERATION] Error cargando spots pendientes:', error);
         showToast('Error cargando spots pendientes', 'error');
@@ -64,29 +52,17 @@ export async function approveSpot(spotId) {
     }
 
     try {
-        if (supabaseAvailable()) {
-            const { getClient } = await import('./supabaseClient.js');
-            const supabase = getClient();
-            
-            const { data, error } = await supabase
-                .from('spots')
-                .update({ status: 'approved', updated_at: new Date().toISOString() })
-                .eq('id', spotId)
-                .select();
-            
-            if (error) throw error;
-            
-            // Eliminar de la lista local
-            pendingSpots = pendingSpots.filter(s => s.id !== spotId);
-            console.log(`[MODERATION] ✅ Spot ${spotId} aprobado`);
-            showToast('Spot aprobado correctamente', 'success');
-            
-            // Invalidar cache
-            const { Cache } = await import('./Cache.js');
-            Cache.remove('spots');
-            
-            return true;
-        }
+        const ok = await approve(spotId);
+        if (!ok) throw new Error('No se pudo aprobar el spot');
+        
+        pendingSpots = pendingSpots.filter(s => s.id !== spotId);
+        console.log(`[MODERATION] ✅ Spot ${spotId} aprobado`);
+        showToast('Spot aprobado correctamente', 'success');
+        
+        const { Cache } = await import('./cache.js');
+        Cache.remove('spots');
+        
+        return true;
     } catch (error) {
         console.error('[MODERATION] Error aprobando spot:', error);
         showToast('Error aprobando spot: ' + error.message, 'error');
@@ -104,33 +80,17 @@ export async function rejectSpot(spotId, reason = '') {
     }
 
     try {
-        if (supabaseAvailable()) {
-            const { getClient } = await import('./supabaseClient.js');
-            const supabase = getClient();
-            
-            const { data, error } = await supabase
-                .from('spots')
-                .update({ 
-                    status: 'rejected', 
-                    updated_at: new Date().toISOString(),
-                    rejection_reason: reason || null
-                })
-                .eq('id', spotId)
-                .select();
-            
-            if (error) throw error;
-            
-            // Eliminar de la lista local
-            pendingSpots = pendingSpots.filter(s => s.id !== spotId);
-            console.log(`[MODERATION] ✅ Spot ${spotId} rechazado`);
-            showToast('Spot rechazado correctamente', 'success');
-            
-            // Invalidar cache
-            const { Cache } = await import('./Cache.js');
-            Cache.remove('spots');
-            
-            return true;
-        }
+        const ok = await reject(spotId);
+        if (!ok) throw new Error('No se pudo rechazar el spot');
+        
+        pendingSpots = pendingSpots.filter(s => s.id !== spotId);
+        console.log(`[MODERATION] ✅ Spot ${spotId} rechazado`);
+        showToast('Spot rechazado correctamente', 'success');
+        
+        const { Cache } = await import('./cache.js');
+        Cache.remove('spots');
+        
+        return true;
     } catch (error) {
         console.error('[MODERATION] Error rechazando spot:', error);
         showToast('Error rechazando spot: ' + error.message, 'error');
@@ -264,8 +224,10 @@ async function showModerationPanel() {
             if (await approveSpot(spotId)) {
                 // Recargar el panel
                 const modal = bootstrap.Modal.getInstance(document.getElementById('moderationModal'));
-                modal.hide();
-                setTimeout(() => showModerationPanel(), 500);
+                if (modal) {
+                    modal.hide();
+                    setTimeout(() => showModerationPanel(), 500);
+                }
             }
         });
     });
@@ -277,8 +239,10 @@ async function showModerationPanel() {
             if (reason !== null) { // Si no presiona Cancel
                 if (await rejectSpot(spotId, reason)) {
                     const modal = bootstrap.Modal.getInstance(document.getElementById('moderationModal'));
-                    modal.hide();
-                    setTimeout(() => showModerationPanel(), 500);
+                    if (modal) {
+                        modal.hide();
+                        setTimeout(() => showModerationPanel(), 500);
+                    }
                 }
             }
         });
@@ -305,10 +269,19 @@ function escapeHtml(text) {
 export function initModeration() {
     if (!isAuthenticated()) {
         console.log('[MODERATION] Usuario no autenticado, omitiendo');
-        return;
+    } else {
+        setupModerationPanel().catch(err => {
+            console.error('[MODERATION] Error inicializando:', err);
+        });
     }
-    
-    setupModerationPanel().catch(err => {
-        console.error('[MODERATION] Error inicializando:', err);
+
+    // Reintentar cuando cambie el estado de auth (login/rol)
+    document.addEventListener('spotmap:auth-changed', (event) => {
+        const role = event?.detail?.role || 'guest';
+        if (role === 'moderator' || role === 'admin') {
+            setupModerationPanel().catch(err => {
+                console.error('[MODERATION] Error re-inicializando:', err);
+            });
+        }
     });
 }

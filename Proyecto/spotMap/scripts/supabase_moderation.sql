@@ -30,18 +30,38 @@ CREATE POLICY spots_read_approved
   ON public.spots FOR SELECT
   USING (status = 'approved');
 
--- Authenticated users can insert their own spots
+-- Owners can read their own spots (including pending)
+DROP POLICY IF EXISTS spots_read_own ON public.spots;
+CREATE POLICY spots_read_own
+  ON public.spots FOR SELECT
+  USING (auth.uid() = user_id);
+
+-- Authenticated users can insert their own spots (pending only)
 DROP POLICY IF EXISTS spots_insert_own ON public.spots;
 CREATE POLICY spots_insert_own
   ON public.spots FOR INSERT
-  WITH CHECK (auth.uid() = user_id);
+  WITH CHECK (auth.uid() = user_id AND status = 'pending');
 
--- Owners can update/delete their own spots
+-- Moderators/admins can insert approved spots
+DROP POLICY IF EXISTS spots_insert_mod ON public.spots;
+CREATE POLICY spots_insert_mod
+  ON public.spots FOR INSERT
+  WITH CHECK (
+    auth.uid() = user_id
+    AND status IN ('pending','approved')
+    AND EXISTS (
+      SELECT 1 FROM public.profiles p
+      WHERE p.user_id = auth.uid()
+        AND p.role IN ('moderator','admin')
+    )
+  );
+
+-- Owners can update their own spots while status remains pending
 DROP POLICY IF EXISTS spots_owner_write ON public.spots;
 CREATE POLICY spots_owner_write
   ON public.spots FOR UPDATE
-  USING (auth.uid() = user_id)
-  WITH CHECK (auth.uid() = user_id);
+  USING (auth.uid() = user_id AND status = 'pending')
+  WITH CHECK (auth.uid() = user_id AND status = 'pending');
 
 DROP POLICY IF EXISTS spots_owner_delete ON public.spots;
 CREATE POLICY spots_owner_delete

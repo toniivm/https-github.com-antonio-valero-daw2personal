@@ -5,6 +5,7 @@
 
 import { showToast } from './notifications.js';
 import { getClient, getOrProvisionProfile, supabaseAvailable } from './supabaseClient.js';
+import { initNotifications, cleanupNotifications } from './notificationsManager.js';
 
 let currentUser = null;
 let currentRole = 'guest';
@@ -398,6 +399,13 @@ function updateUIForLoggedInUser(user) {
     }
 
     toggleModerationVisibility();
+    
+    // Inicializar sistema de notificaciones
+    initNotifications();
+    
+    document.dispatchEvent(new CustomEvent('spotmap:auth-changed', {
+        detail: { user, role: currentRole, authenticated: true }
+    }));
     console.log('[AUTH] ✓ UI actualizada para usuario logueado (rol=' + currentRole + ')');
 }
 
@@ -415,11 +423,18 @@ function updateUIForLoggedOutUser() {
     if (loggedIn) {
         loggedIn.style.display = 'none';
         loggedIn.style.visibility = 'hidden';
+    
+    // Limpiar sistema de notificaciones
+    cleanupNotifications();
+    
     }
 
     const panel = document.getElementById('moderation-panel');
     if (panel) panel.style.display = 'none';
     currentRole = 'guest';
+    document.dispatchEvent(new CustomEvent('spotmap:auth-changed', {
+        detail: { user: null, role: currentRole, authenticated: false }
+    }));
     console.log('[AUTH] ✓ UI actualizada para usuario no logueado');
 }
 
@@ -496,17 +511,10 @@ async function loadProfileRole() {
 }
 
 function toggleModerationVisibility() {
-    const panel = document.getElementById('moderation-panel');
-    if (!panel) return;
-    
+    const button = document.getElementById('btn-moderation-panel');
+    if (!button) return;
+
     const isModerator = currentRole === 'moderator' || currentRole === 'admin';
-    panel.style.display = isModerator ? 'block' : 'none';
-    
-    // Si es moderador, cargar los spots pending
-    if (isModerator && window.setupModerationPanel) {
-        setTimeout(() => {
-            window.setupModerationPanel();
-        }, 100);
-    }
+    button.style.display = isModerator ? 'inline-flex' : 'none';
 }
 

@@ -51,4 +51,116 @@ class AdminController
         }
         ApiResponse::success(["spots" => $result['spots'], "total" => $result['total']]);
     }
+
+    public function approveSpot(int $id): void
+    {
+        $user = Auth::requireUser();
+        $token = Auth::getBearerToken();
+        $role = Roles::getUserRole($user);
+        if (!in_array($role, ['moderator','admin'])) ApiResponse::unauthorized('Moderator only');
+        if (!DatabaseAdapter::useSupabase()) {
+            ApiResponse::error('Moderation requires Supabase backend', 400);
+        }
+        if ($id <= 0) ApiResponse::error('Invalid ID', 400);
+
+        // Get spot details via REST API
+        $supabaseUrl = $_ENV['SUPABASE_URL'] ?? '';
+        $supabaseKey = $_ENV['SUPABASE_SERVICE_KEY'] ?? $_ENV['SUPABASE_ANON_KEY'] ?? '';
+        
+        $url = rtrim($supabaseUrl, '/') . '/rest/v1/spots?id=eq.' . $id . '&select=id,user_id,title';
+        $ch = curl_init($url);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, [
+            'apikey: ' . $supabaseKey,
+            'Authorization: Bearer ' . $token,
+            'Content-Type: application/json'
+        ]);
+        $response = curl_exec($ch);
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        curl_close($ch);
+
+        if ($httpCode >= 400) {
+            ApiResponse::error('Spot not found', 404);
+        }
+
+        $spots = json_decode($response, true);
+        if (empty($spots)) {
+            ApiResponse::error('Spot not found', 404);
+        }
+        
+        $spotData = $spots[0];
+        
+        // Update spot status
+        $result = DatabaseAdapter::updateSpot($id, ['status' => 'approved'], $token);
+        if (isset($result['error'])) {
+            ApiResponse::error($result['error'], 500);
+        }
+
+        // Create notification for spot owner
+        NotificationController::createNotification(
+            $spotData['user_id'],
+            'spot_approved',
+            '✅ Spot aprobado',
+            'Tu spot "' . htmlspecialchars($spotData['title']) . '" ha sido aprobado y ahora es visible para todos.',
+            ['spot_id' => $id, 'moderator_id' => $user['sub']]
+        );
+
+        ApiResponse::success($result, 'Spot approved');
+    }
+
+    public function rejectSpot(int $id): void
+    {
+        $user = Auth::requireUser();
+        $token = Auth::getBearerToken();
+        $role = Roles::getUserRole($user);
+        if (!in_array($role, ['moderator','admin'])) ApiResponse::unauthorized('Moderator only');
+        if (!DatabaseAdapter::useSupabase()) {
+            ApiResponse::error('Moderation requires Supabase backend', 400);
+        }
+        if ($id <= 0) ApiResponse::error('Invalid ID', 400);
+
+        // Get spot details via REST API
+        $supabaseUrl = $_ENV['SUPABASE_URL'] ?? '';
+        $supabaseKey = $_ENV['SUPABASE_SERVICE_KEY'] ?? $_ENV['SUPABASE_ANON_KEY'] ?? '';
+        
+        $url = rtrim($supabaseUrl, '/') . '/rest/v1/spots?id=eq.' . $id . '&select=id,user_id,title';
+        $ch = curl_init($url);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, [
+            'apikey: ' . $supabaseKey,
+            'Authorization: Bearer ' . $token,
+            'Content-Type: application/json'
+        ]);
+        $response = curl_exec($ch);
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        curl_close($ch);
+
+        if ($httpCode >= 400) {
+            ApiResponse::error('Spot not found', 404);
+        }
+
+        $spots = json_decode($response, true);
+        if (empty($spots)) {
+            ApiResponse::error('Spot not found', 404);
+        }
+
+        $spotData = $spots[0];
+
+        // Update spot status
+        $result = DatabaseAdapter::updateSpot($id, ['status' => 'rejected'], $token);
+        if (isset($result['error'])) {
+            ApiResponse::error($result['error'], 500);
+        }
+
+        // Create notification for spot owner
+        NotificationController::createNotification(
+            $spotData['user_id'],
+            'spot_rejected',
+            '❌ Spot rechazado',
+            'Tu spot "' . htmlspecialchars($spotData['title']) . '" no ha sido aprobado. Por favor, revisa las normas de la comunidad.',
+            ['spot_id' => $id, 'moderator_id' => $user['sub']]
+        );
+
+        ApiResponse::success($result, 'Spot rejected');
+    }
 }

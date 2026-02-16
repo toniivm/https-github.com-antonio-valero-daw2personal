@@ -76,11 +76,35 @@ export async function getPending() {
 }
 
 export async function approve(id) {
+  // Prefer backend admin endpoint (uses authenticated token)
+  try {
+    const { getAccessToken } = await import('./auth.js');
+    const token = await getAccessToken();
+    if (token) {
+      const res = await apiFetch(`/api/admin/spots/${id}/approve`, { method: 'POST', token });
+      if (res?.success !== false) return true;
+    }
+  } catch (err) {
+    console.warn('[supabaseSpots] Approve via API failed, fallback Supabase:', err?.message);
+  }
+
   if (supabaseAvailable()) return await approveSpot(id);
   return false;
 }
 
 export async function reject(id) {
+  // Prefer backend admin endpoint (uses authenticated token)
+  try {
+    const { getAccessToken } = await import('./auth.js');
+    const token = await getAccessToken();
+    if (token) {
+      const res = await apiFetch(`/api/admin/spots/${id}/reject`, { method: 'POST', token });
+      if (res?.success !== false) return true;
+    }
+  } catch (err) {
+    console.warn('[supabaseSpots] Reject via API failed, fallback Supabase:', err?.message);
+  }
+
   if (supabaseAvailable()) return await rejectSpot(id);
   return false;
 }

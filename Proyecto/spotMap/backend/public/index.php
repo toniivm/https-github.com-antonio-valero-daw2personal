@@ -24,6 +24,7 @@ require __DIR__ . '/../src/Controllers/CommentsController.php';
 require __DIR__ . '/../src/Controllers/RatingsController.php';
 require __DIR__ . '/../src/Controllers/ReportsController.php';
 require __DIR__ . '/../src/Controllers/AdminController.php';
+require __DIR__ . '/../src/Controllers/NotificationController.php';
 require __DIR__ . '/../src/Controllers/AccountController.php';
 
 use SpotMap\Config;
@@ -41,6 +42,7 @@ use SpotMap\Controllers\CommentsController;
 use SpotMap\Controllers\RatingsController;
 use SpotMap\Controllers\ReportsController;
 use SpotMap\Controllers\AdminController;
+use SpotMap\Controllers\NotificationController;
 use SpotMap\Controllers\AccountController;
 
 // Inicializar configuración
@@ -360,6 +362,63 @@ if (($uri === '/api/admin/pending' || str_ends_with($uri, '/api/admin/pending'))
     $adm->pendingSpots();
     exit;
 }
+
+// Admin approve spot
+if ($method === 'POST' && preg_match('#/api/admin/spots/(\d+)/approve$#', $uri)) {
+    $spotId = (int)preg_replace('#^.*?/api/admin/spots/(\d+)/approve$#', '$1', $uri);
+    $adm = new AdminController();
+    $adm->approveSpot($spotId);
+    exit;
+}
+
+// Admin reject spot
+if ($method === 'POST' && preg_match('#/api/admin/spots/(\d+)/reject$#', $uri)) {
+    $spotId = (int)preg_replace('#^.*?/api/admin/spots/(\d+)/reject$#', '$1', $uri);
+    $adm = new AdminController();
+    $adm->rejectSpot($spotId);
+    exit;
+}
+// ============================================
+// NOTIFICATIONS ROUTES
+// ============================================
+
+// Get user notifications
+if (($uri === '/api/notifications' || str_ends_with($uri, '/api/notifications')) && $method === 'GET') {
+    $notif = new NotificationController();
+    $notif->index();
+    exit;
+}
+
+// Get unread count
+if (preg_match('#/api/notifications/unread-count$#', $uri) && $method === 'GET') {
+    $notif = new NotificationController();
+    $notif->unreadCount();
+    exit;
+}
+
+// Mark notification as read
+if ($method === 'PATCH' && preg_match('#/api/notifications/(\d+)/read$#', $uri)) {
+    $notifId = (int)preg_replace('#^.*?/api/notifications/(\d+)/read$#', '$1', $uri);
+    $notif = new NotificationController();
+    $notif->markAsRead($notifId);
+    exit;
+}
+
+// Mark all as read
+if ($method === 'POST' && preg_match('#/api/notifications/mark-all-read$#', $uri)) {
+    $notif = new NotificationController();
+    $notif->markAllAsRead();
+    exit;
+}
+
+// Delete notification
+if ($method === 'DELETE' && preg_match('#/api/notifications/(\d+)$#', $uri)) {
+    $notifId = (int)preg_replace('#^.*?/api/notifications/(\d+)$#', '$1', $uri);
+    $notif = new NotificationController();
+    $notif->delete($notifId);
+    exit;
+}
+
 
 http_response_code(404);
 header('Content-Type: application/json');

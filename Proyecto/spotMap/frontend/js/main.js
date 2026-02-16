@@ -13,7 +13,7 @@ import { getCurrentRole, getAccessToken, isAuthenticated, getCurrentUser } from 
 import { subscribeToSpots, supabaseAvailable, initSupabase, getClient as getSupabaseClient } from './supabaseClient.js';
 import * as mapModule from './map.js';
 import * as uiModule from './ui.js';
-import { setupUI, renderSpotList, updateCategoryFilter, updateTagFilter, enableAutoGeolocate, showSpotListLoading } from './ui.js';
+import { setupUI, renderSpotList, updateCategoryFilter, updateTagFilter, showSpotListLoading } from './ui.js';
 import { showToast } from './notifications.js';
 import { initAuth } from './auth.js';
 import { initSocial, isSpotLiked, toggleLike, openShareModal } from './social.js';
@@ -77,7 +77,6 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         // ===== FASE 4: UI Y DATOS =====
         console.log('[MAIN] Fase 4: Interfaz y datos...');
-        enableAutoGeolocate();
         setupUI();
 
         // 4.1 Cargar favoritos del usuario
