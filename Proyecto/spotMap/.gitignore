@@ -13,12 +13,8 @@ config/blocked_ips.txt
 
 # === CÓDIGO FUENTE ORIGINAL ===
 
-# === Tests y Coverage (revelan implementación) ===
-backend/tests/
-frontend/tests/
+# === Tests y Coverage ===
 coverage/
-*.test.js
-*Test.php
 TESTING.md
 RESUMEN_MEJORAS.md
 
