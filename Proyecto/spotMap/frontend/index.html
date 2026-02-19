@@ -41,7 +41,7 @@
         <button id="btn-theme-toggle" class="btn btn-sm btn-outline-light" title="Toggle theme">🌙</button>
         <button id="btn-toggle-sidebar" class="btn btn-sm d-lg-none" data-bs-toggle="offcanvas" data-bs-target="#sidebar" aria-controls="sidebar"><span data-i18n="nav.menu">☰ Menú</span></button>
         <!-- Botón de moderación (solo visible para moderadores) -->
-        <button id="btn-moderation-panel" class="btn btn-sm btn-warning" style="display: none; gap: 0.5rem; align-items-center;" title="Panel de moderación de spots">🛡️ Moderación</button>
+        <button id="btn-moderation-panel" class="btn btn-sm btn-warning" style="display: none; gap: 0.5rem; align-items: center;" title="Panel de moderación de spots">🛡️ Moderación</button>
         <!-- Botón de notificaciones (solo visible cuando está logueado) -->
         <div id="notifications-button" class="dropdown" style="display: none;">
           <button class="btn btn-sm btn-outline-light position-relative" type="button" id="btn-notifications" data-bs-toggle="dropdown" aria-expanded="false" title="Notificaciones">
@@ -186,6 +186,9 @@
               <span class="badge bg-primary" id="spot-count">0</span>
             </div>
             <div id="spot-list" class="spot-list-view" aria-live="polite" aria-busy="false"></div>
+            <div id="load-more-container" class="mt-3" style="display: none;">
+              <button id="btn-load-more-spots" class="btn btn-outline-primary w-100" type="button">Cargar más</button>
+            </div>
           </div>
         </div>
       </aside>

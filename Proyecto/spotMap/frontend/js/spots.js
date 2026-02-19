@@ -10,24 +10,107 @@ import { Cache } from './cache.js';
 import { getApproved, createSpotRecord } from './supabaseSpots.js';
 import { logError, validateData } from './errorHandler.js';
 
+const DEFAULT_PAGE_SIZE = 50;
+const paginationState = {
+    page: 1,
+    limit: DEFAULT_PAGE_SIZE,
+    total: 0,
+    hasMore: false
+};
+
+function dedupeSpotsById(spots = []) {
+    const seen = new Set();
+    return spots.filter(spot => {
+        const id = spot?.id;
+        if (id === undefined || id === null) return false;
+        if (seen.has(id)) return false;
+        seen.add(id);
+        return true;
+    });
+}
+
+
+function toNumber(value) {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : null;
+}
+function resetPagination(limit = DEFAULT_PAGE_SIZE) {
+    paginationState.page = 1;
+    paginationState.limit = limit;
+    paginationState.total = 0;
+    paginationState.hasMore = false;
+}
+
+export function getPaginationState() {
+    return { ...paginationState };
+}
+
+export async function loadMoreSpots() {
+    const cached = Cache.get('spots') || [];
+    if (!paginationState.hasMore) {
+        return cached;
+    }
+
+    return loadSpots({
+        page: paginationState.page + 1,
+        limit: paginationState.limit,
+        append: true
+    });
+}
+
+export async function ensureAllSpotsLoaded({ maxPages = 50 } = {}) {
+    let spots = Cache.get('spots') || [];
+    let guard = 0;
+
+    while (paginationState.hasMore && guard < maxPages) {
+        spots = await loadMoreSpots();
+        guard++;
+    }
+
+    return spots;
+}
+
 /**
  * Cargar todos los spots de la API
  * @returns {Promise<Array>} Array de spots
  */
-export async function loadSpots({ forceRefresh = false } = {}) {
+export async function loadSpots({ forceRefresh = false, page = 1, limit = DEFAULT_PAGE_SIZE, append = false } = {}) {
     try {
-        if (!forceRefresh) {
+        const safePage = Math.max(1, Number(page) || 1);
+        const safeLimit = Math.max(1, Math.min(100, Number(limit) || DEFAULT_PAGE_SIZE));
+
+        if (forceRefresh) {
+            Cache.remove('spots');
+            resetPagination(safeLimit);
+        }
+
+        if (!forceRefresh && !append && safePage === paginationState.page) {
             const cached = Cache.get('spots');
             if (cached) {
                 console.log(`[SPOTS] Cache hit: ${cached.length} spots`);
                 return cached;
             }
         }
-        console.log('[SPOTS] Fetching spots (Supabase/API)...');
-        const spots = await getApproved({});
-        Cache.set('spots', spots, 30000);
-        console.log(`[SPOTS] ✓ ${spots.length} spots cargados`);
-        return spots;
+
+        const offset = (safePage - 1) * safeLimit;
+        console.log(`[SPOTS] Fetching spots (Supabase/API) page=${safePage} limit=${safeLimit}...`);
+
+        const result = await getApproved({ page: safePage, limit: safeLimit, offset });
+        const fetchedSpots = Array.isArray(result?.spots) ? result.spots : [];
+        const fetchedTotal = Number(result?.total);
+
+        const baseSpots = append ? (Cache.get('spots') || []) : [];
+        const mergedSpots = dedupeSpotsById([...baseSpots, ...fetchedSpots]);
+        const total = Number.isFinite(fetchedTotal) ? Math.max(fetchedTotal, mergedSpots.length) : mergedSpots.length;
+
+        paginationState.page = safePage;
+        paginationState.limit = safeLimit;
+        paginationState.total = total;
+        paginationState.hasMore = mergedSpots.length < total;
+
+        Cache.set('spots', mergedSpots, 30000);
+        console.log(`[SPOTS] ✓ ${mergedSpots.length} spots cargados (total=${total}, hasMore=${paginationState.hasMore})`);
+        return mergedSpots;
     } catch (error) {
         console.error('[SPOTS] Error cargando spots:', error);
         return [];
@@ -61,11 +144,13 @@ export function displaySpots(spots, renderListCallback) {
         let validCount = 0;
         validSpots.forEach(spot => {
             try {
-                // Validar que spot tenga lat/lng
-                if (typeof spot.lat !== 'number' || typeof spot.lng !== 'number') {
+                // Validar/coaccionar coordenadas
+                const lat = toNumber(spot.lat);
+                const lng = toNumber(spot.lng);
+                if (lat === null || lng === null) {
                     throw new Error(`Spot ${spot.id} sin coordenadas válidas`);
                 }
-                mapModule.addMarker(spot);
+                mapModule.addMarker({ ...spot, lat, lng });
                 validCount++;
             } catch (spotError) {
                 logError(`[SPOTS] Error agregando marcador`, spotError, { spotId: spot?.id });
@@ -390,8 +475,10 @@ export function filterByOwner(spots, userId) {
 export function filterByDistance(spots, origin, maxKm) {
     if (!origin || !maxKm) return spots;
     return spots.filter(spot => {
-        if (typeof spot.lat !== 'number' || typeof spot.lng !== 'number') return false;
-        const distance = calculateDistanceKm(origin.lat, origin.lng, spot.lat, spot.lng);
+        const lat = toNumber(spot.lat);
+        const lng = toNumber(spot.lng);
+        if (lat === null || lng === null) return false;
+        const distance = calculateDistanceKm(origin.lat, origin.lng, lat, lng);
         return distance <= maxKm;
     });
 }

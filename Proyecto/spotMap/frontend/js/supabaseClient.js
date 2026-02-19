@@ -171,7 +171,7 @@ export async function fetchApprovedSpots({ limit = 50, offset = 0 } = {}) {
     
     // 2. Si hay usuario logueado, también traer sus spots pending
     let userPending = [];
-    if (userId && supportsUserPending && supportsStatusColumn !== false && supportsUserIdColumn !== false) {
+    if (offset === 0 && userId && supportsUserPending && supportsStatusColumn !== false && supportsUserIdColumn !== false) {
       const { data: pending, error: err2 } = await supabase
         .from('spots')
         .select('*')

@@ -23,12 +23,89 @@ export const filterState = {
     userLocation: null
 };
 
+function hasActiveFilters() {
+    return Boolean(
+        (filterState.search && filterState.search.trim()) ||
+        (filterState.category && filterState.category !== 'all') ||
+        (filterState.tag && filterState.tag !== 'all') ||
+        filterState.onlyMine ||
+        (filterState.enableDistance && filterState.userLocation)
+    );
+}
+
+function toFiniteNumber(value) {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : null;
+}
+
+function getSpotCoords(spot) {
+    const lat = toFiniteNumber(spot?.lat);
+    const lng = toFiniteNumber(spot?.lng);
+    return { lat, lng, valid: lat !== null && lng !== null };
+}
+
+function updateLoadMoreVisibility(currentSpotsCount = 0) {
+    const container = document.getElementById('load-more-container');
+    const button = document.getElementById('btn-load-more-spots');
+    if (!container || !button || typeof spotsModule.getPaginationState !== 'function') {
+        return;
+    }
+
+    const pagination = spotsModule.getPaginationState();
+    const shouldShow = pagination.hasMore && !hasActiveFilters();
+
+    container.style.display = shouldShow ? 'block' : 'none';
+    if (!shouldShow) return;
+
+    const remaining = Math.max(0, (pagination.total || 0) - currentSpotsCount);
+    button.disabled = false;
+    button.textContent = remaining > 0
+        ? `Cargar más (${remaining} restantes)`
+        : 'Cargar más';
+}
+
+async function handleLoadMoreSpots() {
+    const button = document.getElementById('btn-load-more-spots');
+    if (!button || typeof spotsModule.loadMoreSpots !== 'function') {
+        return;
+    }
+
+    button.disabled = true;
+    const originalText = button.textContent;
+    button.textContent = 'Cargando...';
+
+    try {
+        const spots = await spotsModule.loadMoreSpots();
+
+        if (hasActiveFilters()) {
+            await applyFilters();
+        } else {
+            spotsModule.displaySpots(spots, renderSpotList);
+        }
+
+        updateCategoryFilter(spots);
+        updateTagFilter(spots);
+    } catch (error) {
+        console.error('[UI] Error cargando más spots:', error);
+        showToast('Error al cargar más spots', 'error');
+    } finally {
+        button.disabled = false;
+        if (button.textContent === 'Cargando...') {
+            button.textContent = originalText;
+        }
+    }
+}
+
 /**
  * Aplicar filtros en cascada
  */
 export async function applyFilters() {
     try {
         let spots = await spotsModule.loadSpots();
+
+        if (hasActiveFilters() && typeof spotsModule.ensureAllSpotsLoaded === 'function') {
+            spots = await spotsModule.ensureAllSpotsLoaded();
+        }
         
         if (!spots) {
             console.warn('[UI] No hay spots disponibles');
@@ -74,6 +151,7 @@ export async function applyFilters() {
         
         console.log(`[UI] Resultado final: ${spots.length} spots mostrados`);
         renderSpotList(spots);
+        updateLoadMoreVisibility(spots.length);
     } catch (error) {
         console.error('[UI] Error aplicando filtros:', error);
         showToast(`Error al filtrar: ${error.message}`, 'error');
@@ -173,6 +251,11 @@ export function setupUI() {
     const formAddSpot = document.getElementById('form-add-spot');
     if (formAddSpot) {
         formAddSpot.addEventListener('submit', handleAddSpotSubmit);
+    }
+
+    const btnLoadMoreSpots = document.getElementById('btn-load-more-spots');
+    if (btnLoadMoreSpots) {
+        btnLoadMoreSpots.addEventListener('click', handleLoadMoreSpots);
     }
 
     // Campo de búsqueda
@@ -673,6 +756,7 @@ export function renderSpotList(spots) {
 
     if (!spots || spots.length === 0) {
         spotList.innerHTML = '<p class="text-muted text-center py-4">No hay spots para mostrar</p>';
+        updateLoadMoreVisibility(0);
         return;
     }
 
@@ -689,6 +773,7 @@ export function renderSpotList(spots) {
     }
 
     console.log(`[UI] ✓ Lista actualizada con ${spots.length} spots`);
+    updateLoadMoreVisibility(spots.length);
 }
 
 /**
@@ -717,12 +802,14 @@ function renderSpotCardList(spot) {
     
     // Calcular distancia desde ubicación del usuario si está disponible
     let distanceHtml = '';
-    if (filterState.userLocation && spot.lat && spot.lng) {
+    const coords = getSpotCoords(spot);
+
+    if (filterState.userLocation && coords.valid) {
         const distance = spotsModule.calculateDistanceKm(
             filterState.userLocation.lat,
             filterState.userLocation.lng,
-            spot.lat,
-            spot.lng
+            coords.lat,
+            coords.lng
         );
         distanceHtml = `<span class="spot-distance" title="Distancia aproximada">📏 ${distance.toFixed(1)} km</span>`;
     }
@@ -778,7 +865,7 @@ function renderSpotCardList(spot) {
                 </div>
                 <div class="d-flex justify-content-between align-items-center">
                     <small class="spot-card-meta">
-                        📍 ${spot.lat.toFixed(3)}, ${spot.lng.toFixed(3)}
+                        📍 ${coords.valid ? `${coords.lat.toFixed(3)}, ${coords.lng.toFixed(3)}` : 'Coordenadas no disponibles'}
                     </small>
                     <div>
                         ${spot.status === 'pending' ? '<span class="badge bg-warning text-dark">⏳ Pendiente</span>' : ''}
@@ -816,12 +903,14 @@ function renderSpotCardGrid(spot) {
     
     // Calcular distancia desde ubicación del usuario si está disponible
     let distanceHtml = '';
-    if (filterState.userLocation && spot.lat && spot.lng) {
+    const coords = getSpotCoords(spot);
+
+    if (filterState.userLocation && coords.valid) {
         const distance = spotsModule.calculateDistanceKm(
             filterState.userLocation.lat,
             filterState.userLocation.lng,
-            spot.lat,
-            spot.lng
+            coords.lat,
+            coords.lng
         );
         distanceHtml = `<span class="spot-distance" title="Distancia aproximada">📏 ${distance.toFixed(1)} km</span>`;
     }

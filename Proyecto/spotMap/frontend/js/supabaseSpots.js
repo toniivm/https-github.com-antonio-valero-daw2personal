@@ -2,14 +2,30 @@
 import { supabaseAvailable, supportsStatus, fetchApprovedSpots, listPendingSpots, approveSpot, rejectSpot, createSpot as sbCreateSpot, uploadSpotImage } from './supabaseClient.js';
 import { apiFetch } from './api.js';
 
-export async function getApproved({ forceRefresh = false } = {}) {
+export async function getApproved({ forceRefresh = false, page = 1, limit = 50, offset = null } = {}) {
+  const safePage = Math.max(1, Number(page) || 1);
+  const safeLimit = Math.max(1, Math.min(100, Number(limit) || 50));
+  const safeOffset = offset !== null
+    ? Math.max(0, Number(offset) || 0)
+    : (safePage - 1) * safeLimit;
+
   // Intentar Supabase primero
   if (supabaseAvailable()) {
     try {
-      const result = await fetchApprovedSpots({ limit: 200 });
+      const result = await fetchApprovedSpots({ limit: safeLimit, offset: safeOffset });
       if (result?.spots) {
         console.log('[supabaseSpots] ✓ Spots obtenidos de Supabase');
-        return result.spots;
+        const totalFromSource = Number(result.total);
+        const total = Number.isFinite(totalFromSource)
+          ? Math.max(totalFromSource, result.spots.length)
+          : result.spots.length;
+
+        return {
+          spots: result.spots,
+          total,
+          page: safePage,
+          limit: safeLimit
+        };
       }
     } catch (error) {
       console.warn('[supabaseSpots] Error de Supabase, usando fallback API:', error.message);
@@ -19,21 +35,26 @@ export async function getApproved({ forceRefresh = false } = {}) {
   // Fallback: usar API local
   try {
     console.log('[supabaseSpots] Intentando fallback a API local...');
-    const res = await apiFetch('/spots', { method: 'GET' });
+    const res = await apiFetch(`/spots?page=${safePage}&limit=${safeLimit}`, { method: 'GET' });
     
     console.log('[supabaseSpots] Respuesta cruda de API:', JSON.stringify(res, null, 2));
     
     // Intentar múltiples estructuras de respuesta
     let spots = null;
+    let total = null;
     
     if (Array.isArray(res)) {
       spots = res;
     } else if (res?.data?.spots && Array.isArray(res.data.spots)) {
       spots = res.data.spots;
+      const paginationTotal = Number(res?.data?.pagination?.total);
+      total = Number.isFinite(paginationTotal) ? paginationTotal : null;
     } else if (res?.data && Array.isArray(res.data)) {
       spots = res.data;
     } else if (res?.spots && Array.isArray(res.spots)) {
       spots = res.spots;
+      const paginationTotal = Number(res?.pagination?.total);
+      total = Number.isFinite(paginationTotal) ? paginationTotal : null;
     } else if (res?.success && res?.data) {
       // Última opción: si success es true y data existe
       spots = Array.isArray(res.data) ? res.data : [];
@@ -41,14 +62,19 @@ export async function getApproved({ forceRefresh = false } = {}) {
     
     if (spots && Array.isArray(spots)) {
       console.log(`[supabaseSpots] ✓ Spots obtenidos de API local: ${spots.length} items`);
-      return spots;
+      return {
+        spots,
+        total: Number.isFinite(total) ? total : spots.length,
+        page: safePage,
+        limit: safeLimit
+      };
     }
     
     console.warn('[supabaseSpots] API no retornó spots válidos:', res);
-    return [];
+    return { spots: [], total: 0, page: safePage, limit: safeLimit };
   } catch (error) {
     console.error('[supabaseSpots] Error en API local:', error);
-    return [];
+    return { spots: [], total: 0, page: safePage, limit: safeLimit };
   }
 }
 
