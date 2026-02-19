@@ -24,6 +24,8 @@ require __DIR__ . '/../src/PerformanceMonitor.php';
 require __DIR__ . '/../src/ErrorTracker.php';
 require __DIR__ . '/../src/Controllers/SpotController.php';
 require __DIR__ . '/../src/Controllers/MonitoringController.php';
+require __DIR__ . '/../src/Controllers/AuditController.php';
+require __DIR__ . '/../src/Auth.php';
 
 use SpotMap\Database;
 use SpotMap\DatabaseAdapter;
@@ -31,6 +33,7 @@ use SpotMap\ApiResponse;
 use SpotMap\Security;
 use SpotMap\Controllers\SpotController;
 use SpotMap\Controllers\MonitoringController;
+use SpotMap\Controllers\AuditController;
 use SpotMap\Logger;
 use SpotMap\PerformanceMonitor;
 use SpotMap\ErrorTracker;
@@ -124,6 +127,7 @@ if (!DatabaseAdapter::useSupabase()) {
 
 $controller = new SpotController();
 $monitoringController = new MonitoringController();
+$auditController = new AuditController(Database::pdo());
 $method = $_SERVER['REQUEST_METHOD'];
 
 // Soporte para _method fallback (si algunos servidores bloquean DELETE)
@@ -143,6 +147,50 @@ $id = isset($_GET['id']) ? (int)$_GET['id'] : null;
 $sub = $_GET['sub'] ?? null;
 
 try {
+    // 🔍 RUTAS DE AUDITORÍA (ADMIN-ONLY)
+    if ($action === 'audit') {
+        PerformanceMonitor::mark('audit_start');
+        
+        // Autenticar usuario (permitir fallo para manejarlo en controller)
+        try {
+            $user = \SpotMap\Auth::requireUser();
+        } catch (\Exception $e) {
+            ApiResponse::error('Unauthorized: Authentication required', 401);
+            exit;
+        }
+        if (!$user) {
+            ApiResponse::error('Unauthorized: Authentication required', 401);
+            exit;
+        }
+        
+        // GET /audit/logs - Get audit log entries
+        if ($method === 'GET' && !$sub) {
+            $auditController->getLogs($user);
+            exit;
+        }
+        
+        // GET /audit/stats - Get audit statistics
+        if ($method === 'GET' && $sub === 'stats') {
+            $auditController->getStats($user);
+            exit;
+        }
+        
+        // GET /audit/moderator/{id} - Get specific moderator's audit trail
+        if ($method === 'GET' && $sub === 'moderator' && $id) {
+            $auditController->getModeratorHistory($user, $id);
+            exit;
+        }
+        
+        // GET /audit/resource/{targetType}/{targetId} - Get resource audit trail
+        if ($method === 'GET' && $sub === 'resource' && isset($_GET['target_type']) && isset($_GET['target_id'])) {
+            $auditController->getResourceHistory($user, $_GET['target_type'], $_GET['target_id']);
+            exit;
+        }
+        
+        $logger->warning('Audit endpoint not found', ['sub' => $sub]);
+        ApiResponse::notFound('Audit endpoint not found');
+    }
+
     // 🔍 RUTAS DE MONITOREO
     if ($action === 'monitoring') {
         PerformanceMonitor::mark('monitoring_start');
@@ -209,6 +257,24 @@ try {
         $controller->uploadPhoto($id);
         PerformanceMonitor::mark('photo_upload_end');
         $logger->info("POST /spots/{$id}/photo - Success");
+        exit;
+    }
+
+    // ⭐ POST /admin/spots?id=1&sub=approve (aprobar spot - moderador+)
+    if ($method === 'POST' && $action === 'admin' && $sub === 'spots' && $id && isset($_GET['approve'])) {
+        PerformanceMonitor::mark('spot_approve_start');
+        $controller->approveSpot($id);
+        PerformanceMonitor::mark('spot_approve_end');
+        $logger->info("POST /admin/spots/{$id}/approve - Success");
+        exit;
+    }
+
+    // ⭐ POST /admin/spots?id=1&sub=reject (rechazar spot - moderador+)
+    if ($method === 'POST' && $action === 'admin' && $sub === 'spots' && $id && isset($_GET['reject'])) {
+        PerformanceMonitor::mark('spot_reject_start');
+        $controller->rejectSpot($id);
+        PerformanceMonitor::mark('spot_reject_end');
+        $logger->info("POST /admin/spots/{$id}/reject - Success");
         exit;
     }
 

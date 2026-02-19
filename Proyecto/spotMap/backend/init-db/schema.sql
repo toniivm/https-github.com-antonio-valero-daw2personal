@@ -151,13 +151,36 @@ CREATE TABLE IF NOT EXISTS activity_logs (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ============================================
--- 8. INSERT DEFAULT ADMIN USER
+-- 8. MODERATION AUDIT LOG
+-- ============================================
+CREATE TABLE IF NOT EXISTS moderation_audit_log (
+  id BIGINT AUTO_INCREMENT PRIMARY KEY,
+  moderator_id CHAR(36) NOT NULL COMMENT 'User performing moderation action',
+  action VARCHAR(50) NOT NULL COMMENT 'Action: approve_spot, reject_spot, delete_comment, ban_user, etc.',
+  target_type VARCHAR(50) NOT NULL COMMENT 'Resource type: spot, comment, user, report',
+  target_id VARCHAR(100) NOT NULL COMMENT 'ID of the moderated resource',
+  old_value TEXT COMMENT 'Previous state (JSON)',
+  new_value TEXT COMMENT 'Updated state (JSON)',
+  reason TEXT COMMENT 'Moderator justification for the action',
+  metadata JSON COMMENT 'Additional context (IP, user_agent, referrer, etc.)',
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (moderator_id) REFERENCES users(id) ON DELETE CASCADE,
+  INDEX idx_moderator_id (moderator_id),
+  INDEX idx_action (action),
+  INDEX idx_target (target_type, target_id),
+  INDEX idx_created_at (created_at),
+  INDEX idx_action_created (action, created_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+COMMENT='Immutable audit trail for all moderation actions';
+
+-- ============================================
+-- 9. INSERT DEFAULT ADMIN USER
 -- ============================================
 INSERT IGNORE INTO users (id, username, email, password_hash, full_name, role, is_verified, is_active) VALUES
 ('550e8400-e29b-41d4-a716-446655440000', 'admin', 'admin@spotmap.local', '$2y$10$YIjlrBzijF0CRQfJlgOXaeQ5XlXvjnPBL6Oy5GS5TGRvXCDWTSAMG', 'Administrator', 'admin', TRUE, TRUE);
 
 -- ============================================
--- 9. INSERT SAMPLE SPOTS
+-- 10. INSERT SAMPLE SPOTS
 -- ============================================
 INSERT INTO spots (user_id, title, description, latitude, longitude, category, tags, status) VALUES
 -- Art & Street Art
@@ -190,7 +213,7 @@ INSERT INTO spots (user_id, title, description, latitude, longitude, category, t
 ('550e8400-e29b-41d4-a716-446655440000', 'Taller de Fotografía Analógica', 'Clase práctica sobre fotografía en película y revelado', 40.4145, -3.7090, 'educación', '["fotografía", "analógico", "taller"]', 'approved');
 
 -- ============================================
--- 10. CREATE INDEXES FOR PERFORMANCE
+-- 11. CREATE INDEXES FOR PERFORMANCE
 -- ============================================
 CREATE INDEX idx_spots_category_status ON spots(category, status);
 CREATE INDEX idx_spots_created_at ON spots(created_at);

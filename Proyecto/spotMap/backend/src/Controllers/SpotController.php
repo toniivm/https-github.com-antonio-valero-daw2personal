@@ -8,6 +8,7 @@ use SpotMap\Cache;
 use SpotMap\Auth;
 use SpotMap\Logger;
 use SpotMap\Constants;
+use AuditLogger;
 
 class SpotController
 {
@@ -622,6 +623,139 @@ class SpotController
             Cache::delete("spot_{$id}");
             Cache::flushPattern('spots_*');
             ApiResponse::success($result, 'Photo uploaded successfully', 200);
+
+        } catch (\Exception $e) {
+            ApiResponse::serverError($e->getMessage());
+        }
+    }
+
+    /**
+     * POST /admin/spots/{id}/approve - Approve a pending spot (moderator+)
+     */
+    public function approveSpot(int $id): void
+    {
+        try {
+            $user = Auth::requireUser();
+            if (!$user) {
+                ApiResponse::error('Unauthorized', 401);
+                return;
+            }
+
+            if (!Constants::isModerator($user['role'] ?? 'user')) {
+                ApiResponse::error('Forbidden: Moderator access required', 403);
+                return;
+            }
+
+            // Get current spot state
+            $spot = DatabaseAdapter::getSpotById($id);
+            if (!$spot) {
+                ApiResponse::notFound('Spot not found');
+                return;
+            }
+
+            $oldStatus = $spot['status'] ?? 'unknown';
+            
+            // Update status to approved
+            $result = DatabaseAdapter::updateSpot($id, ['status' => 'approved']);
+            
+            if (isset($result['error'])) {
+                ApiResponse::error($result['error'], 500);
+                return;
+            }
+
+            // Log moderation action
+            $db = \SpotMap\Database::pdo();
+            $auditLogger = new AuditLogger($db);
+            $auditLogger->logModeration(
+                $user['id'],
+                'approve_spot',
+                'spot',
+                (string)$id,
+                ['status' => $oldStatus],
+                ['status' => 'approved'],
+                $_POST['reason'] ?? 'Approved by moderator',
+                [
+                    'ip' => $_SERVER['REMOTE_ADDR'] ?? 'unknown',
+                    'user_agent' => $_SERVER['HTTP_USER_AGENT'] ?? 'unknown'
+                ]
+            );
+
+            Cache::delete("spot_{$id}");
+            Cache::flushPattern('spots_*');
+            
+            ApiResponse::success([
+                'spot_id' => $id,
+                'new_status' => 'approved'
+            ], 'Spot approved successfully');
+
+        } catch (\Exception $e) {
+            ApiResponse::serverError($e->getMessage());
+        }
+    }
+
+    /**
+     * POST /admin/spots/{id}/reject - Reject a pending spot (moderator+)
+     */
+    public function rejectSpot(int $id): void
+    {
+        try {
+            $user = Auth::requireUser();
+            if (!$user) {
+                ApiResponse::error('Unauthorized', 401);
+                return;
+            }
+
+            if (!Constants::isModerator($user['role'] ?? 'user')) {
+                ApiResponse::error('Forbidden: Moderator access required', 403);
+                return;
+            }
+
+            // Get current spot state
+            $spot = DatabaseAdapter::getSpotById($id);
+            if (!$spot) {
+                ApiResponse::notFound('Spot not found');
+                return;
+            }
+
+            $oldStatus = $spot['status'] ?? 'unknown';
+            
+            // Get rejection reason from request body
+            $input = json_decode(file_get_contents('php://input'), true) ?? [];
+            $reason = $input['reason'] ?? $_POST['reason'] ?? 'Rejected by moderator';
+            
+            // Update status to rejected
+            $result = DatabaseAdapter::updateSpot($id, ['status' => 'rejected']);
+            
+            if (isset($result['error'])) {
+                ApiResponse::error($result['error'], 500);
+                return;
+            }
+
+            // Log moderation action
+            $db = \SpotMap\Database::pdo();
+            $auditLogger = new AuditLogger($db);
+            $auditLogger->logModeration(
+                $user['id'],
+                'reject_spot',
+                'spot',
+                (string)$id,
+                ['status' => $oldStatus],
+                ['status' => 'rejected'],
+                $reason,
+                [
+                    'ip' => $_SERVER['REMOTE_ADDR'] ?? 'unknown',
+                    'user_agent' => $_SERVER['HTTP_USER_AGENT'] ?? 'unknown'
+                ]
+            );
+
+            Cache::delete("spot_{$id}");
+            Cache::flushPattern('spots_*');
+            
+            ApiResponse::success([
+                'spot_id' => $id,
+                'new_status' => 'rejected',
+                'reason' => $reason
+            ], 'Spot rejected successfully');
 
         } catch (\Exception $e) {
             ApiResponse::serverError($e->getMessage());
