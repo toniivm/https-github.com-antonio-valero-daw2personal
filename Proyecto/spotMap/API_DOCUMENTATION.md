@@ -14,7 +14,7 @@ http://localhost/https-github.com-antonio-valero-daw2personal/Proyecto/spotMap/b
 
 ### Especificación OpenAPI JSON
 ```
-http://localhost/https-github.com-antonio-valero-daw2personal/Proyecto/spotMap/backend/public/api.php?openapi
+http://localhost/https-github.com-antonio-valero-daw2personal/Proyecto/spotMap/backend/openapi.json
 ```
 
 ---
@@ -43,6 +43,8 @@ http://localhost/https-github.com-antonio-valero-daw2personal/Proyecto/spotMap/b
    - ⭐ **Ratings**: Valoraciones de usuarios
    - ❤️ **Favorites**: Spots favoritos
    - 👑 **Admin**: Endpoints de administración
+   - 🔔 **Notifications**: Notificaciones in-app
+   - 🩺 **System**: Estado y health checks
 
 ---
 
@@ -67,6 +69,18 @@ http://localhost/https-github.com-antonio-valero-daw2personal/Proyecto/spotMap/b
 
 ### Admin
 - `GET /admin/pending` - Spots pendientes de moderación (solo moderadores/admins)
+- `POST /admin/spots/{id}/approve` - Aprobar spot pendiente
+- `POST /admin/spots/{id}/reject` - Rechazar spot pendiente
+
+### Notifications
+- `GET /notifications` - Listar notificaciones del usuario autenticado
+- `GET /notifications/unread-count` - Contador de no leídas
+- `PATCH /notifications/{id}/read` - Marcar una notificación como leída
+- `POST /notifications/mark-all-read` - Marcar todas como leídas
+- `DELETE /notifications/{id}` - Eliminar notificación
+
+### System
+- `GET /api/status` - Health check de API y DB
 
 ---
 

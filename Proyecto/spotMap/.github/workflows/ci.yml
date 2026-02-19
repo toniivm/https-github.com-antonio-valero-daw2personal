@@ -85,7 +85,7 @@ jobs:
       - name: 🗄️ Setup database
         working-directory: ./backend
         run: |
-          mysql -h127.0.0.1 -uroot -proot123 spotmap_test < ../SQL_RLS_BASE.sql 2>/dev/null || true
+          mysql -h127.0.0.1 -uroot -proot123 spotmap_test < init-db/schema.sql
 
       - name: 🧪 Run PHPUnit tests
         working-directory: ./backend
@@ -187,18 +187,21 @@ jobs:
         with:
           node-version: '18'
           cache: 'npm'
-          cache-dependency-path: frontend/package-lock.json
+          cache-dependency-path: frontend/package.json
 
       - name: 📥 Install dependencies
         working-directory: ./frontend
-        run: npm ci
+        run: |
+          if [ -f package-lock.json ]; then
+            npm ci
+          else
+            npm install
+          fi
 
       - name: 🧪 Run Jest tests
         working-directory: ./frontend
         run: npm run test -- --coverage --passWithNoTests
-        continue-on-error: true
 
       - name: 🔨 Build frontend
         working-directory: ./frontend
-        run: npm run build:prod
-        continue-on-error: true
+        run: npm run build

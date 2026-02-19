@@ -7,7 +7,12 @@ class RateLimiter
 
     public static function check(string $identifier = 'default'): bool
     {
-        if (!Config::get('RATE_LIMIT_ENABLED', false)) {
+        $enabled = (bool)Config::get('RATE_LIMIT_ENABLED', false);
+        if (!$enabled && Config::isProd()) {
+            $enabled = true;
+        }
+
+        if (!$enabled) {
             return true;
         }
 
@@ -40,7 +45,12 @@ class RateLimiter
 
     public static function getRemaining(string $identifier = 'default'): int
     {
-        if (!Config::get('RATE_LIMIT_ENABLED', false)) {
+        $enabled = (bool)Config::get('RATE_LIMIT_ENABLED', false);
+        if (!$enabled && Config::isProd()) {
+            $enabled = true;
+        }
+
+        if (!$enabled) {
             return -1;
         }
 

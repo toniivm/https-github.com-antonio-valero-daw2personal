@@ -52,11 +52,19 @@ Config::load();
 Security::setSecurityHeaders();
 
 // CORS mejorado
-$allowedOrigins = explode(',', Config::get('CORS_ORIGINS', 'http://localhost,http://localhost:3000'));
+$allowedOrigins = array_map('trim', explode(',', Config::get('CORS_ORIGINS', 'http://localhost,http://localhost:3000')));
 $origin = $_SERVER['HTTP_ORIGIN'] ?? '';
-if (in_array($origin, $allowedOrigins) || in_array('*', $allowedOrigins)) {
-    header("Access-Control-Allow-Origin: $origin");
-    header("Access-Control-Allow-Credentials: true");
+$allowAllOrigins = in_array('*', $allowedOrigins, true);
+$isAllowedOrigin = $allowAllOrigins || in_array($origin, $allowedOrigins, true);
+
+if ($isAllowedOrigin) {
+    if ($allowAllOrigins && $origin === '') {
+        header('Access-Control-Allow-Origin: *');
+    } else {
+        header("Access-Control-Allow-Origin: $origin");
+        header('Access-Control-Allow-Credentials: true');
+    }
+    header('Vary: Origin');
 }
 header("Access-Control-Allow-Methods: GET, POST, DELETE, OPTIONS, PUT");
 header("Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With");
@@ -84,11 +92,21 @@ $uri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
 $method = $_SERVER['REQUEST_METHOD'];
 
 // Rate limiting
-if (!RateLimiter::check($_SERVER['REMOTE_ADDR'] ?? 'unknown')) {
+$rateIdentifier = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
+if (!RateLimiter::check($rateIdentifier)) {
     http_response_code(429);
+    $remaining = RateLimiter::getRemaining($rateIdentifier);
+    if ($remaining >= 0) {
+        header('X-RateLimit-Remaining: 0');
+    }
     header('Content-Type: application/json');
     echo json_encode(['error' => 'Too many requests']);
     exit;
+}
+
+$remaining = RateLimiter::getRemaining($rateIdentifier);
+if ($remaining >= 0) {
+    header('X-RateLimit-Remaining: ' . $remaining);
 }
 
 // Logging
