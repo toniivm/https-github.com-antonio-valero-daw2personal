@@ -205,3 +205,47 @@ jobs:
       - name: 🔨 Build frontend
         working-directory: ./frontend
         run: npm run build
+
+      - name: 🎭 Install Playwright browser
+        working-directory: ./frontend
+        run: npx playwright install --with-deps chromium
+
+      - name: 📱 Run mobile E2E smoke
+        working-directory: ./frontend
+        run: npm run e2e:mobile
+
+      - name: 🌱 Seed E2E users in Supabase
+        if: ${{ secrets.E2E_USER_EMAIL != '' && secrets.E2E_USER_PASSWORD != '' && secrets.E2E_MODERATOR_EMAIL != '' && secrets.E2E_MODERATOR_PASSWORD != '' && secrets.SUPABASE_URL != '' && secrets.SUPABASE_SERVICE_KEY != '' }}
+        working-directory: ./frontend
+        env:
+          E2E_SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          E2E_SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+          E2E_USER_EMAIL: ${{ secrets.E2E_USER_EMAIL }}
+          E2E_USER_PASSWORD: ${{ secrets.E2E_USER_PASSWORD }}
+          E2E_MODERATOR_EMAIL: ${{ secrets.E2E_MODERATOR_EMAIL }}
+          E2E_MODERATOR_PASSWORD: ${{ secrets.E2E_MODERATOR_PASSWORD }}
+        run: npm run e2e:seed
+
+      - name: 🔐 Run authenticated moderation E2E flow
+        if: ${{ secrets.E2E_USER_EMAIL != '' && secrets.E2E_USER_PASSWORD != '' && secrets.E2E_MODERATOR_EMAIL != '' && secrets.E2E_MODERATOR_PASSWORD != '' && secrets.SUPABASE_URL != '' && secrets.SUPABASE_SERVICE_KEY != '' }}
+        working-directory: ./frontend
+        env:
+          E2E_SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          E2E_SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+          E2E_USER_EMAIL: ${{ secrets.E2E_USER_EMAIL }}
+          E2E_USER_PASSWORD: ${{ secrets.E2E_USER_PASSWORD }}
+          E2E_MODERATOR_EMAIL: ${{ secrets.E2E_MODERATOR_EMAIL }}
+          E2E_MODERATOR_PASSWORD: ${{ secrets.E2E_MODERATOR_PASSWORD }}
+        run: npm run e2e:flow -- --project=mobile-chromium
+
+      - name: 🧹 Cleanup E2E test data
+        if: ${{ always() && secrets.E2E_USER_EMAIL != '' && secrets.E2E_USER_PASSWORD != '' && secrets.E2E_MODERATOR_EMAIL != '' && secrets.E2E_MODERATOR_PASSWORD != '' && secrets.SUPABASE_URL != '' && secrets.SUPABASE_SERVICE_KEY != '' }}
+        working-directory: ./frontend
+        env:
+          E2E_SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          E2E_SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+          E2E_USER_EMAIL: ${{ secrets.E2E_USER_EMAIL }}
+          E2E_USER_PASSWORD: ${{ secrets.E2E_USER_PASSWORD }}
+          E2E_MODERATOR_EMAIL: ${{ secrets.E2E_MODERATOR_EMAIL }}
+          E2E_MODERATOR_PASSWORD: ${{ secrets.E2E_MODERATOR_PASSWORD }}
+        run: npm run e2e:cleanup

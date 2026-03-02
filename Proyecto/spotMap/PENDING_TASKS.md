@@ -1,212 +1,120 @@
-# SpotMap - Tareas Pendientes
+# SpotMap - Estado Real de Tareas
 
-**Última actualización:** 16 Feb 2026  
-**Estado general:** 3/15 tareas completadas (20%)
-
----
-
-## 🔴 ALTA PRIORIDAD (Bloquean producción)
-
-### [x] 1. Remover debug logs innecesarios ✅ COMPLETADA
-**Ubicación:** `frontend/js/ui.js`, `frontend/js/spots.js`
-**Trabajo efectuado:**
-  - ✅ Removido `console.log('[UI-DEBUG]')` de ui.js línea 699
-  - ✅ Removido `console.log('[SPOTS-DEBUG]')` de spots.js (4 logs eliminados en getTags())
-  - ✅ Removido `console.error()` de onerror en images
-**Impacto:** Console limpia, mejor performance en producción
+**Última actualización:** 02 Mar 2026  
+**Estado general (real):** 5/15 completadas, 9 parciales, 1 pendiente crítica
 
 ---
 
-### [x] 2. Implementar notificaciones spot aprobado/rechazado ✅ COMPLETADA
-**Ubicación:** `backend/src/Controllers/NotificationController.php` (NEW), `frontend/js/notificationsManager.js` (NEW)
-**Trabajo efectuado:**
-  - ✅ Creada tabla `notifications` en MySQL + Supabase con RLS policies
-  - ✅ Backend: NotificationController.php con endpoints CRUD
-  - ✅ API: GET /notifications, GET /unread-count, PATCH /read, DELETE
-  - ✅ Frontend: notificationsManager.js con polling cada 30s
-  - ✅ UI: Botón campana 🔔 con badge de contador en navbar
-  - ✅ Dropdown: Lista de notificaciones con opción marcar leídas/eliminar
-  - ✅ Integration: AdminController crea notificaciones al aprobar/rechazar spots
-  - ✅ Auth integration: init/cleanup en login/logout
-**Impacto:** UX crítica - usuarios ahora saben estado de sus spots en tiempo real
+## ✅ Leyenda de estado
 
-### [x] 3. Refactorizar validación backend (robustez) ✅ COMPLETADA
-**Ubicación:** `backend/src/Constants.php`, `backend/src/Auth.php`, `backend/src/Validator.php`, `backend/src/Controllers/SpotController.php`
-**Problemas resueltos:**
-  - ✅ **Creado Constants.php** - Centralización de todas las constantes (categorías, status, roles, límites)
-  - ✅ **Auth::loadUserRole()** - Ahora carga rol real desde tabla `profiles` (antes siempre devolvía 'user')
-  - ✅ **Sanitización** - Agregados métodos `sanitize()` y `clean()` en Validator
-  - ✅ **Escalabilidad** - Todas las constantes hardcodeadas reemplazadas por referencias a Constants::
-  - ✅ **Profesionalismo** - Métodos helper como `Constants::isModerator()` para lógica reutilizable
-**Impacto:** 
-  - 🛡️ Moderadores/admins ahora detectados correctamente
-  - 🏗️ Único punto de entrada para cambiar reglas (Constants.php)
-  - 🔐 Sanitización contra XSS
-  - ✅ Cumple PROJECT_GUIDELINES: Scalable, robust, professional
+- `[x]` Completada
+- `[~]` Parcial (funciona, pero faltan remates)
+- `[ ]` Pendiente
 
 ---
 
-## 🟠 MEDIA PRIORIDAD (Mejoran escalabilidad)
+## 🔴 Prioridad inmediata recomendada
 
-### [ ] 4. Implementar paginación spots
-- **Ubicación:** `backend/public/api.php`, `frontend/js/spots.js`
-- **Razón:** No queremos cargar 1000s de spots en memoria
-- **Trabajo:**
-  - Backend: agregar parámetros `limit=20&offset=0` a GET `/api/spots`
-  - Frontend: implementar "Load More" button o infinite scroll
-  - Cache: guardar en memoria página actual
-- **Impacto:** Performance crítica si >500 spots
-- **Nota:** Si ya hay <200 spots, no urgente pero planificar
-
-### [ ] 5. Setup tests unitarios backend
-- **Ubicación:** `backend/tests/`
-- **Razón:** Validar endpoints sin romper código
-- **Trabajo:**
-  - Tests para `approveSpot()` con usuario no moderador (debe fallar)
-  - Tests para `rejectSpot()` con razón
-  - Tests para RLS policies (usuario A no ve spots de usuario B si no approved)
-  - Tests para validación de coordenadas inválidas
-- **Impacto:** Confiabilidad (detectar bugs antes de producción)
-
-### [ ] 6. Setup tests E2E frontend
-- **Ubicación:** `frontend/tests/`
-- **Razón:** Validar flujo completo: login → crear spot → moderación
-- **Trabajo:**
-  - Tests con Cypress/Playwright
-  - Flujo: login → crear spot → ver como pending → aprobar como mod → ver como approved
-  - Test geolocalización
-  - Test filtros
-- **Impacto:** Confiabilidad (usuario journey completo)
-
-### [ ] 7. Documentación API (Swagger/OpenAPI)
-- **Ubicación:** `backend/openapi.json` (ya existe pero revisar)
-- **Razón:** Devs nuevos necesitan saber endpoints
-- **Trabajo:**
-  - Completar OpenAPI con todos los endpoints
-  - Documentar parámetros, responses, errores
-  - Generar documentación HTML con Swagger UI
-- **Impacto:** Mantenibilidad (onboarding devs)
-
-### [ ] 8. Revisar y mejorar rate limiting
-- **Ubicación:** `backend/src/RateLimiter.php`
-- **Razón:** Prevenir abuse (spam de spots, ataques)
-- **Trabajo:**
-  - Verificar que está habilitado en endpoints críticos
-  - Tests que usuario que excede límite recibe 429
-  - Configurar límites apropiados (ej: 10 spots/día por usuario)
-- **Impacto:** Seguridad (prevenir DOS)
+### [~] 6. Setup tests E2E frontend (con foco móvil) ← EN MARCHA
+**Razón:** Es lo que más reduce riesgo antes de producción y valida versión móvil real.  
+**Hecho en esta sesión:**
+- Playwright instalado y configurado
+- Smoke E2E creado (home + login modal) en móvil y desktop
+- Ejecución mobile conectada en CI
+**Siguiente remate:**
+- Flujo autenticado completo: login → crear spot → moderar → notificación
 
 ---
 
-## 🟡 BAJA PRIORIDAD (Mejoras de calidad)
+## 📌 Estado por tarea (15 originales)
 
-### [ ] 9. Verificar security headers CORS
-- **Ubicación:** `backend/src/Security.php`, `backend/public/index.php`
-- **Razón:** Verificar que CORS solo permite origen correcto
-- **Trabajo:**
-  - Cambiar `ALLOWED_ORIGINS=*` a origen específico
-  - Verificar headers: Content-Security-Policy, X-Frame-Options, etc.
-  - Tests que origen no permitido recibe error
-- **Impacto:** Seguridad (prevenir CSRF, XSS)
+### [~] 1. Remover debug logs innecesarios
+**Estado real:** Se limpió parte del debug antiguo, pero aún hay logs de desarrollo en frontend/backend.
 
-### [ ] 10. Implementar CI/CD pipeline
-- **Ubicación:** `.github/workflows/` (crear)
-- **Razón:** Tests y deploy automático
-- **Trabajo:**
-  - GitHub Actions para: lint, tests, build
-  - Deploy a producción en merge a `main`
-  - Health check post-deploy
-- **Impacto:** DevOps (deployments confiables)
+### [x] 2. Implementar notificaciones spot aprobado/rechazado
+**Estado real:** Implementado end-to-end (rutas, controlador, UI y polling).
 
-### [ ] 11. Sistema de auditoría para moderación
-- **Ubicación:** `backend/src/` (nueva tabla)
-- **Razón:** Rastrear quién aprobó/rechazó qué y cuándo
-- **Trabajo:**
-  - Nueva tabla `moderation_logs` (spot_id, moderator_id, action, reason, timestamp)
-  - Insert en `approveSpot()` y `rejectSpot()`
-  - Dashboard para ver historial
-- **Impacto:** Compliance (auditoría)
+### [x] 3. Refactorizar validación backend (robustez)
+**Estado real:** Implementado (`Constants`, rol por perfil, sanitización y validaciones reforzadas).
+
+### [x] 4. Implementar paginación spots
+**Estado real:** Ya implementado en backend y frontend con estado de paginación y caché.
+
+### [~] 5. Setup tests unitarios backend
+**Estado real:** Hay base de tests robusta, pero faltan casos críticos concretos de moderación/RLS.
+
+### [~] 6. Setup tests E2E frontend
+**Estado real:** Playwright base ya implementado (`frontend/e2e`, `playwright.config.js`, scripts npm y CI mobile smoke). Falta flujo de negocio autenticado completo.
+
+### [~] 7. Documentación API (Swagger/OpenAPI)
+**Estado real:** `backend/openapi.json` está amplio, pero requiere validación final contra todas las rutas activas y ejemplos de error.
+
+### [~] 8. Revisar y mejorar rate limiting
+**Estado real:** Existe `RateLimiter` y test básico, pero falta ajuste fino por endpoint/riesgo.
+
+### [~] 9. Verificar security headers CORS
+**Estado real:** Headers y CORS existen, pero falta endurecer política de orígenes en producción y tests más estrictos.
+
+### [x] 10. Implementar CI/CD pipeline
+**Estado real:** Existen workflows de CI, seguridad y deploy en `.github/workflows`.
+
+### [~] 11. Sistema de auditoría para moderación
+**Estado real:** Logging de auditoría y migración implementados; falta dashboard/visualización operativa.
 
 ### [ ] 12. Mejorar caché usuario/roles
-- **Ubicación:** `frontend/js/auth.js`, `backend/src/Auth.php`
-- **Razón:** No cargar rol del user cada vez
-- **Trabajo:**
-  - Frontend: cachear rol en localStorage, revalidar en intervals
-  - Backend: verificar TTL de caché
-- **Impacto:** Performance (reducir queries)
+**Estado real:** Sigue pendiente cacheo/TTL explícito para evitar consultas repetidas.
 
-### [ ] 13. Error handling centralizado
-- **Ubicación:** `frontend/js/` (crear errorHandler.js mejorado)
-- **Razón:** Inconsistencia: algunos errores muestran toast, otros console
-- **Trabajo:**
-  - Centralizar manejo de errores
-  - Errores de red → retry automático
-  - Errores de validación → mostrar en formulario
-  - Errores de servidor → log + usuario ve mensaje amigable
-- **Impacto:** UX (usuario entiende qué salió mal)
+### [x] 13. Error handling centralizado
+**Estado real:** Implementado (`frontend/js/errorHandler.js`) e integrado en módulos principales.
 
-### [ ] 14. Optimizar carga de imágenes (WebP)
-- **Ubicación:** `backend/public/api.php`, `frontend/js/ui.js`
-- **Razón:** Reducir tamaño de imágenes (50% vs JPEG)
-- **Trabajo:**
-  - Backend: convertir JPEG → WebP en upload
-  - Frontend: servir WebP si navegador soporta
-  - Fallback a JPEG para navegadores viejos
-- **Impacto:** Performance (menos bandwidth)
+### [~] 14. Optimizar carga de imágenes (WebP)
+**Estado real:** Se acepta WebP, pero no está cerrada la conversión automática JPEG → WebP en upload.
 
-### [ ] 15. Fix aria-hidden en modales
-- **Ubicación:** `frontend/js/ui.js`, `frontend/js/mapPickerModal.js`
-- **Razón:** Browser warnings sobre aria-hidden con foco
-- **Trabajo:**
-  - Usar `inert` attribute en lugar de `aria-hidden`
-  - Verificar accesibilidad con screen reader
-- **Impacto:** Accesibilidad (usuarios con discapacidades)
+### [~] 15. Fix aria-hidden en modales
+**Estado real:** Mitigado en parte, pero no estandarizado con `inert` en todos los modales.
 
 ---
 
-## 📊 Progreso General
+## 📱 Versión móvil (nueva línea de trabajo obligatoria)
 
-| Categoría | Total | Completadas | % |
-|-----------|-------|-------------|---|
-| Alta Prioridad | 3 | 2 | 67% |
-| Media Prioridad | 5 | 0 | 0% |
-| Baja Prioridad | 7 | 0 | 0% |
-| **TOTAL** | **15** | **2** | **13%** |
+### Objetivo
+Garantizar experiencia mobile-first usable y verificable en dispositivos táctiles.
 
----
+### Backlog móvil (prioridad alta)
+- [ ] Definir breakpoints objetivo y matriz de dispositivos (iPhone 13, Pixel 7, iPad)
+- [ ] Revisar navegación, modales y formularios para uso táctil (tap targets, scroll, teclado)
+- [ ] Ajustar paneles (sidebar/moderación/notificaciones) para pantallas <768px
+- [ ] Validar rendimiento móvil (LCP/CLS) en red 4G simulada
+- [ ] Añadir tests E2E mobile en CI (Playwright projects: `mobile`, `desktop`)
 
-## 📝 Sesión Actual (16 Feb 2026)
-
-**Completadas:**
-1. ✅ Refactorizar validación backend (20 min) - Profesional y robusto
-2. ✅ Remover debug logs (5 min) - Console limpia
-
-**Próxima sesión:**
-- Notificaciones de moderación (20 min - UX impacto) ← RECOMENDADO
-- O: Tests backend (establece confiabilidad)
+### Criterio de “móvil listo”
+- Sin overflow horizontal
+- Todos los flujos críticos completables con una mano
+- E2E passing en viewport móvil y desktop
 
 ---
 
-## 🚀 Checklista de Inicio por Sesión
+## 📊 Resumen de progreso (real)
 
-```
-Cuando vuelvas al proyecto:
-- [ ] Revisar esta lista
-- [ ] Elegir 1-2 tareas de la sesión
-- [ ] Marcar como completadas
-- [ ] Actualizar % de progreso
-- [ ] Hacer commit: "chore: complete task #X"
-```
+| Estado | Cantidad |
+|--------|----------|
+| Completadas | 5 |
+| Parciales | 9 |
+| Pendientes | 1 |
+| **Total** | **15** |
 
 ---
 
-## 📝 Notas
+## 🎯 Próximas 2 sesiones recomendadas
 
-- **Sesión 1 (16 Feb):** Completada 3-tier approval system, moderación funcional, geolocalización mejorada
-- **Sesión 2 (próxima):** Enfocarse en ALTA PRIORIDAD para estabilidad
-- **Sesión 3+:** Completar MEDIA y BAJA prioridad para producción ready
+### Sesión A (ahora)
+1. Crear 1 flujo E2E autenticado completo (login → spot → moderación → notificación)
+2. Validar ese flujo en `mobile-chromium` y `desktop-chromium`
+
+### Sesión B
+1. Cerrar caché de rol (`Auth` + frontend)
+2. Rematar accesibilidad de modales (`inert`) y WebP conversion
 
 ---
 
-**Last updated:** 2026-02-16  
-**Next review:** Cuando completes primera tarea
+**Next review:** al cerrar E2E mobile smoke
