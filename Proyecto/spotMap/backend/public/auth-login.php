@@ -3,8 +3,11 @@
 
 require __DIR__ . '/../src/Config.php';
 require __DIR__ . '/../src/Database.php';
+require __DIR__ . '/../src/Constants.php';
 
 use SpotMap\Database;
+use SpotMap\Config;
+use SpotMap\Constants;
 
 header('Content-Type: application/json');
 
@@ -23,7 +26,7 @@ try {
     $pdo = Database::pdo();
     
     // Buscar usuario
-    $stmt = $pdo->prepare("SELECT id, email, username, full_name FROM users WHERE email = ? LIMIT 1");
+    $stmt = $pdo->prepare("SELECT id, email, username, full_name, role FROM users WHERE email = ? LIMIT 1");
     $stmt->execute([$email]);
     $user = $stmt->fetch(\PDO::FETCH_ASSOC);
     
@@ -39,23 +42,40 @@ try {
             'id' => $userId,
             'email' => $email,
             'username' => $email,
-            'full_name' => explode('@', $email)[0]
+            'full_name' => explode('@', $email)[0],
+            'role' => Constants::DEFAULT_ROLE,
         ];
     }
-    
-    // Retornar token simple (no es JWT real, solo para demo local)
-    $token = base64_encode(json_encode([
-        'user_id' => $user['id'],
+
+    $role = $user['role'] ?? Constants::DEFAULT_ROLE;
+
+    // JWT-like token para fallback local de Auth::fetchUser
+    $header = ['alg' => 'HS256', 'typ' => 'JWT'];
+    $payload = [
+        'sub' => $user['id'],
         'email' => $user['email'],
-        'exp' => time() + 86400
-    ]));
+        'role' => $role,
+        'user_metadata' => ['name' => $user['full_name'] ?? $user['username'] ?? 'User'],
+        'iat' => time(),
+        'exp' => time() + 86400,
+    ];
+
+    $base64UrlEncode = static function (array $data): string {
+        return rtrim(strtr(base64_encode(json_encode($data, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES)), '+/', '-_'), '=');
+    };
+
+    $jwtHeader = $base64UrlEncode($header);
+    $jwtPayload = $base64UrlEncode($payload);
+    $secret = Config::get('JWT_SECRET', 'spotmap-local-secret');
+    $signature = rtrim(strtr(base64_encode(hash_hmac('sha256', $jwtHeader . '.' . $jwtPayload, $secret, true)), '+/', '-_'), '=');
+    $token = $jwtHeader . '.' . $jwtPayload . '.' . $signature;
     
     echo json_encode([
         'success' => true,
-        'user' => $user,
+        'user' => array_merge($user, ['role' => $role]),
         'session' => [
             'access_token' => $token,
-            'user' => $user
+            'user' => array_merge($user, ['role' => $role])
         ]
     ]);
     

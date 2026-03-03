@@ -16,6 +16,29 @@ class AuditLogger {
         $this->db = $db;
     }
 
+    private function isSqlite3(): bool {
+        return is_object($this->db) && strtolower(get_class($this->db)) === 'sqlite3';
+    }
+
+    private function bindSqliteValue($stmt, int $index, $value): void {
+        if ($value === null) {
+            $stmt->bindValue($index, null, SQLITE3_NULL);
+            return;
+        }
+
+        if (is_int($value)) {
+            $stmt->bindValue($index, $value, SQLITE3_INTEGER);
+            return;
+        }
+
+        if (is_float($value)) {
+            $stmt->bindValue($index, $value, SQLITE3_FLOAT);
+            return;
+        }
+
+        $stmt->bindValue($index, (string)$value, SQLITE3_TEXT);
+    }
+
     /**
      * Log a moderation action with full context
      * 
@@ -56,7 +79,36 @@ class AuditLogger {
         
         $stmt = $this->db->prepare($sql);
         if (!$stmt) {
-            error_log("AuditLogger: Failed to prepare statement - " . $this->db->error);
+            $err = $this->isSqlite3() ? $this->db->lastErrorMsg() : $this->db->error;
+            error_log("AuditLogger: Failed to prepare statement - " . $err);
+            return false;
+        }
+
+        if ($this->isSqlite3()) {
+            $values = [
+                $moderatorId,
+                $action,
+                $targetType,
+                $targetId,
+                $oldValueJson,
+                $newValueJson,
+                $reason,
+                $metadataJson,
+            ];
+
+            foreach ($values as $idx => $value) {
+                $this->bindSqliteValue($stmt, $idx + 1, $value);
+            }
+
+            $result = $stmt->execute();
+            if ($result) {
+                if (is_object($result) && method_exists($result, 'finalize')) {
+                    $result->finalize();
+                }
+                return (int)$this->db->lastInsertRowID();
+            }
+
+            error_log("AuditLogger: Failed to execute - " . $this->db->lastErrorMsg());
             return false;
         }
 
@@ -76,11 +128,11 @@ class AuditLogger {
             $insertId = $stmt->insert_id;
             $stmt->close();
             return $insertId;
-        } else {
-            error_log("AuditLogger: Failed to execute - " . $stmt->error);
-            $stmt->close();
-            return false;
         }
+
+        error_log("AuditLogger: Failed to execute - " . $stmt->error);
+        $stmt->close();
+        return false;
     }
 
     /**
@@ -150,12 +202,13 @@ class AuditLogger {
                     created_at
                 FROM moderation_audit_log
                 $whereClause
-                ORDER BY created_at DESC
+                ORDER BY created_at DESC, id DESC
                 LIMIT ? OFFSET ?";
         
         $stmt = $this->db->prepare($sql);
         if (!$stmt) {
-            error_log("AuditLogger::getLogs - prepare failed: " . $this->db->error);
+            $err = $this->isSqlite3() ? $this->db->lastErrorMsg() : $this->db->error;
+            error_log("AuditLogger::getLogs - prepare failed: " . $err);
             return [];
         }
 
@@ -164,16 +217,21 @@ class AuditLogger {
         $params[] = $offset;
         $types .= 'ii';
 
-        // Bind parameters dynamically
-        if (!empty($params)) {
-            $stmt->bind_param($types, ...$params);
+        if ($this->isSqlite3()) {
+            foreach ($params as $idx => $value) {
+                $this->bindSqliteValue($stmt, $idx + 1, $value);
+            }
+            $result = $stmt->execute();
+        } else {
+            if (!empty($params)) {
+                $stmt->bind_param($types, ...$params);
+            }
+            $stmt->execute();
+            $result = $stmt->get_result();
         }
-
-        $stmt->execute();
-        $result = $stmt->get_result();
         
         $logs = [];
-        while ($row = $result->fetch_assoc()) {
+        while ($row = $this->isSqlite3() ? $result->fetchArray(SQLITE3_ASSOC) : $result->fetch_assoc()) {
             // Decode JSON fields
             $row['old_value'] = $row['old_value'] ? json_decode($row['old_value'], true) : null;
             $row['new_value'] = $row['new_value'] ? json_decode($row['new_value'], true) : null;
@@ -181,7 +239,13 @@ class AuditLogger {
             $logs[] = $row;
         }
 
-        $stmt->close();
+        if ($this->isSqlite3()) {
+            if (is_object($result) && method_exists($result, 'finalize')) {
+                $result->finalize();
+            }
+        } else {
+            $stmt->close();
+        }
         return $logs;
     }
 
@@ -240,18 +304,30 @@ class AuditLogger {
         
         $stmt = $this->db->prepare($sql);
         if (!$stmt) {
-            error_log("AuditLogger::getCount - prepare failed: " . $this->db->error);
+            $err = $this->isSqlite3() ? $this->db->lastErrorMsg() : $this->db->error;
+            error_log("AuditLogger::getCount - prepare failed: " . $err);
             return 0;
         }
 
-        if (!empty($params)) {
-            $stmt->bind_param($types, ...$params);
-        }
+        if ($this->isSqlite3()) {
+            foreach ($params as $idx => $value) {
+                $this->bindSqliteValue($stmt, $idx + 1, $value);
+            }
+            $result = $stmt->execute();
+            $row = $result ? $result->fetchArray(SQLITE3_ASSOC) : null;
+            if (is_object($result) && method_exists($result, 'finalize')) {
+                $result->finalize();
+            }
+        } else {
+            if (!empty($params)) {
+                $stmt->bind_param($types, ...$params);
+            }
 
-        $stmt->execute();
-        $result = $stmt->get_result();
-        $row = $result->fetch_assoc();
-        $stmt->close();
+            $stmt->execute();
+            $result = $stmt->get_result();
+            $row = $result->fetch_assoc();
+            $stmt->close();
+        }
 
         return (int)($row['total'] ?? 0);
     }
@@ -292,23 +368,37 @@ class AuditLogger {
         
         $stmt = $this->db->prepare($sql);
         if (!$stmt) {
-            error_log("AuditLogger::getStatsByAction - prepare failed: " . $this->db->error);
+            $err = $this->isSqlite3() ? $this->db->lastErrorMsg() : $this->db->error;
+            error_log("AuditLogger::getStatsByAction - prepare failed: " . $err);
             return [];
         }
 
-        if (!empty($params)) {
-            $stmt->bind_param($types, ...$params);
-        }
+        if ($this->isSqlite3()) {
+            foreach ($params as $idx => $value) {
+                $this->bindSqliteValue($stmt, $idx + 1, $value);
+            }
+            $result = $stmt->execute();
+        } else {
+            if (!empty($params)) {
+                $stmt->bind_param($types, ...$params);
+            }
 
-        $stmt->execute();
-        $result = $stmt->get_result();
+            $stmt->execute();
+            $result = $stmt->get_result();
+        }
         
         $stats = [];
-        while ($row = $result->fetch_assoc()) {
+        while ($row = $this->isSqlite3() ? $result->fetchArray(SQLITE3_ASSOC) : $result->fetch_assoc()) {
             $stats[$row['action']] = (int)$row['count'];
         }
 
-        $stmt->close();
+        if ($this->isSqlite3()) {
+            if (is_object($result) && method_exists($result, 'finalize')) {
+                $result->finalize();
+            }
+        } else {
+            $stmt->close();
+        }
         return $stats;
     }
 
@@ -358,23 +448,37 @@ class AuditLogger {
         
         $stmt = $this->db->prepare($sql);
         if (!$stmt) {
-            error_log("AuditLogger::getModeratorActivity - prepare failed: " . $this->db->error);
+            $err = $this->isSqlite3() ? $this->db->lastErrorMsg() : $this->db->error;
+            error_log("AuditLogger::getModeratorActivity - prepare failed: " . $err);
             return [];
         }
 
         $params[] = $limit;
         $types .= 'i';
 
-        $stmt->bind_param($types, ...$params);
-        $stmt->execute();
-        $result = $stmt->get_result();
+        if ($this->isSqlite3()) {
+            foreach ($params as $idx => $value) {
+                $this->bindSqliteValue($stmt, $idx + 1, $value);
+            }
+            $result = $stmt->execute();
+        } else {
+            $stmt->bind_param($types, ...$params);
+            $stmt->execute();
+            $result = $stmt->get_result();
+        }
         
         $activity = [];
-        while ($row = $result->fetch_assoc()) {
+        while ($row = $this->isSqlite3() ? $result->fetchArray(SQLITE3_ASSOC) : $result->fetch_assoc()) {
             $activity[] = $row;
         }
 
-        $stmt->close();
+        if ($this->isSqlite3()) {
+            if (is_object($result) && method_exists($result, 'finalize')) {
+                $result->finalize();
+            }
+        } else {
+            $stmt->close();
+        }
         return $activity;
     }
 }

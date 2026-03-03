@@ -38,10 +38,13 @@ class Auth
             ApiResponse::unauthorized('Invalid or expired token');
         }
         
-        // Cargar rol desde tabla profiles (CRÍTICO para moderación)
+        // Cargar rol desde tabla profiles cuando esté disponible, sin perder rol del token fallback
         if (isset($user['id'])) {
             $role = self::loadUserRole($user['id']);
-            $user['role'] = $role ?? \SpotMap\Constants::DEFAULT_ROLE;
+            $resolvedRole = $role ?: ($user['role'] ?? null);
+            $user['role'] = (is_string($resolvedRole) && \SpotMap\Constants::isValidRole($resolvedRole))
+                ? $resolvedRole
+                : \SpotMap\Constants::DEFAULT_ROLE;
         } else {
             $user['role'] = \SpotMap\Constants::DEFAULT_ROLE;
         }
@@ -135,13 +138,21 @@ class Auth
             }
             
             // Retornar usuario autenticado para modo fallback
+            $payloadRole = $payload['role']
+                ?? ($payload['app_metadata']['role'] ?? null)
+                ?? ($payload['user_metadata']['role'] ?? null);
+
+            $resolvedRole = (is_string($payloadRole) && \SpotMap\Constants::isValidRole($payloadRole))
+                ? $payloadRole
+                : \SpotMap\Constants::DEFAULT_ROLE;
+
             return [
                 'id' => $payload['sub'],
                 'email' => $payload['email'] ?? 'user@example.com',
                 'user_metadata' => [
                     'name' => $payload['user_metadata']['name'] ?? 'User'
                 ],
-                'role' => 'authenticated',
+                'role' => $resolvedRole,
                 'aud' => $payload['aud'] ?? null
             ];
         } catch (\Throwable $e) {

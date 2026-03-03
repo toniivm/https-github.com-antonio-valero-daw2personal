@@ -17,6 +17,8 @@ config/blocked_ips.txt
 coverage/
 TESTING.md
 RESUMEN_MEJORAS.md
+frontend/test-results/
+frontend/playwright-report/
 
 # === Archivos temporales y cache ===
 *.log

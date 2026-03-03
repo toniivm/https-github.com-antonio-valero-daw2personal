@@ -32,7 +32,23 @@ class AuthFallbackTest extends TestCase
         $this->assertIsArray($user);
         $this->assertSame('user-123', $user['id']);
         $this->assertSame('test@example.com', $user['email']);
-        $this->assertSame('authenticated', $user['role']);
+        $this->assertSame('user', $user['role']);
+    }
+
+    public function testFetchUserWithRoleClaimUsesModeratorRole(): void
+    {
+        $token = $this->makeJwt([
+            'sub' => 'mod-123',
+            'email' => 'mod@example.com',
+            'role' => 'moderator',
+            'exp' => time() + 3600,
+            'user_metadata' => ['name' => 'Moderator']
+        ]);
+
+        $user = SpotMap\Auth::fetchUser($token);
+
+        $this->assertIsArray($user);
+        $this->assertSame('moderator', $user['role']);
     }
 
     public function testFetchUserWithExpiredJwtReturnsNull(): void

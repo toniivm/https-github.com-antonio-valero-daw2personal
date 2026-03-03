@@ -11,9 +11,7 @@ $dbUser = getenv('DB_USERNAME') ?: 'spotmap';
 $dbPass = getenv('DB_PASSWORD') ?: 'spotmappw';
 $dbPort = getenv('DB_PORT') ?: '3306';
 
-$dsn = "mysql:host={$dbHost};port={$dbPort};dbname={$dbName};charset=utf8mb4";
-
-Database::init($dsn, $dbUser, $dbPass);
+Database::init();
 
 // Warm cache avanzado (página 1 + popularidad + schedule variantes) si producción
 if (getenv('ENV') === 'production') {

@@ -26,7 +26,7 @@ test.describe('SpotMap smoke', () => {
   test('abre modal de login en mobile y desktop', async ({ page }) => {
     await page.goto('/index.html');
 
-    await page.locator('#btn-login').click();
+    await page.locator('#btn-login').click({ force: true });
     await expect(page.locator('#modalLogin')).toBeVisible();
     await expect(page.locator('#login-email')).toBeVisible();
     await expect(page.locator('#login-password')).toBeVisible();

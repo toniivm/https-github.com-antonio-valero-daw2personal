@@ -9,6 +9,81 @@ class DatabaseAdapter
     private static $useSupabase = null;
     private static $supabase = null;
     private static $hasUserIdColumn = null;
+    private static array $columnExistsCache = [];
+
+    private static function toTagList($tags): array
+    {
+        if (is_array($tags)) {
+            return array_values(array_filter(array_map(static fn($tag) => strtolower(trim((string)$tag)), $tags)));
+        }
+        if (is_string($tags) && $tags !== '') {
+            $decoded = json_decode($tags, true);
+            if (is_array($decoded)) {
+                return array_values(array_filter(array_map(static fn($tag) => strtolower(trim((string)$tag)), $decoded)));
+            }
+            return array_values(array_filter(array_map(static fn($tag) => strtolower(trim((string)$tag)), explode(',', $tags))));
+        }
+        return [];
+    }
+
+    private static function filterValueMatches(array $spot, string $field, ?string $filterValue): bool
+    {
+        if ($filterValue === null || $filterValue === '') {
+            return true;
+        }
+
+        $needle = strtolower(trim($filterValue));
+        $direct = isset($spot[$field]) ? strtolower(trim((string)$spot[$field])) : '';
+        if ($direct !== '' && $direct === $needle) {
+            return true;
+        }
+
+        $tags = self::toTagList($spot['tags'] ?? []);
+        if (in_array($needle, $tags, true)) {
+            return true;
+        }
+
+        foreach ($tags as $tag) {
+            if (str_contains($tag, $needle)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private static function applyPhotoFilters(array $spots, array $filters): array
+    {
+        $schedule = isset($filters['schedule']) ? trim((string)$filters['schedule']) : null;
+        if (($schedule === null || $schedule === '') && isset($filters['best_time'])) {
+            $schedule = trim((string)$filters['best_time']);
+        }
+        $difficulty = isset($filters['difficulty']) ? trim((string)$filters['difficulty']) : null;
+        $season = isset($filters['season']) ? trim((string)$filters['season']) : null;
+
+        if (($schedule === null || $schedule === '') && ($difficulty === null || $difficulty === '') && ($season === null || $season === '')) {
+            return $spots;
+        }
+
+        return array_values(array_filter($spots, static function($spot) use ($schedule, $difficulty, $season) {
+            return self::filterValueMatches($spot, 'schedule', $schedule)
+                && self::filterValueMatches($spot, 'difficulty', $difficulty)
+                && self::filterValueMatches($spot, 'season', $season);
+        }));
+    }
+
+    private static function hasPhotoFilters(array $filters): bool
+    {
+        $schedule = isset($filters['schedule']) ? trim((string)$filters['schedule']) : '';
+        if ($schedule === '' && isset($filters['best_time'])) {
+            $schedule = trim((string)$filters['best_time']);
+        }
+
+        $difficulty = isset($filters['difficulty']) ? trim((string)$filters['difficulty']) : '';
+        $season = isset($filters['season']) ? trim((string)$filters['season']) : '';
+
+        return $schedule !== '' || $difficulty !== '' || $season !== '';
+    }
 
     public static function useSupabase(): bool
     {
@@ -35,8 +110,13 @@ class DatabaseAdapter
 
     public static function getAllSpots(int $limit = 100, int $offset = 0, array $filters = []): array
     {
+        $photoFiltersActive = self::hasPhotoFilters($filters);
+
         if (self::useSupabase()) {
-            $spots = self::getClient()->getAllSpots($limit, $offset, $filters);
+            $queryLimit = $photoFiltersActive ? 1000 : $limit;
+            $queryOffset = $photoFiltersActive ? 0 : $offset;
+
+            $spots = self::getClient()->getAllSpots($queryLimit, $queryOffset, $filters);
             $total = count($spots);
             
             // Parsear tags JSONB
@@ -75,18 +155,45 @@ class DatabaseAdapter
                 }));
                 $total = count($spots);
             }
+
+            $spots = self::applyPhotoFilters($spots, $filters);
+            $total = count($spots);
+
+            if ($photoFiltersActive) {
+                $spots = array_slice($spots, $offset, $limit);
+            }
+
             return ['spots' => $spots, 'total' => $total];
         } else {
             $pdo = self::getClient();
-            
-            // Contar total
-            $stmt = $pdo->query('SELECT COUNT(*) as total FROM spots');
-            $total = (int)$stmt->fetch()['total'];
-            
-            // Obtener spots
-            $stmt = $pdo->prepare('SELECT * FROM spots ORDER BY created_at DESC LIMIT :limit OFFSET :offset');
-            $stmt->bindValue(':limit', $limit, \PDO::PARAM_INT);
-            $stmt->bindValue(':offset', $offset, \PDO::PARAM_INT);
+
+            $where = [];
+            $params = [];
+
+            if (!empty($filters['category'])) {
+                $where[] = 'category = :category';
+                $params[':category'] = $filters['category'];
+            }
+            if (!empty($filters['tag'])) {
+                $where[] = 'tags LIKE :tag';
+                $params[':tag'] = '%' . $filters['tag'] . '%';
+            }
+
+            $whereSql = $where ? (' WHERE ' . implode(' AND ', $where)) : '';
+
+            $querySql = 'SELECT * FROM spots' . $whereSql . ' ORDER BY created_at DESC';
+            if (!$photoFiltersActive) {
+                $querySql .= ' LIMIT :limit OFFSET :offset';
+            }
+
+            $stmt = $pdo->prepare($querySql);
+            foreach ($params as $key => $value) {
+                $stmt->bindValue($key, $value, \PDO::PARAM_STR);
+            }
+            if (!$photoFiltersActive) {
+                $stmt->bindValue(':limit', $limit, \PDO::PARAM_INT);
+                $stmt->bindValue(':offset', $offset, \PDO::PARAM_INT);
+            }
             $stmt->execute();
             $spots = $stmt->fetchAll();
 
@@ -98,10 +205,17 @@ class DatabaseAdapter
                 if (array_key_exists('longitude', $spot) && !array_key_exists('lng', $spot)) {
                     $spot['lng'] = (float)$spot['longitude'];
                 }
-                $spot['tags'] = $spot['tags'] ? json_decode($spot['tags']) : [];
+                $spot['tags'] = $spot['tags'] ? (json_decode($spot['tags'], true) ?? []) : [];
             });
-            
-            return ['spots' => $spots, 'total' => $total]; // Filters not implemented for local DB
+
+            $spots = self::applyPhotoFilters($spots, $filters);
+            $total = count($spots);
+
+            if ($photoFiltersActive) {
+                $spots = array_slice($spots, $offset, $limit);
+            }
+
+            return ['spots' => $spots, 'total' => $total];
         }
     }
 
@@ -162,28 +276,35 @@ class DatabaseAdapter
             return self::getClient()->createSpot($data, $userToken);
         } else {
             $pdo = self::getClient();
+            $latColumn = self::resolveLatitudeColumn();
+            $lngColumn = self::resolveLongitudeColumn();
+
+            $columns = ['title', 'description', $latColumn, $lngColumn, 'tags', 'category', 'image_path'];
             $params = [
                 ':title' => $data['title'],
-                ':desc' => $data['description'] ?? null,
-                ':lat' => $data['lat'],
-                ':lng' => $data['lng'],
+                ':description' => $data['description'] ?? null,
+                ':' . $latColumn => $data['lat'],
+                ':' . $lngColumn => $data['lng'],
                 ':tags' => isset($data['tags']) ? json_encode($data['tags']) : null,
-                ':cat' => $data['category'] ?? null,
-                ':image_path' => $data['image_path'] ?? null
+                ':category' => $data['category'] ?? null,
+                ':image_path' => $data['image_path'] ?? null,
             ];
 
             if (self::hasUserIdColumn() && isset($data['user_id'])) {
-                $stmt = $pdo->prepare('
-                    INSERT INTO spots (user_id, title, description, latitude, longitude, tags, category, image_path)
-                    VALUES (:user_id, :title, :desc, :lat, :lng, :tags, :cat, :image_path)
-                ');
+                $columns[] = 'user_id';
                 $params[':user_id'] = $data['user_id'];
-            } else {
-                $stmt = $pdo->prepare('
-                    INSERT INTO spots (title, description, latitude, longitude, tags, category, image_path)
-                    VALUES (:title, :desc, :lat, :lng, :tags, :cat, :image_path)
-                ');
             }
+
+            foreach (['schedule', 'difficulty', 'season', 'status', 'image_path_2'] as $optionalColumn) {
+                if (array_key_exists($optionalColumn, $data) && self::hasSpotColumn($optionalColumn)) {
+                    $columns[] = $optionalColumn;
+                    $params[':' . $optionalColumn] = $data[$optionalColumn];
+                }
+            }
+
+            $placeholders = array_map(static fn($column) => ':' . $column, $columns);
+            $sql = 'INSERT INTO spots (' . implode(', ', $columns) . ') VALUES (' . implode(', ', $placeholders) . ')';
+            $stmt = $pdo->prepare($sql);
 
             $stmt->execute($params);
             $id = (int)$pdo->lastInsertId();
@@ -210,6 +331,47 @@ class DatabaseAdapter
         }
 
         return self::$hasUserIdColumn;
+    }
+
+    private static function hasSpotColumn(string $column): bool
+    {
+        $cacheKey = 'spots.' . $column;
+        if (array_key_exists($cacheKey, self::$columnExistsCache)) {
+            return self::$columnExistsCache[$cacheKey];
+        }
+
+        try {
+            $pdo = self::getClient();
+            $stmt = $pdo->prepare("SHOW COLUMNS FROM spots LIKE :column");
+            $stmt->execute([':column' => $column]);
+            self::$columnExistsCache[$cacheKey] = (bool)$stmt->fetch();
+        } catch (\Throwable $e) {
+            self::$columnExistsCache[$cacheKey] = false;
+        }
+
+        return self::$columnExistsCache[$cacheKey];
+    }
+
+    private static function resolveLatitudeColumn(): string
+    {
+        if (self::hasSpotColumn('latitude')) {
+            return 'latitude';
+        }
+        if (self::hasSpotColumn('lat')) {
+            return 'lat';
+        }
+        return 'latitude';
+    }
+
+    private static function resolveLongitudeColumn(): string
+    {
+        if (self::hasSpotColumn('longitude')) {
+            return 'longitude';
+        }
+        if (self::hasSpotColumn('lng')) {
+            return 'lng';
+        }
+        return 'longitude';
     }
 
     public static function updateSpot(int $id, array $data, ?string $userToken = null): array
@@ -248,6 +410,32 @@ class DatabaseAdapter
             if (isset($data['image_path_2'])) {
                 $fields[] = 'image_path_2 = :image_path_2';
                 $params[':image_path_2'] = $data['image_path_2'];
+            }
+            if (isset($data['lat'])) {
+                $latColumn = self::resolveLatitudeColumn();
+                $fields[] = $latColumn . ' = :lat';
+                $params[':lat'] = (float)$data['lat'];
+            }
+            if (isset($data['lng'])) {
+                $lngColumn = self::resolveLongitudeColumn();
+                $fields[] = $lngColumn . ' = :lng';
+                $params[':lng'] = (float)$data['lng'];
+            }
+            if (isset($data['schedule']) && self::hasSpotColumn('schedule')) {
+                $fields[] = 'schedule = :schedule';
+                $params[':schedule'] = $data['schedule'];
+            }
+            if (isset($data['difficulty']) && self::hasSpotColumn('difficulty')) {
+                $fields[] = 'difficulty = :difficulty';
+                $params[':difficulty'] = $data['difficulty'];
+            }
+            if (isset($data['season']) && self::hasSpotColumn('season')) {
+                $fields[] = 'season = :season';
+                $params[':season'] = $data['season'];
+            }
+            if (isset($data['status']) && self::hasSpotColumn('status')) {
+                $fields[] = 'status = :status';
+                $params[':status'] = $data['status'];
             }
 
             if (!$fields) {

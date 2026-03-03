@@ -28,6 +28,27 @@ class Constants
         'rejected'   // Rechazado (solo propietario puede ver)
     ];
 
+    // Metadatos fotográficos (MVP/P0)
+    const SPOT_SCHEDULES = [
+        'sunrise',
+        'golden_hour',
+        'blue_hour',
+        'night'
+    ];
+
+    const SPOT_DIFFICULTIES = [
+        'easy',
+        'medium',
+        'hard'
+    ];
+
+    const SPOT_SEASONS = [
+        'spring',
+        'summer',
+        'autumn',
+        'winter'
+    ];
+
     // Roles de usuario
     const USER_ROLES = [
         'user',       // Usuario normal (puede crear spots, votar, comentar)

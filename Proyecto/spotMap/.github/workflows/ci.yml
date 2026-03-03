@@ -177,6 +177,14 @@ jobs:
   frontend-test:
     name: 🎨 Frontend Tests
     runs-on: ubuntu-latest
+    timeout-minutes: 35
+    env:
+      E2E_SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+      E2E_SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+      E2E_USER_EMAIL: ${{ secrets.E2E_USER_EMAIL }}
+      E2E_USER_PASSWORD: ${{ secrets.E2E_USER_PASSWORD }}
+      E2E_MODERATOR_EMAIL: ${{ secrets.E2E_MODERATOR_EMAIL }}
+      E2E_MODERATOR_PASSWORD: ${{ secrets.E2E_MODERATOR_PASSWORD }}
 
     steps:
       - name: 📥 Checkout code
@@ -207,45 +215,40 @@ jobs:
         run: npm run build
 
       - name: 🎭 Install Playwright browser
+        timeout-minutes: 10
         working-directory: ./frontend
         run: npx playwright install --with-deps chromium
 
       - name: 📱 Run mobile E2E smoke
+        timeout-minutes: 15
         working-directory: ./frontend
         run: npm run e2e:mobile
 
       - name: 🌱 Seed E2E users in Supabase
-        if: ${{ secrets.E2E_USER_EMAIL != '' && secrets.E2E_USER_PASSWORD != '' && secrets.E2E_MODERATOR_EMAIL != '' && secrets.E2E_MODERATOR_PASSWORD != '' && secrets.SUPABASE_URL != '' && secrets.SUPABASE_SERVICE_KEY != '' }}
+        if: env.E2E_USER_EMAIL != '' && env.E2E_USER_PASSWORD != '' && env.E2E_MODERATOR_EMAIL != '' && env.E2E_MODERATOR_PASSWORD != '' && env.E2E_SUPABASE_URL != '' && env.E2E_SUPABASE_SERVICE_KEY != ''
+        timeout-minutes: 10
         working-directory: ./frontend
-        env:
-          E2E_SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-          E2E_SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
-          E2E_USER_EMAIL: ${{ secrets.E2E_USER_EMAIL }}
-          E2E_USER_PASSWORD: ${{ secrets.E2E_USER_PASSWORD }}
-          E2E_MODERATOR_EMAIL: ${{ secrets.E2E_MODERATOR_EMAIL }}
-          E2E_MODERATOR_PASSWORD: ${{ secrets.E2E_MODERATOR_PASSWORD }}
         run: npm run e2e:seed
 
       - name: 🔐 Run authenticated moderation E2E flow
-        if: ${{ secrets.E2E_USER_EMAIL != '' && secrets.E2E_USER_PASSWORD != '' && secrets.E2E_MODERATOR_EMAIL != '' && secrets.E2E_MODERATOR_PASSWORD != '' && secrets.SUPABASE_URL != '' && secrets.SUPABASE_SERVICE_KEY != '' }}
+        if: env.E2E_USER_EMAIL != '' && env.E2E_USER_PASSWORD != '' && env.E2E_MODERATOR_EMAIL != '' && env.E2E_MODERATOR_PASSWORD != '' && env.E2E_SUPABASE_URL != '' && env.E2E_SUPABASE_SERVICE_KEY != ''
+        timeout-minutes: 20
         working-directory: ./frontend
-        env:
-          E2E_SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-          E2E_SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
-          E2E_USER_EMAIL: ${{ secrets.E2E_USER_EMAIL }}
-          E2E_USER_PASSWORD: ${{ secrets.E2E_USER_PASSWORD }}
-          E2E_MODERATOR_EMAIL: ${{ secrets.E2E_MODERATOR_EMAIL }}
-          E2E_MODERATOR_PASSWORD: ${{ secrets.E2E_MODERATOR_PASSWORD }}
         run: npm run e2e:flow -- --project=mobile-chromium
 
       - name: 🧹 Cleanup E2E test data
-        if: ${{ always() && secrets.E2E_USER_EMAIL != '' && secrets.E2E_USER_PASSWORD != '' && secrets.E2E_MODERATOR_EMAIL != '' && secrets.E2E_MODERATOR_PASSWORD != '' && secrets.SUPABASE_URL != '' && secrets.SUPABASE_SERVICE_KEY != '' }}
+        if: always() && env.E2E_USER_EMAIL != '' && env.E2E_USER_PASSWORD != '' && env.E2E_MODERATOR_EMAIL != '' && env.E2E_MODERATOR_PASSWORD != '' && env.E2E_SUPABASE_URL != '' && env.E2E_SUPABASE_SERVICE_KEY != ''
+        timeout-minutes: 10
         working-directory: ./frontend
-        env:
-          E2E_SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-          E2E_SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
-          E2E_USER_EMAIL: ${{ secrets.E2E_USER_EMAIL }}
-          E2E_USER_PASSWORD: ${{ secrets.E2E_USER_PASSWORD }}
-          E2E_MODERATOR_EMAIL: ${{ secrets.E2E_MODERATOR_EMAIL }}
-          E2E_MODERATOR_PASSWORD: ${{ secrets.E2E_MODERATOR_PASSWORD }}
         run: npm run e2e:cleanup
+
+      - name: 📎 Upload E2E artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-e2e-artifacts
+          if-no-files-found: ignore
+          retention-days: 7
+          path: |
+            frontend/playwright-report/
+            frontend/test-results/

@@ -1,6 +1,7 @@
 $ErrorActionPreference = 'Stop'
 
-$base = 'http://localhost/https-github.com-antonio-valero-daw2personal/Proyecto/spotMap/backend/public/index.php'
+$defaultBase = 'http://localhost/spotMap/backend/public/index.php'
+$base = if ($env:SMOKE_BASE_URL) { $env:SMOKE_BASE_URL.TrimEnd('/') } else { $defaultBase }
 
 function Assert-True($condition, $message) {
     if (-not $condition) {
@@ -17,7 +18,7 @@ Write-Host "[Smoke] api/status OK (healthy)"
 
 # 2) DB ping (warn if not ok)
 try {
-    $ping = Invoke-RestMethod -Uri "http://localhost/https-github.com-antonio-valero-daw2personal/Proyecto/spotMap/backend/public/index.php/ping-db" -Method Get
+    $ping = Invoke-RestMethod -Uri "$base/ping-db" -Method Get
     if ($ping.ok -ne $true) {
         Write-Warning "[Smoke] ping-db returned ok=false"
     } else {

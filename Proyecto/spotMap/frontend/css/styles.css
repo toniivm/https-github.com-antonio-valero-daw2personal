@@ -293,20 +293,22 @@ body:not(.modal-open) .modal-backdrop {
   position: relative;
 }
 
-/* Estado colapsado del sidebar */
-.sidebar[data-collapsed="true"] {
-  width: 70px;
-  overflow: visible;
-}
+/* Estado colapsado del sidebar (solo desktop) */
+@media (min-width: 992px) {
+  .sidebar[data-collapsed="true"] {
+    width: 70px;
+    overflow: visible;
+  }
 
-.sidebar[data-collapsed="true"] .offcanvas-body > div {
-  opacity: 0;
-  pointer-events: none;
-}
+  .sidebar[data-collapsed="true"] .offcanvas-body > div {
+    opacity: 0;
+    pointer-events: none;
+  }
 
-/* Ajustar posición del botón cuando está colapsado */
-.sidebar[data-collapsed="true"] ~ .btn-toggle-sidebar {
-  left: 90px;
+  /* Ajustar posición del botón cuando está colapsado */
+  .sidebar[data-collapsed="true"] ~ .btn-toggle-sidebar {
+    left: 90px;
+  }
 }
 
 .sidebar::before {

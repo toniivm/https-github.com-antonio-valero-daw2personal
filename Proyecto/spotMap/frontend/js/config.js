@@ -46,3 +46,10 @@ export function buildApiUrl(endpoint) {
   const ep = endpoint.startsWith('/') ? endpoint : '/' + endpoint;
   return Config.apiBase + ep;
 }
+
+export function getApiUrl(endpoint = '') {
+  if (!endpoint) {
+    return Config.apiBase;
+  }
+  return buildApiUrl(endpoint);
+}

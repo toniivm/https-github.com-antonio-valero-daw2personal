@@ -27,8 +27,28 @@ class SpotController
             $tag = isset($_GET['tag']) ? trim($_GET['tag']) : null;
             $minRating = isset($_GET['min_rating']) ? filter_var($_GET['min_rating'], FILTER_VALIDATE_FLOAT) : null;
 
+            $schedule = isset($_GET['schedule']) ? trim((string)$_GET['schedule']) : null;
+            if (($schedule === null || $schedule === '') && isset($_GET['best_time'])) {
+                $schedule = trim((string)$_GET['best_time']);
+            }
+            $difficulty = isset($_GET['difficulty']) ? trim((string)$_GET['difficulty']) : null;
+            $season = isset($_GET['season']) ? trim((string)$_GET['season']) : null;
+
             // Cache primero
-            $cacheKey = "spots_{$page}_{$limit}";
+            $cacheFilters = [
+                'category' => $category,
+                'tag' => $tag,
+                'schedule' => $schedule,
+                'difficulty' => $difficulty,
+                'season' => $season,
+                'popularity' => isset($_GET['popularity']) ? (bool)$_GET['popularity'] : false,
+                'center_lat' => $_GET['center_lat'] ?? null,
+                'center_lng' => $_GET['center_lng'] ?? null,
+                'max_distance_km' => $_GET['max_distance_km'] ?? null,
+                'fields' => $_GET['fields'] ?? null,
+                'min_rating' => $minRating,
+            ];
+            $cacheKey = "spots_{$page}_{$limit}_" . md5(json_encode($cacheFilters));
             $cached = Cache::get($cacheKey);
             if ($cached !== null) {
                 ApiResponse::success($cached);
@@ -38,7 +58,9 @@ class SpotController
             $filters = [
                 'category' => $category,
                 'tag' => $tag,
-                'schedule' => $_GET['schedule'] ?? null,
+                'schedule' => $schedule,
+                'difficulty' => $difficulty,
+                'season' => $season,
                 'popularity' => isset($_GET['popularity']) ? (bool)$_GET['popularity'] : false,
                 'center_lat' => $_GET['center_lat'] ?? null,
                 'center_lng' => $_GET['center_lng'] ?? null,
@@ -187,6 +209,24 @@ class SpotController
                 $validator->array($input['tags'], 'tags', Constants::TAG_MAX_COUNT, Constants::TAG_MAX_LENGTH);
             }
 
+            $bestTime = isset($input['best_time']) ? trim((string)$input['best_time']) : '';
+            $schedule = isset($input['schedule']) ? trim((string)$input['schedule']) : '';
+            if ($schedule === '' && $bestTime !== '') {
+                $schedule = $bestTime;
+            }
+            $difficulty = isset($input['difficulty']) ? trim((string)$input['difficulty']) : '';
+            $season = isset($input['season']) ? trim((string)$input['season']) : '';
+
+            if ($schedule !== '') {
+                $validator->in($schedule, 'schedule', Constants::SPOT_SCHEDULES);
+            }
+            if ($difficulty !== '') {
+                $validator->in($difficulty, 'difficulty', Constants::SPOT_DIFFICULTIES);
+            }
+            if ($season !== '') {
+                $validator->in($season, 'season', Constants::SPOT_SEASONS);
+            }
+
             if (isset($input['lat']) && is_numeric($input['lat'])) {
                 $validator->latitude($input['lat'], 'lat');
             }
@@ -208,6 +248,16 @@ class SpotController
                 'category' => isset($input['category']) ? trim($input['category']) : null,
                 'tags' => isset($input['tags']) && is_array($input['tags']) ? $input['tags'] : []
             ];
+
+            if ($schedule !== '') {
+                $spotData['schedule'] = $schedule;
+            }
+            if ($difficulty !== '') {
+                $spotData['difficulty'] = $difficulty;
+            }
+            if ($season !== '') {
+                $spotData['season'] = $season;
+            }
             
             // Ownership: set whenever user id is available
             if (isset($user['id'])) {
@@ -362,6 +412,57 @@ class SpotController
             if (isset($input['tags'])) {
                 $validator->array($input['tags'], 'tags', Constants::TAG_MAX_COUNT, Constants::TAG_MAX_LENGTH);
                 $fields['tags'] = is_array($input['tags']) ? $input['tags'] : [];
+            }
+
+            // Validar coordenadas si existen
+            if (isset($input['lat'])) {
+                $validator->numeric($input['lat'], 'lat');
+                if (is_numeric($input['lat'])) {
+                    $validator->latitude($input['lat'], 'lat');
+                    $fields['lat'] = (float)$input['lat'];
+                }
+            }
+
+            if (isset($input['lng'])) {
+                $validator->numeric($input['lng'], 'lng');
+                if (is_numeric($input['lng'])) {
+                    $validator->longitude($input['lng'], 'lng');
+                    $fields['lng'] = (float)$input['lng'];
+                }
+            }
+
+            if (isset($input['image_path'])) {
+                $validator->string($input['image_path'], 'image_path', 1, 500);
+                $fields['image_path'] = trim((string)$input['image_path']);
+            }
+
+            if (isset($input['image_path_2'])) {
+                $validator->string($input['image_path_2'], 'image_path_2', 1, 500);
+                $fields['image_path_2'] = trim((string)$input['image_path_2']);
+            }
+
+            if (array_key_exists('schedule', $input) || array_key_exists('best_time', $input)) {
+                $schedule = trim((string)($input['schedule'] ?? $input['best_time'] ?? ''));
+                if ($schedule !== '') {
+                    $validator->in($schedule, 'schedule', Constants::SPOT_SCHEDULES);
+                    $fields['schedule'] = $schedule;
+                }
+            }
+
+            if (array_key_exists('difficulty', $input)) {
+                $difficulty = trim((string)$input['difficulty']);
+                if ($difficulty !== '') {
+                    $validator->in($difficulty, 'difficulty', Constants::SPOT_DIFFICULTIES);
+                    $fields['difficulty'] = $difficulty;
+                }
+            }
+
+            if (array_key_exists('season', $input)) {
+                $season = trim((string)$input['season']);
+                if ($season !== '') {
+                    $validator->in($season, 'season', Constants::SPOT_SEASONS);
+                    $fields['season'] = $season;
+                }
             }
             
             // Solo moderators/admin pueden cambiar status

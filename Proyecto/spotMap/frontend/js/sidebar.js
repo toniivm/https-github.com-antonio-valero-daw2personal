@@ -12,6 +12,14 @@ export function initSidebar() {
     return;
   }
 
+  const isMobileViewport = window.matchMedia('(max-width: 991.98px)').matches;
+  if (isMobileViewport) {
+    sidebar.setAttribute('data-collapsed', 'false');
+    toggleBtn.classList.remove('collapsed');
+    console.log('[SIDEBAR] Modo móvil detectado, colapsado desactivado');
+    return;
+  }
+
   // Estado inicial
   let isCollapsed = sidebar.getAttribute('data-collapsed') === 'true';
 

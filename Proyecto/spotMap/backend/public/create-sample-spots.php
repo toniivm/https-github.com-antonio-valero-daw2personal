@@ -8,8 +8,22 @@ header('Content-Type: application/json');
 
 require_once '../src/bootstrap.php';
 
+use SpotMap\Database;
+
 try {
-    $db = Database::getInstance();
+    $db = Database::pdo();
+
+    $userId = null;
+    try {
+        $userStmt = $db->query("SELECT id FROM users ORDER BY created_at ASC LIMIT 1");
+        $userId = $userStmt ? $userStmt->fetchColumn() : null;
+    } catch (Exception $e) {
+        $userId = null;
+    }
+
+    if (empty($userId)) {
+        throw new Exception('No hay usuarios disponibles para asignar a los spots de ejemplo');
+    }
     
     $sampleSpots = [
         [
@@ -152,13 +166,13 @@ try {
                 $spot['title'],
                 $spot['description'],
                 $spot['category'],
-                $spot['tags'],
+                json_encode(array_map('trim', explode(',', $spot['tags'])), JSON_UNESCAPED_UNICODE),
                 $spot['latitude'],
                 $spot['longitude'],
                 $spot['image_path'],
                 $spot['rating'],
                 $spot['status'],
-                1  // user_id = 1 (admin)
+                (string)$userId
             ]);
             
             $created++;

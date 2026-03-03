@@ -139,6 +139,35 @@ API_VERSION=1.0.0
 
 ## 🛠️ Desarrollo
 
+### Quality Gate (recomendado antes de PR)
+
+Desde la raíz `spotMap/`:
+
+```powershell
+./scripts/quality-gate.ps1
+```
+
+Opciones útiles:
+
+```powershell
+# Saltar e2e (rápido)
+./scripts/quality-gate.ps1 -SkipE2E
+
+# Saltar backend phpunit
+./scripts/quality-gate.ps1 -SkipBackend
+```
+
+### Smoke de integración (API)
+
+```powershell
+# Base por defecto: http://localhost/spotMap/backend/public/index.php
+./scripts/integration-smoke.ps1
+
+# Si tu ruta local es distinta
+$env:SMOKE_BASE_URL = 'http://localhost/tu-ruta/spotMap/backend/public/index.php'
+./scripts/integration-smoke.ps1
+```
+
 ### Migraciones
 
 ```powershell
