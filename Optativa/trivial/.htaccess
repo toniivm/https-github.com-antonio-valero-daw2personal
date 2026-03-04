@@ -1,0 +1,9 @@
+RewriteEngine On
+# Route /api/* to api/index.php
+RewriteCond %{REQUEST_URI} ^.*/api/.*$
+RewriteRule ^api/.*$ api/index.php [L,QSA]
+
+# Fallback: serve index.php for the SPA for anything not a real file/dir
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^ index.php [L]

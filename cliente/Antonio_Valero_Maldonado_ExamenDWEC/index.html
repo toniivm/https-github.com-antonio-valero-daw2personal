@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Examen</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+        }
+        input {
+            margin: 5px;
+            padding: 5px;
+        }
+        button {
+            margin: 5px;
+            padding: 5px 15px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <h2>Ejercicio 2. Operadores, conversiones y expresiones regulares (2 puntos)</h2>
+    
+    Número 1: <input type="text" id="numero1">
+    Número 2: <input type="text" id="numero2">
+    Expresión: <input type="text" id="expresion">
+    <button onclick="comprobar()">Comprobar</button>
+
+    <br><br>
+    <h2>Ejercicio 3. Funciones y Arrays (2 puntos)</h2>
+    
+    <h1 id="tituloDWEC">DWEC</h1>
+    <img id="miImagen" src="img/Captura de pantalla 2025-11-20 131805.png" alt="Imagen" style="width: 300px; cursor: pointer;">
+    <br>
+    Input 1: <input type="text" id="input1">
+    <br>
+    Input 2: <input type="text" id="input2">
+
+    <br><br>
+    <h2>Ejercicio 4. HashMap y listas (3 puntos)</h2>
+    
+    <ul id="listaBebidas"></ul>
+    <br>
+    <button onclick="añadirBebida()">Añadir</button>
+    <button onclick="eliminarBebida()">Eliminar</button>
+    <button onclick="vaciarBebidas()">Vaciar</button>
+    <button onclick="mostrarBebidas()">Mostrar</button>
+
+    <script src="examen.js"></script>
+</body>
+</html>

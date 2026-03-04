@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Análisis Big Data - DataShop</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background-color: #f5f5f5;
+        }
+        
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 40px 30px;
+            background-color: white;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+        }
+        
+        header {
+            text-align: center;
+            border-bottom: 3px solid #2c3e50;
+            padding-bottom: 30px;
+            margin-bottom: 40px;
+        }
+        
+        h1 {
+            color: #2c3e50;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+        
+        .subtitle {
+            color: #7f8c8d;
+            font-size: 1.1em;
+            font-style: italic;
+        }
+        
+        .case-study {
+            background-color: #ecf0f1;
+            padding: 20px;
+            border-left: 5px solid #3498db;
+            margin-bottom: 40px;
+            border-radius: 5px;
+        }
+        
+        .case-study h2 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+        }
+        
+        .case-study p {
+            color: #555;
+            font-size: 1em;
+        }
+        
+        section {
+            margin-bottom: 50px;
+        }
+        
+        h2 {
+            color: #2c3e50;
+            font-size: 1.8em;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 10px;
+            margin-bottom: 25px;
+        }
+        
+        h3 {
+            color: #34495e;
+            font-size: 1.3em;
+            margin-top: 25px;
+            margin-bottom: 15px;
+            padding-left: 15px;
+            border-left: 4px solid #3498db;
+        }
+        
+        .answer {
+            background-color: #f8f9fa;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+            border-left: 4px solid #27ae60;
+        }
+        
+        .answer p {
+            margin-bottom: 12px;
+            text-align: justify;
+            color: #2c3e50;
+        }
+        
+        .answer ul {
+            margin-left: 25px;
+            margin-top: 10px;
+            margin-bottom: 10px;
+        }
+        
+        .answer li {
+            margin-bottom: 10px;
+            color: #34495e;
+        }
+        
+        .v-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-top: 20px;
+        }
+        
+        .v-box {
+            background-color: #fff;
+            border: 2px solid #3498db;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(52, 152, 219, 0.1);
+        }
+        
+        .v-box h4 {
+            color: #2980b9;
+            font-size: 1.3em;
+            margin-bottom: 12px;
+        }
+        
+        .v-box p {
+            color: #555;
+            font-size: 0.95em;
+            line-height: 1.5;
+        }
+        
+        .technology-item {
+            background-color: #f0f8ff;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 8px;
+            border-left: 5px solid #e74c3c;
+        }
+        
+        .technology-item h4 {
+            color: #c0392b;
+            font-size: 1.2em;
+            margin-bottom: 10px;
+        }
+        
+        .technology-item p {
+            color: #34495e;
+            margin-bottom: 8px;
+        }
+        
+        .conclusion {
+            background-color: #e8f5e9;
+            border-left: 5px solid #27ae60;
+            padding: 25px;
+            border-radius: 5px;
+            margin-top: 30px;
+        }
+        
+        .conclusion h3 {
+            color: #1b5e20;
+            border-left-color: #27ae60;
+        }
+        
+        .conclusion p {
+            color: #2c3e50;
+            text-align: justify;
+        }
+        
+        footer {
+            text-align: center;
+            margin-top: 50px;
+            padding-top: 20px;
+            border-top: 1px solid #bdc3c7;
+            color: #7f8c8d;
+            font-size: 0.9em;
+        }
+        
+        @media print {
+            body {
+                background-color: white;
+            }
+            .container {
+                box-shadow: none;
+                max-width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>📊 Big Data: Caso DataShop</h1>
+            <p class="subtitle">Análisis integral de conceptos, tecnologías y aplicaciones</p>
+        </header>
+        
+        <div class="case-study">
+            <h2>📋 Caso de Estudio: DataShop</h2>
+            <p>La empresa DataShop recibe diariamente millones de registros: clics en la web, compras, búsquedas de productos y valoraciones de clientes. Los datos se almacenan en distintos formatos y crecen rápidamente. La empresa quiere aprovechar esta información para mejorar sus ventas y personalizar la experiencia de usuario.</p>
+        </div>
+        
+        <!-- SECCIÓN 1: CONCEPTOS BÁSICOS -->
+        <section>
+            <h2>1️⃣ Conceptos Básicos de Big Data</h2>
+            
+            <h3>¿Qué es Big Data?</h3>
+            <div class="answer">
+                <p>Big Data se refiere al conjunto masivo de datos que las empresas generan y recopilan cada día. Estamos hablando de volúmenes tan grandes que las herramientas tradicionales simplemente no pueden procesarlos eficientemente.</p>
+                <p>En el caso de DataShop, generan millones de registros diarios. Imagina intentar analizar todo eso con una hoja de cálculo convencional... sería imposible. Big Data no es solo cantidad, sino también la inteligencia que sacamos de esos datos para tomar decisiones mejores y más rápidas.</p>
+                <p>Es como la diferencia entre leer un libro versus tener acceso a una biblioteca completa. Con Big Data, tienes mucha más información para trabajar y, si sabes cómo procesarla, puedes descubrir patrones y tendencias que nadie veía antes.</p>
+            </div>
+            
+            <h3>Las 5 V del Big Data</h3>
+            <div class="v-container">
+                <div class="v-box">
+                    <h4>📏 Volumen</h4>
+                    <p>Es el tamaño massive de los datos. DataShop maneja millones de registros diarios. Estamos hablando de terabytes, petabytes... números que la mayoría de sistemas tradicionales no pueden gestionar.</p>
+                </div>
+                
+                <div class="v-box">
+                    <h4>⚡ Velocidad</h4>
+                    <p>Los datos llegan constantemente, en tiempo real. Los clics, compras y búsquedas de DataShop no espera. Necesitan procesarse y analizarse rápidamente para poder reaccionar al instante.</p>
+                </div>
+                
+                <div class="v-box">
+                    <h4>🎨 Variedad</h4>
+                    <p>Los datos no son uniformes. DataShop recibe clics (logs), compras (estructuradas), búsquedas (texto) y valoraciones (también texto, pero con estructura). Todo junto, en formatos diferentes.</p>
+                </div>
+                
+                <div class="v-box">
+                    <h4>✅ Veracidad</h4>
+                    <p>No todos los datos son precisos o útiles. Hay datos incompletos, duplicados o incluso incorrectos. Separar lo valioso de lo ruido es fundamental para obtener resultados confiables.</p>
+                </div>
+            </div>
+            
+            <div style="margin-top: 20px;">
+                <div class="v-box">
+                    <h4>💎 Valor</h4>
+                    <p>Al final, lo que importa es el valor que generamos. ¿Qué insights conseguimos? ¿Cómo mejoramos nuestro negocio? Para DataShop, el valor está en personalizar experiencias, mejorar ventas y entender mejor a sus clientes.</p>
+                </div>
+            </div>
+            
+            <h3>¿Por qué una base de datos relacional tradicional no es suficiente?</h3>
+            <div class="answer">
+                <p>Una base de datos relacional tradicional (como MySQL o SQL Server) está diseñada para datos estructurados, organizados en tablas con relaciones claras. Son excelentes para transacciones: clientes, órdenes, productos...</p>
+                
+                <p><strong>Pero DataShop tiene problemas que las bases de datos relacionales no resuelven bien:</strong></p>
+                
+                <ul>
+                    <li><strong>Volumen:</strong> Las BDD relacionales no escalan horizontalmente con facilidad. Cuando los datos crecen exponencialmente, el rendimiento cae dramáticamente.</li>
+                    
+                    <li><strong>Variedad:</strong> Los logs de clics, las valoraciones en texto libre, los datos semiestructurados... no encajan bien en un esquema rígido de tablas y columnas.</li>
+                    
+                    <li><strong>Velocidad:</strong> Las consultas complejas en millones de registros son lentas. Necesitas respuestas en tiempo real, no en horas.</li>
+                    
+                    <li><strong>Flexibilidad:</strong> Con una base de datos relacional, cambiar el esquema es complicado. En Big Data, necesitas agregar nuevos tipos de datos sin parar el sistema.</li>
+                    
+                    <li><strong>Análisis complejos:</strong> Las BDD relacionales están optimizadas para operaciones OLTP (transaccionales). El análisis profundo de millones de registros requiere herramientas diferentes.</li>
+                </ul>
+                
+                <p style="margin-top: 15px;">Por eso DataShop necesita tecnologías especializadas que puedan distribuir el procesamiento, manejar múltiples formatos y escalar sin límites.</p>
+            </div>
+        </section>
+        
+        <!-- SECCIÓN 2: TECNOLOGÍAS Y HERRAMIENTAS -->
+        <section>
+            <h2>2️⃣ Tecnologías y Herramientas de Big Data</h2>
+            
+            <h3>Dos tecnologías clave en entornos Big Data</h3>
+            
+            <div class="technology-item">
+                <h4>🐘 Hadoop (con HDFS y MapReduce)</h4>
+                <p><strong>¿Para qué se utiliza?</strong></p>
+                <p>Hadoop es como la columna vertebral de Big Data. Permite distribuir datos enormes entre múltiples servidores y procesar esos datos en paralelo de forma eficiente.</p>
+                <p>Imagina que DataShop tiene 100 millones de registros de compra. En lugar de procesarlos en un servidor (que tardaría horas), Hadoop los divide entre 50 máquinas, cada una procesa su parte, y luego se combinan los resultados. Así terminas en minutos.</p>
+                <p><strong>En el caso de DataShop:</strong> Podrían usar Hadoop para procesar los millones de registros diarios, almacenarlos de forma distribuida (HDFS) y realizar análisis batch que les permita identificar tendencias de compra, patrones de comportamiento de usuarios, etc.</p>
+            </div>
+            
+            <div class="technology-item">
+                <h4>⚙️ Apache Spark</h4>
+                <p><strong>¿Para qué se utiliza?</strong></p>
+                <p>Spark es más rápido y flexible que Hadoop. Mientras que Hadoop escribe datos en disco constantemente (lento), Spark mantiene los datos en memoria (mucho más rápido). Es como la diferencia entre escribir en papel vs. usar una pizarra.</p>
+                <p>Spark es increíblemente versátil: procesa datos batch (grandes lotes), streaming (datos en tiempo real), machine learning, procesamiento de grafos... todo con la misma herramienta.</p>
+                <p><strong>En el caso de DataShop:</strong> Podrían usar Spark para analizar en tiempo real los clics en la web (streaming), entrenar modelos de recomendación de productos (ML) y ejecutar análisis batch por la noche. Por ejemplo, detectar patrones de fraude en compras o recomendaciones personalizadas basadas en el historial.</p>
+            </div>
+            
+            <div class="technology-item">
+                <h4>📦 Tecnologías complementarias útiles</h4>
+                <p><strong>NoSQL (MongoDB, Cassandra):</strong> Para almacenar datos no estructurados y semiestructurados de forma flexible.</p>
+                <p><strong>Kafka:</strong> Para gestionar streams de datos en tiempo real de millones de eventos por segundo.</p>
+                <p><strong>Elasticsearch:</strong> Para búsquedas y análisis rápidos de grandes volúmenes de texto.</p>
+            </div>
+            
+            <h3>¿Qué tipo de datos manejaría DataShop?</h3>
+            <div class="answer">
+                <p>DataShop maneja los tres tipos principales de datos:</p>
+                
+                <ul>
+                    <li><strong>📊 Datos Estructurados:</strong> Las compras registradas en su sistema. Tienes una estructura clara: ID de cliente, ID de producto, fecha, precio, cantidad, etc. Esto es como una tabla perfectamente organizada en una base de datos. Representan aproximadamente el 20% de sus datos.</li>
+                    
+                    <li><strong>🔀 Datos Semiestructurados:</strong> Los logs de clics en la web tienen cierta estructura (timestamp, URL, usuario, acción), pero no es tan rígida como los datos estructurados. JSON, XML... Los datos de búsqueda también caen aquí. Representan aproximadamente el 30% de sus datos.</li>
+                    
+                    <li><strong>📝 Datos No Estructurados:</strong> Las valoraciones de clientes son texto libre. Una persona puede escribir "Este producto es excelente, llegó rápido" o "Muy malo, no funciona". No hay estructura, pero contienen información valiosa. Fotos, vídeos de demostraciones... también caerían aquí si los utilizaran. Representan aproximadamente el 50% de sus datos.</li>
+                </ul>
+                
+                <p style="margin-top: 15px;"><strong>¿Por qué es importante?</strong> Las herramientas que elige DataShop deben manejar esta mezcla. No puede usar solo una base de datos relacional (no maneja bien lo no estructurado) ni solo un almacén NoSQL (que no es ideal para transacciones críticas). Necesita una arquitectura híbrida que combine lo mejor de cada mundo.</p>
+            </div>
+        </section>
+        
+        <!-- CONCLUSIÓN -->
+        <div class="conclusion">
+            <h3>🎯 Conclusión</h3>
+            <p>DataShop está en una situación típica de muchas empresas modernas: tienen datos valiosos, mucha cantidad, y necesitan procesarlos rápidamente. Big Data no es solo una moda, es una necesidad. Con las herramientas adecuadas (Hadoop, Spark, y bases de datos NoSQL), pueden convertir millones de clics, compras y valoraciones en decisiones inteligentes que mejoren sus ventas y la experiencia de sus clientes.</p>
+            <p>La clave está en elegir la arquitectura correcta: una combinación de tecnologías que se adapte a la variedad, velocidad y volumen de sus datos. Y más importante aún, en los analistas y científicos de datos que sabrán extraer el verdadero valor de toda esa información.</p>
+        </div>
+        
+        <footer>
+            <p>Documento generado como respuesta a preguntas sobre Big Data</p>
+            <p>Análisis del caso: DataShop - Enero 2026</p>
+        </footer>
+    </div>
+</body>
+</html>

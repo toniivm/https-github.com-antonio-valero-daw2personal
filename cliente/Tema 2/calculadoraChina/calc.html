@@ -1,0 +1,162 @@
+<!-- Calculadora moderna simple: HTML + CSS + JavaScript -->
+<!-- Autor: Ejemplo educativo -->
+<!-- Copiar en un archivo index.html y abrir en el navegador -->
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Calculadora Moderna</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      font-family: 'Segoe UI', sans-serif;
+    }
+    body {
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+      color: #fff;
+    }
+    .calculator {
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(10px);
+      padding: 20px;
+      border-radius: 20px;
+      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+      width: 320px;
+    }
+    .display {
+      background: rgba(0, 0, 0, 0.2);
+      border-radius: 10px;
+      padding: 15px;
+      font-size: 2em;
+      text-align: right;
+      overflow-x: auto;
+      margin-bottom: 15px;
+    }
+    .buttons {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+    }
+    button {
+      border: none;
+      padding: 15px;
+      font-size: 1.2em;
+      border-radius: 10px;
+      background: rgba(255, 255, 255, 0.15);
+      color: #fff;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.1s;
+    }
+    button:hover {
+      background: rgba(255, 255, 255, 0.25);
+    }
+    button:active {
+      transform: scale(0.95);
+    }
+    .equal {
+      background: linear-gradient(135deg, #43cea2, #185a9d);
+      color: white;
+      grid-column: span 2;
+    }
+    .clear {
+      background: rgba(255, 80, 80, 0.7);
+    }
+  </style>
+</head>
+<body>
+  <div class="calculator">
+    <div id="display" class="display">0</div>
+    <div class="buttons">
+      <button class="clear">C</button>
+      <button>(</button>
+      <button>)</button>
+      <button>/</button>
+
+      <button>7</button>
+      <button>8</button>
+      <button>9</button>
+      <button>*</button>
+
+      <button>4</button>
+      <button>5</button>
+      <button>6</button>
+      <button>-</button>
+
+      <button>1</button>
+      <button>2</button>
+      <button>3</button>
+      <button>+</button>
+
+      <button>0</button>
+      <button>.</button>
+      <button class="equal">=</button>
+    </div>
+  </div>
+
+  <script>
+    const display = document.getElementById('display');
+    const buttons = document.querySelectorAll('button');
+
+    let expression = '';
+
+    buttons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        const value = btn.textContent;
+
+        if (value === 'C') {
+          expression = '';
+          display.textContent = '0';
+          return;
+        }
+        if (value === '=') {
+          try {
+            const result = eval(expression);
+            display.textContent = result;
+            expression = result.toString();
+          } catch {
+            display.textContent = 'Error';
+            expression = '';
+          }
+          return;
+        }
+
+        expression += value;
+        display.textContent = expression;
+      });
+    });
+
+    // Soporte de teclado básico
+    document.addEventListener('keydown', (e) => {
+      if ((e.key >= '0' && e.key <= '9') || '+-*/().'.includes(e.key)) {
+        expression += e.key;
+        display.textContent = expression;
+      }
+      if (e.key === 'Enter') {
+        try {
+          const result = eval(expression);
+          display.textContent = result;
+          expression = result.toString();
+        } catch {
+          display.textContent = 'Error';
+          expression = '';
+        }
+      }
+      if (e.key === 'Backspace') {
+        expression = expression.slice(0, -1);
+        display.textContent = expression || '0';
+      }
+      if (e.key === 'Escape') {
+        expression = '';
+        display.textContent = '0';
+      }
+    });
+  </script>
+</body>
+</html>

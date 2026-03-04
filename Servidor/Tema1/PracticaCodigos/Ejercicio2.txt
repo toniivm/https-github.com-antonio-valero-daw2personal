@@ -1,0 +1,7 @@
+/* Ejercicio2
+Si ejecutáis este código php...
+¿Qué obtenéis por pantalla? */
+
+<?php
+phpinfo();
+?>

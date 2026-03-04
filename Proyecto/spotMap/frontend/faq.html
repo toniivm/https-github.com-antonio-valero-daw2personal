@@ -1,0 +1,232 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Preguntas Frecuentes - SpotMap</title>
+  
+  <!-- Bootstrap -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.2/font/bootstrap-icons.css">
+  
+  <!-- Estilos propios -->
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+
+<body>
+  <!-- Navbar -->
+  <nav class="navbar px-3">
+    <a class="navbar-brand" href="index.html">📸 SpotMap</a>
+    <div class="d-flex gap-2">
+      <a href="index.html" class="btn btn-sm">Volver al mapa</a>
+    </div>
+  </nav>
+
+  <!-- Content -->
+  <div class="page-content">
+    <div class="container py-5">
+      <div class="row justify-content-center">
+        <div class="col-lg-10">
+          <header class="text-center mb-5">
+            <h1 class="display-4 fw-bold mb-3">❓ Preguntas Frecuentes</h1>
+            <p class="lead text-secondary">Encuentra respuestas a las dudas más comunes</p>
+          </header>
+
+          <div class="accordion accordion-flush" id="faqAccordion">
+            <!-- General -->
+            <div class="accordion-item faq-item">
+              <h2 class="accordion-header">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq1">
+                  ¿Qué es SpotMap?
+                </button>
+              </h2>
+              <div id="faq1" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                <div class="accordion-body">
+                  SpotMap es una plataforma social basada en mapas que te permite descubrir y compartir lugares increíbles. Puedes explorar spots de otros usuarios, crear los tuyos con fotos y descripciones, y construir una comunidad de exploradores.
+                </div>
+              </div>
+            </div>
+
+            <div class="accordion-item faq-item">
+              <h2 class="accordion-header">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq2">
+                  ¿Es gratis usar SpotMap?
+                </button>
+              </h2>
+              <div id="faq2" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                <div class="accordion-body">
+                  Sí, SpotMap es completamente gratuito. Puedes crear una cuenta, explorar spots, añadir los tuyos y compartir sin ningún costo.
+                </div>
+              </div>
+            </div>
+
+            <div class="accordion-item faq-item">
+              <h2 class="accordion-header">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq3">
+                  ¿Necesito crear una cuenta?
+                </button>
+              </h2>
+              <div id="faq3" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                <div class="accordion-body">
+                  Puedes explorar spots sin cuenta, pero necesitarás crear una para añadir nuevos spots, dar "me gusta", guardar favoritos y comentar.
+                </div>
+              </div>
+            </div>
+
+            <!-- Spots -->
+            <div class="accordion-item faq-item">
+              <h2 class="accordion-header">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq4">
+                  ¿Cómo añado un nuevo spot?
+                </button>
+              </h2>
+              <div id="faq4" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                <div class="accordion-body">
+                  Haz clic en el botón "+ Añadir Spot" en la barra superior. Completa el título y las coordenadas (puedes usar tu ubicación actual). Opcionalmente añade descripción, categoría, etiquetas y una foto.
+                </div>
+              </div>
+            </div>
+
+            <div class="accordion-item faq-item">
+              <h2 class="accordion-header">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq5">
+                  ¿Puedo editar o eliminar mis spots?
+                </button>
+              </h2>
+              <div id="faq5" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                <div class="accordion-body">
+                  Sí, puedes eliminar tus spots haciendo clic en el botón de eliminar (🗑️) en la tarjeta del spot. La función de editar estará disponible pronto.
+                </div>
+              </div>
+            </div>
+
+            <div class="accordion-item faq-item">
+              <h2 class="accordion-header">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq6">
+                  ¿Qué tipos de fotos puedo subir?
+                </button>
+              </h2>
+              <div id="faq6" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                <div class="accordion-body">
+                  Aceptamos fotos en formato JPEG, PNG, WebP y GIF. El tamaño máximo es de 5 MB. Recomendamos fotos de al menos 1920x1080 píxeles para mejor calidad.
+                </div>
+              </div>
+            </div>
+
+            <!-- Privacidad -->
+            <div class="accordion-item faq-item">
+              <h2 class="accordion-header">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq7">
+                  ¿Es segura mi información?
+                </button>
+              </h2>
+              <div id="faq7" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                <div class="accordion-body">
+                  Sí, tomamos la privacidad muy en serio. Usamos encriptación SSL, autenticación segura con Supabase, y nunca compartimos tu información personal con terceros. Lee nuestra <a href="#">Política de Privacidad</a> para más detalles.
+                </div>
+              </div>
+            </div>
+
+            <div class="accordion-item faq-item">
+              <h2 class="accordion-header">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq8">
+                  ¿Cómo funciona la geolocalización?
+                </button>
+              </h2>
+              <div id="faq8" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                <div class="accordion-body">
+                  SpotMap puede usar la geolocalización de tu navegador para mostrarte spots cercanos y facilitar la creación de nuevos spots. Siempre te pediremos permiso antes de acceder a tu ubicación, y puedes desactivarla en cualquier momento.
+                </div>
+              </div>
+            </div>
+
+            <!-- Funciones -->
+            <div class="accordion-item faq-item">
+              <h2 class="accordion-header">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq9">
+                  ¿Cómo funcionan los favoritos?
+                </button>
+              </h2>
+              <div id="faq9" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                <div class="accordion-body">
+                  Haz clic en el corazón (🤍) en cualquier spot para añadirlo a tus favoritos. Podrás acceder a tu lista de favoritos desde tu perfil. Los favoritos son privados y solo tú puedes verlos.
+                </div>
+              </div>
+            </div>
+
+            <div class="accordion-item faq-item">
+              <h2 class="accordion-header">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq10">
+                  ¿Puedo compartir spots en redes sociales?
+                </button>
+              </h2>
+              <div id="faq10" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                <div class="accordion-body">
+                  Sí, haz clic en el botón de compartir en cualquier spot. Podrás compartir en WhatsApp, Twitter, Facebook, Telegram, por email, o copiar el enlace directo.
+                </div>
+              </div>
+            </div>
+
+            <!-- Técnico -->
+            <div class="accordion-item faq-item">
+              <h2 class="accordion-header">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq11">
+                  ¿Funciona en móviles?
+                </button>
+              </h2>
+              <div id="faq11" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                <div class="accordion-body">
+                  Sí, SpotMap está completamente optimizado para móviles, tablets y escritorio. También estamos trabajando en apps nativas para iOS y Android.
+                </div>
+              </div>
+            </div>
+
+            <div class="accordion-item faq-item">
+              <h2 class="accordion-header">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq12">
+                  ¿Qué navegadores son compatibles?
+                </button>
+              </h2>
+              <div id="faq12" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                <div class="accordion-body">
+                  SpotMap funciona en todos los navegadores modernos: Chrome, Firefox, Safari, Edge y Opera. Recomendamos mantener tu navegador actualizado para la mejor experiencia.
+                </div>
+              </div>
+            </div>
+
+            <!-- Soporte -->
+            <div class="accordion-item faq-item">
+              <h2 class="accordion-header">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq13">
+                  ¿Cómo reporto un problema o sugiero una mejora?
+                </button>
+              </h2>
+              <div id="faq13" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                <div class="accordion-body">
+                  Puedes contactarnos a través del <a href="contact.html">formulario de contacto</a> o enviarnos un email a soporte@spotmap.com. Valoramos mucho tu feedback.
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <section class="text-center mt-5">
+            <h3 class="mb-3">¿No encuentras tu respuesta?</h3>
+            <a href="contact.html" class="btn btn-primary">Contáctanos</a>
+          </section>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer class="app-footer">
+    <div class="container-fluid">
+      <div class="footer-bottom">
+        <p class="mb-0">© 2026 SpotMap. Todos los derechos reservados.</p>
+      </div>
+    </div>
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

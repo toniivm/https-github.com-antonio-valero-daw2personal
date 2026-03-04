@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="es">    
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Acceder a un elemento del DOM</title>
+</head>
+<body>
+    <h1 id="titulo">TITULO DE LA PAGINA</h1>
+    <p id="parrafo">Este es un párrafo de ejemplo.</p>
+
+    <script>
+        document.getElementById("titulo").innerHTML = "TITULO MODIFICADO DESDE JAVASCRIPT";
+    
+        document.getElementById("parrafo").style.color = "blue";
+        document.getElementById("parrafo").style.fontSize = "20px";
+    </script>
+</body>
+</html>

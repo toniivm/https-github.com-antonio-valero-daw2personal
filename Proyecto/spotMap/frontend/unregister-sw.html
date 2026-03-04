@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Desregistrar Service Worker</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #1a1a1a;
+            color: #fff;
+        }
+        .status {
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 5px;
+            background: #2a2a2a;
+        }
+        .success {
+            background: #155724;
+            color: #d4edda;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            background: #dc3545;
+            color: white;
+            border: none;
+            border-radius: 5px;
+        }
+        button:hover {
+            background: #c82333;
+        }
+    </style>
+</head>
+<body>
+    <h1>🧹 Desregistrar Service Worker</h1>
+    <div id="status" class="status">Esperando acción...</div>
+    <button onclick="unregisterAll()">Eliminar Service Workers</button>
+    <button onclick="clearCache()">Limpiar Caché</button>
+    <button onclick="goHome()">Volver a SpotMap</button>
+
+    <script>
+        async function unregisterAll() {
+            const status = document.getElementById('status');
+            
+            if (!('serviceWorker' in navigator)) {
+                status.textContent = '❌ Este navegador no soporta Service Workers';
+                return;
+            }
+
+            try {
+                const registrations = await navigator.serviceWorker.getRegistrations();
+                
+                if (registrations.length === 0) {
+                    status.className = 'status success';
+                    status.textContent = '✅ No hay Service Workers registrados';
+                    return;
+                }
+
+                for (let registration of registrations) {
+                    await registration.unregister();
+                    console.log('✅ Service Worker desregistrado:', registration.scope);
+                }
+
+                status.className = 'status success';
+                status.textContent = `✅ ${registrations.length} Service Worker(s) eliminados correctamente`;
+            } catch (error) {
+                status.textContent = '❌ Error: ' + error.message;
+            }
+        }
+
+        async function clearCache() {
+            const status = document.getElementById('status');
+            
+            if (!('caches' in window)) {
+                status.textContent = '❌ Este navegador no soporta Cache API';
+                return;
+            }
+
+            try {
+                const cacheNames = await caches.keys();
+                
+                if (cacheNames.length === 0) {
+                    status.className = 'status success';
+                    status.textContent = '✅ No hay cachés para eliminar';
+                    return;
+                }
+
+                for (let cacheName of cacheNames) {
+                    await caches.delete(cacheName);
+                    console.log('✅ Caché eliminada:', cacheName);
+                }
+
+                status.className = 'status success';
+                status.textContent = `✅ ${cacheNames.length} caché(s) eliminadas correctamente`;
+            } catch (error) {
+                status.textContent = '❌ Error: ' + error.message;
+            }
+        }
+
+        function goHome() {
+            window.location.href = './index.html';
+        }
+
+        // Auto-check al cargar
+        window.addEventListener('load', async () => {
+            const registrations = await navigator.serviceWorker.getRegistrations();
+            const cacheNames = await caches.keys();
+            
+            const status = document.getElementById('status');
+            status.innerHTML = `
+                📊 <strong>Estado actual:</strong><br>
+                • Service Workers: ${registrations.length}<br>
+                • Cachés: ${cacheNames.length}
+            `;
+        });
+    </script>
+</body>
+</html>

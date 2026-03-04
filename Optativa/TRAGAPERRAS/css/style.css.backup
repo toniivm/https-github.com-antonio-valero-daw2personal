@@ -1,0 +1,446 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    background: linear-gradient(135deg, #0f2027 0%, #203a43 50%, #2c5364 100%);
+    color: white;
+    font-family: 'Poppins', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+    position: relative;
+    padding-bottom: 50px;
+}
+
+/* Efecto de nieve */
+.snowflakes {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 9999;
+}
+
+.snowflake {
+    position: absolute;
+    top: -10px;
+    color: #fff;
+    font-size: 1.5em;
+    opacity: 0.8;
+    animation: fall linear infinite;
+    text-shadow: 0 0 10px rgba(255, 255, 255, 0.8);
+}
+
+@keyframes fall {
+    0% {
+        transform: translateY(0) rotate(0deg);
+        opacity: 1;
+    }
+    100% {
+        transform: translateY(100vh) rotate(360deg);
+        opacity: 0.3;
+    }
+}
+
+.snowflake:nth-child(1) { left: 10%; animation-duration: 10s; animation-delay: 0s; }
+.snowflake:nth-child(2) { left: 20%; animation-duration: 12s; animation-delay: 1s; font-size: 2em; }
+.snowflake:nth-child(3) { left: 30%; animation-duration: 8s; animation-delay: 2s; }
+.snowflake:nth-child(4) { left: 40%; animation-duration: 14s; animation-delay: 0.5s; font-size: 1.8em; }
+.snowflake:nth-child(5) { left: 50%; animation-duration: 11s; animation-delay: 1.5s; }
+.snowflake:nth-child(6) { left: 60%; animation-duration: 9s; animation-delay: 3s; font-size: 2.2em; }
+.snowflake:nth-child(7) { left: 70%; animation-duration: 13s; animation-delay: 0s; }
+.snowflake:nth-child(8) { left: 80%; animation-duration: 10s; animation-delay: 2s; font-size: 1.6em; }
+.snowflake:nth-child(9) { left: 90%; animation-duration: 12s; animation-delay: 1s; }
+.snowflake:nth-child(10) { left: 15%; animation-duration: 11s; animation-delay: 2.5s; }
+.snowflake:nth-child(11) { left: 85%; animation-duration: 10s; animation-delay: 0.5s; font-size: 2em; }
+.snowflake:nth-child(12) { left: 55%; animation-duration: 9s; animation-delay: 1.8s; }
+
+/* Luces navideñas */
+.christmas-lights {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 20px;
+    display: flex;
+    justify-content: space-around;
+    z-index: 9998;
+    background: rgba(0, 0, 0, 0.3);
+}
+
+.light {
+    width: 15px;
+    height: 15px;
+    border-radius: 50%;
+    margin-top: 5px;
+    animation: blink 1.5s infinite;
+    box-shadow: 0 0 20px currentColor;
+}
+
+.light.red { 
+    background: #ff0000; 
+    animation-delay: 0s; 
+}
+.light.green { 
+    background: #00ff00; 
+    animation-delay: 0.3s; 
+}
+.light.blue { 
+    background: #0000ff; 
+    animation-delay: 0.6s; 
+}
+.light.yellow { 
+    background: #ffff00; 
+    animation-delay: 0.9s; 
+}
+
+@keyframes blink {
+    0%, 50%, 100% { opacity: 1; transform: scale(1); }
+    25%, 75% { opacity: 0.3; transform: scale(0.8); }
+}
+
+/* Título navideño */
+.christmas-title {
+    font-family: 'Mountains of Christmas', cursive;
+    font-size: 3.5rem;
+    font-weight: 700;
+    color: #fff;
+    text-shadow: 
+        0 0 10px #ff0000,
+        0 0 20px #ff0000,
+        0 0 30px #00ff00,
+        0 0 40px #00ff00,
+        2px 2px 4px rgba(0, 0, 0, 0.8);
+    animation: titleGlow 2s ease-in-out infinite alternate;
+    margin-top: 30px;
+}
+
+@keyframes titleGlow {
+    0% {
+        text-shadow: 
+            0 0 10px #ff0000,
+            0 0 20px #ff0000,
+            0 0 30px #00ff00,
+            2px 2px 4px rgba(0, 0, 0, 0.8);
+    }
+    100% {
+        text-shadow: 
+            0 0 20px #ff0000,
+            0 0 30px #ff0000,
+            0 0 40px #00ff00,
+            0 0 50px #00ff00,
+            2px 2px 8px rgba(0, 0, 0, 0.8);
+    }
+}
+
+/* Máquina tragaperras principal */
+.slot-machine {
+    background: linear-gradient(135deg, #c31432 0%, #240b36 100%);
+    border-radius: 30px;
+    padding: 30px;
+    box-shadow: 
+        0 0 50px rgba(195, 20, 50, 0.6),
+        0 0 100px rgba(36, 11, 54, 0.4),
+        inset 0 0 50px rgba(255, 255, 255, 0.1);
+    border: 5px solid #ffd700;
+    position: relative;
+    overflow: hidden;
+    animation: fadeInScale 0.8s ease-out forwards;
+}
+
+@keyframes fadeInScale {
+    0% { 
+        opacity: 0; 
+        transform: scale(0.9) translateY(20px);
+    }
+    100% { 
+        opacity: 1; 
+        transform: scale(1) translateY(0);
+    }
+}
+
+.slot-machine::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: linear-gradient(
+        45deg,
+        transparent,
+        rgba(255, 215, 0, 0.1),
+        transparent
+    );
+    animation: shine 3s infinite;
+}
+
+@keyframes shine {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.slot-machine-header {
+    margin-bottom: 20px;
+}
+
+.slot-title {
+    font-family: 'Mountains of Christmas', cursive;
+    font-size: 2.5rem;
+    color: #ffd700;
+    text-shadow: 
+        0 0 10px #ff0000,
+        0 0 20px #ff0000,
+        2px 2px 4px rgba(0, 0, 0, 0.8);
+    margin: 0;
+    animation: slotTitlePulse 2s ease-in-out infinite;
+}
+
+@keyframes slotTitlePulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+}
+
+/* Contenedor de slots */
+.slots-container {
+    background: rgba(0, 0, 0, 0.5);
+    padding: 25px;
+    border-radius: 20px;
+    margin: 20px 0;
+    box-shadow: inset 0 0 30px rgba(0, 0, 0, 0.8);
+}
+
+.slots {
+    display: grid;
+    grid-template-columns: repeat(3, 110px);
+    grid-template-rows: repeat(3, 110px);
+    gap: 15px;
+    justify-content: center;
+    perspective: 1000px;
+}
+
+.slot {
+    width: 110px;
+    height: 110px;
+    position: relative;
+    transform-style: preserve-3d;
+    transition: all 0.3s ease;
+}
+
+.slot-inner {
+    width: 100%;
+    height: 100%;
+    border: 4px solid #ffd700;
+    border-radius: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+    box-shadow: 
+        0 0 20px rgba(255, 215, 0, 0.5),
+        inset 0 0 20px rgba(0, 0, 0, 0.5);
+    position: relative;
+    overflow: hidden;
+    transform-style: preserve-3d;
+    transition: all 0.3s ease;
+}
+
+.slot-inner::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(
+        90deg,
+        transparent,
+        rgba(255, 255, 255, 0.3),
+        transparent
+    );
+    transition: left 0.5s;
+}
+
+.slot:hover .slot-inner {
+    transform: scale(1.05) rotateY(5deg);
+    box-shadow: 
+        0 0 30px rgba(255, 215, 0, 0.8),
+        inset 0 0 20px rgba(0, 0, 0, 0.5);
+}
+
+.slot:hover .slot-inner::before {
+    left: 100%;
+}
+
+.slot-inner img {
+    max-width: 70px;
+    max-height: 70px;
+    filter: drop-shadow(0 0 10px rgba(255, 215, 0, 0.6));
+    animation: symbolFloat 2s ease-in-out infinite;
+}
+
+@keyframes symbolFloat {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-5px); }
+}
+
+.slot.spinning .slot-inner {
+    animation: spin 0.1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotateX(0deg); }
+    100% { transform: rotateX(360deg); }
+}
+
+.slot.winner .slot-inner {
+    animation: winnerPulse 0.5s ease-in-out 3;
+    border-color: #00ff00;
+    box-shadow: 
+        0 0 40px rgba(0, 255, 0, 1),
+        inset 0 0 20px rgba(0, 255, 0, 0.3);
+}
+
+@keyframes winnerPulse {
+    0%, 100% { 
+        transform: scale(1); 
+        border-color: #ffd700;
+    }
+    50% { 
+        transform: scale(1.15); 
+        border-color: #00ff00;
+    }
+}
+
+.btn-custom {
+    background: linear-gradient(45deg, #008C45, #4CAF50);
+    color: white;
+    font-size: 1rem; /* Reducir tamaño de fuente */
+    font-weight: bold;
+    border: none;
+    padding: 12px 25px; /* Reducir padding */
+    margin-top: 15px;
+    border-radius: 50px;
+    cursor: pointer;
+    transition: 0.3s ease, transform 0.3s ease;
+    box-shadow: 0px 0px 20px rgba(0, 140, 69, 0.7);
+}
+
+.btn-custom:hover {
+    background: linear-gradient(45deg, #008C45, #1e7e34);
+    box-shadow: 0px 0px 30px rgba(0, 140, 69, 0.9);
+    transform: scale(1.05);
+}
+
+.jackpot {
+    margin-top: 15px; /* Reducir margen superior */
+    padding: 8px; /* Reducir padding */
+    background: linear-gradient(135deg, #4CAF50, #008C45);
+    border-radius: 15px;
+    box-shadow: 0px 0px 20px rgba(0, 140, 69, 0.8);
+    font-size: 1rem; /* Reducir tamaño de texto */
+    font-weight: bold;
+    text-shadow: 1px 1px 3px rgba(0, 140, 69, 0.8);
+    animation: jackpotGlow 1.5s infinite alternate;
+}
+
+@keyframes jackpotGlow {
+    0% {
+        text-shadow: 0 0 10px #4CAF50, 0 0 20px #008C45;
+    }
+    100% {
+        text-shadow: 0 0 30px #4CAF50, 0 0 40px #008C45;
+    }
+}
+
+.credits {
+    font-size: 1rem; /* Reducir tamaño de fuente */
+    background: #333;
+    padding: 8px; /* Reducir padding */
+    border-radius: 10px;
+    color: #FFC600; /* Amarillo */
+    margin-bottom: 15px;
+    box-shadow: 0px 0px 20px rgba(0, 140, 69, 0.7);
+    transition: transform 0.2s ease;
+}
+
+.credits:hover {
+    transform: scale(1.05);
+}
+
+.credit-buttons {
+    display: flex;
+    justify-content: center;
+    gap: 10px; /* Reducir espacio entre botones */
+    margin-top: 10px; /* Reducir margen superior */
+}
+
+.credit-button {
+    background-color: #4CAF50;
+    color: white;
+    font-size: 1rem; /* Reducir tamaño de fuente */
+    font-weight: bold;
+    padding: 10px 20px; /* Reducir padding */
+    border: none;
+    border-radius: 50px;
+    cursor: pointer;
+    transition: 0.3s;
+    width: 80px; /* Reducir el tamaño de los botones */
+}
+
+.credit-button:hover {
+    background-color: #FFC600; /* Amarillo al pasar el mouse */
+    box-shadow: 0px 0px 20px rgba(0, 140, 69, 0.8);
+}
+
+.slot-machine-container {
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    position: relative;
+    flex-direction: column;
+    gap: 20px; /* Reducir espacio entre los contenedores */
+    margin-bottom: 50px; /* Reducir margen inferior */
+}
+
+.slot-container {
+    width: 100%;
+}
+
+.credit-container {
+    position: absolute;
+    right: 5%;
+    top: 15%;
+    background-color: rgba(0, 0, 0, 0.8);
+    border-radius: 15px;
+    padding: 15px;
+    box-shadow: 0px 0px 30px rgba(0, 140, 69, 0.8);
+    width: 180px; /* Ajustar el tamaño del contenedor */
+    min-width: 180px;
+    max-width: 200px;
+    z-index: 10;
+    opacity: 0;
+    animation: fadeInRight 1s forwards;
+}
+
+@keyframes fadeInRight {
+    0% { opacity: 0; transform: translateX(20px); }
+    100% { opacity: 1; transform: translateX(0); }
+}
+
+.credit-container h3 {
+    color: #FFC600; /* Amarillo para los encabezados */
+    font-size: 1.3rem; /* Reducir tamaño de fuente */
+    margin-bottom: 12px; /* Reducir margen inferior */
+}
+
+.credit-container .credit-buttons {
+    margin-top: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px; /* Reducir espacio entre botones */
+}

@@ -1,0 +1,30 @@
+[
+    {
+        "name": "Ana",
+        "score": 557,
+        "duration": 36,
+        "mode": "classic",
+        "at": "2025-12-12T11:03:35+01:00"
+    },
+    {
+        "name": "Ana",
+        "score": 0,
+        "duration": 0,
+        "mode": "classic",
+        "at": "2025-12-12T11:03:40+01:00"
+    },
+    {
+        "name": "Ana",
+        "score": 0,
+        "duration": 0,
+        "mode": "classic",
+        "at": "2025-12-12T11:03:45+01:00"
+    },
+    {
+        "name": "Ana",
+        "score": 0,
+        "duration": 7,
+        "mode": "classic",
+        "at": "2025-12-12T10:51:39+01:00"
+    }
+]
