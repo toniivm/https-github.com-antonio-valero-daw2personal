@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ODS 7 - Energia asequible y no contaminante</title>
+  <style>
+    :root {
+      --ink: #1f2937;
+      --muted: #5b6472;
+      --accent: #c47a00;
+      --paper: #fcfbf7;
+      --line: #d7d0c4;
+      --soft: #f1ece2;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: Georgia, "Times New Roman", serif;
+      color: var(--ink);
+      background: linear-gradient(180deg, #f3efe6 0%, #ebe4d7 100%);
+      line-height: 1.7;
+    }
+
+    .page {
+      width: min(900px, calc(100% - 48px));
+      margin: 32px auto;
+      background: var(--paper);
+      border: 1px solid var(--line);
+      box-shadow: 0 18px 50px rgba(48, 37, 22, 0.12);
+      padding: 56px 64px;
+      position: relative;
+    }
+
+    .page::before {
+      content: "";
+      position: absolute;
+      inset: 14px;
+      border: 1px solid rgba(196, 122, 0, 0.15);
+      pointer-events: none;
+    }
+
+    h1, h2, h3 {
+      line-height: 1.25;
+      margin: 0 0 14px;
+      font-weight: 700;
+      color: #22201b;
+    }
+
+    h1 {
+      font-size: 2.2rem;
+      letter-spacing: -0.02em;
+    }
+
+    h2 {
+      margin-top: 34px;
+      font-size: 1.35rem;
+      padding-bottom: 6px;
+      border-bottom: 2px solid var(--soft);
+    }
+
+    h3 {
+      margin-top: 18px;
+      font-size: 1.08rem;
+    }
+
+    p {
+      margin: 0 0 15px;
+      text-align: justify;
+    }
+
+    .cover {
+      min-height: 300px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 24px;
+    }
+
+    .subtitle {
+      font-size: 1.08rem;
+      color: var(--muted);
+      max-width: 680px;
+    }
+
+    .meta {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px 28px;
+      padding: 18px 20px;
+      background: var(--soft);
+      border-left: 4px solid var(--accent);
+    }
+
+    .meta strong {
+      display: inline-block;
+      min-width: 88px;
+    }
+
+    .lead {
+      font-size: 1.05rem;
+    }
+
+    .quote {
+      margin: 24px 0;
+      padding: 18px 22px;
+      background: #f7f3eb;
+      border-left: 4px solid var(--accent);
+      color: #3a342a;
+      font-style: italic;
+    }
+
+    ul, ol {
+      margin: 0 0 16px 22px;
+      padding: 0;
+    }
+
+    li {
+      margin-bottom: 8px;
+    }
+
+    .table-wrap {
+      overflow-x: auto;
+      margin: 18px 0 22px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.96rem;
+      background: #fff;
+    }
+
+    th, td {
+      border: 1px solid var(--line);
+      padding: 11px 12px;
+      text-align: left;
+      vertical-align: top;
+    }
+
+    th {
+      background: #f3ede2;
+    }
+
+    .box {
+      background: #faf6ee;
+      border: 1px solid var(--line);
+      padding: 18px 20px;
+      margin: 18px 0;
+    }
+
+    .page-break {
+      page-break-before: always;
+    }
+
+    @media print {
+      body {
+        background: #fff;
+      }
+
+      .page {
+        width: 100%;
+        margin: 0;
+        border: none;
+        box-shadow: none;
+        padding: 20mm 18mm;
+      }
+
+      .page::before {
+        display: none;
+      }
+    }
+
+    @media (max-width: 720px) {
+      .page {
+        width: calc(100% - 20px);
+        padding: 28px 20px;
+      }
+
+      .meta {
+        grid-template-columns: 1fr;
+      }
+
+      h1 {
+        font-size: 1.8rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <section class="cover">
+      <div>
+        <h1>ODS 7: energia asequible y no contaminante</h1>
+        <p class="subtitle">Analisis del papel de la energia en el desarrollo sostenible, los principales desafios globales para 2030 y las oportunidades de transformacion economica, social y ambiental asociadas a la transicion energetica.</p>
+      </div>
+
+      <div class="meta">
+        <div><strong>Alumno:</strong> Antonio Valero Maldonado</div>
+        <div><strong>Curso:</strong> 2025-2026</div>
+        <div><strong>Asignatura:</strong> Sostenibilidad</div>
+        <div><strong>Tema:</strong> Objetivo de Desarrollo Sostenible 7</div>
+      </div>
+    </section>
+
+    <h2>1. Introduccion</h2>
+    <p class="lead">El Objetivo de Desarrollo Sostenible 7 pretende garantizar el acceso a una energia asequible, segura, sostenible y moderna para todas las personas. Aunque esta formulacion parece concreta y tecnica, en realidad encierra una cuestion central para el presente y el futuro de la humanidad: sin energia no hay bienestar, no hay desarrollo economico estable, no hay igualdad de oportunidades y tampoco existe una respuesta realista al cambio climatico.</p>
+    <p>La energia atraviesa toda la vida social. De ella dependen la iluminacion de los hogares, el funcionamiento de hospitales, la conservacion de vacunas, la actividad industrial, el transporte, la conectividad digital y el acceso a la educacion. La falta de energia o el acceso precario a servicios energeticos modernos no es solo un problema de infraestructura, sino una forma de desigualdad estructural que limita las capacidades de millones de personas y frena el desarrollo de territorios enteros.</p>
+    <p>Sin embargo, el problema no se reduce a disponer de mas energia, sino a decidir como se produce, se distribuye y se consume. El modelo energetico dominante durante las ultimas decadas se ha sostenido en gran medida sobre combustibles fosiles como el carbon, el petroleo y el gas. Este sistema ha favorecido el crecimiento industrial y el aumento del consumo, pero tambien ha intensificado las emisiones de gases de efecto invernadero, ha agravado la crisis climatica y ha generado graves impactos sobre la salud y el medio ambiente.</p>
+
+    <div class="quote">El ODS 7 no plantea simplemente producir mas electricidad; exige transformar el sistema energetico mundial para que sea compatible con la justicia social, la salud publica, la competitividad economica y la sostenibilidad ambiental.</div>
+
+    <h2>2. Objetivos del trabajo</h2>
+    <p>Este trabajo tiene como objetivo principal analizar el ODS 7 desde una perspectiva academica y critica. Para ello se plantean los siguientes objetivos especificos:</p>
+    <ol>
+      <li>Explicar el significado del ODS 7 dentro de la Agenda 2030.</li>
+      <li>Describir las metas fundamentales asociadas a este objetivo.</li>
+      <li>Examinar la situacion global actual en materia de acceso a la energia.</li>
+      <li>Relacionar el sistema energetico con la desigualdad, la salud, la economia y el cambio climatico.</li>
+      <li>Valorar los principales retos y oportunidades de la transicion energetica.</li>
+      <li>Proponer una reflexion personal sobre la importancia del compromiso politico, empresarial y ciudadano.</li>
+    </ol>
+
+    <h2>3. Que es el ODS 7 y por que es importante</h2>
+    <p>El ODS 7 forma parte de los 17 Objetivos de Desarrollo Sostenible aprobados por Naciones Unidas en 2015 dentro de la Agenda 2030. Su formulacion oficial es clara: garantizar el acceso a una energia asequible, segura, sostenible y moderna para todos. Las cuatro ideas clave del objetivo son, por tanto, el acceso universal, la asequibilidad economica, la seguridad del suministro y la sostenibilidad ambiental.</p>
+    <p>Su importancia radica en que la energia actua como un multiplicador del desarrollo. Cuando una comunidad accede a electricidad estable y a tecnologias limpias para cocinar, mejoran simultaneamente la salud, la educacion, la productividad y la autonomia economica. Por el contrario, cuando las familias dependen de biomasa tradicional, carbon vegetal o combustibles contaminantes para cocinar y calentarse, aumentan los problemas respiratorios, la vulnerabilidad economica y la desigualdad de genero, ya que en muchas regiones son las mujeres y las ninas quienes asumen la recogida de combustible y las tareas domesticas asociadas.</p>
+    <p>Ademas, la energia es inseparable del debate sobre el cambio climatico. Segun Naciones Unidas, el consumo de energia representa una parte muy relevante de las emisiones mundiales de gases de efecto invernadero. En consecuencia, la lucha contra el calentamiento global no puede abordarse sin una transicion hacia sistemas energeticos basados en renovables, eficiencia y electrificacion limpia.</p>
+
+    <div class="page-break"></div>
+
+    <h2>4. Metas principales del ODS 7</h2>
+    <p>El ODS 7 se concreta en varias metas operativas que orientan la accion internacional. Entre las mas importantes destacan las siguientes:</p>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Meta</th>
+            <th>Contenido esencial</th>
+            <th>Relevancia</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>7.1</td>
+            <td>Garantizar el acceso universal a servicios energeticos asequibles, fiables y modernos.</td>
+            <td>Busca que ninguna persona quede excluida del suministro electrico y de soluciones limpias para cocinar.</td>
+          </tr>
+          <tr>
+            <td>7.2</td>
+            <td>Aumentar considerablemente la proporcion de energias renovables en el conjunto de fuentes energeticas.</td>
+            <td>Permite reducir emisiones y dependencia de combustibles fosiles.</td>
+          </tr>
+          <tr>
+            <td>7.3</td>
+            <td>Duplicar la tasa mundial de mejora de la eficiencia energetica.</td>
+            <td>La energia mas limpia es la que no llega a desperdiciarse.</td>
+          </tr>
+          <tr>
+            <td>7.a</td>
+            <td>Favorecer la cooperacion internacional para investigar e implantar tecnologias limpias.</td>
+            <td>Sin transferencia tecnologica y financiacion, muchos paises no podran avanzar al ritmo necesario.</td>
+          </tr>
+          <tr>
+            <td>7.b</td>
+            <td>Ampliar infraestructuras y mejorar la tecnologia para suministrar servicios energeticos modernos en paises en desarrollo.</td>
+            <td>Subraya la dimension territorial y de justicia global del problema.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p>Estas metas muestran que el ODS 7 no se limita a instalar paneles solares o aerogeneradores. Tambien implica marcos regulatorios adecuados, inversiones publicas y privadas, redes de transporte y distribucion, innovacion tecnologica y politicas sociales que garanticen que el acceso no quede restringido por la renta o por la localizacion geografica.</p>
+
+    <h2>5. Situacion mundial actual</h2>
+    <p>Los avances logrados desde comienzos del siglo XXI son relevantes, pero insuficientes. La extension del acceso a la electricidad ha mejorado y la presencia de energias renovables ha crecido de forma notable, especialmente en el sector electrico. No obstante, las cifras globales siguen revelando una brecha profunda entre regiones y grupos sociales.</p>
+    <p>Datos difundidos por Naciones Unidas muestran que el acceso mundial a la electricidad aumento del 87 % en 2015 al 91 % en 2021. A pesar de esta mejora, centenares de millones de personas continuan sin acceso electrico. Del mismo modo, miles de millones siguen dependiendo de combustibles y tecnologias contaminantes para cocinar, una realidad especialmente grave en regiones con menor renta y fuerte crecimiento demografico.</p>
+
+    <div class="box">
+      <h3>Algunos datos clave</h3>
+      <ul>
+        <li>En 2021, alrededor de 675 millones de personas seguian sin acceso a la electricidad.</li>
+        <li>Unos 2300 millones de personas dependian todavia de combustibles y tecnologias contaminantes para cocinar.</li>
+        <li>Las energias renovables aportan una parte creciente del consumo electrico, pero su integracion en transporte y calefaccion sigue siendo un reto.</li>
+        <li>El avance global existe, pero no es lo bastante rapido para cumplir plenamente la Agenda 2030.</li>
+      </ul>
+    </div>
+
+    <p>La lectura de estos datos obliga a evitar dos errores frecuentes. El primero es pensar que la transicion energetica ya esta practicamente resuelta por el crecimiento de la energia solar o eolica. El segundo es reducir el problema a una simple cuestion tecnologica. En realidad, las barreras son tambien politicas, economicas y sociales: pobreza energetica, falta de financiacion, ausencia de infraestructuras, dependencia de importaciones, debilidad institucional y desigualdad territorial.</p>
+
+    <h2>6. Energia, pobreza y desigualdad</h2>
+    <p>Uno de los aspectos mas relevantes del ODS 7 es su relacion directa con la justicia social. La energia no es un lujo; es un requisito minimo para una vida digna. Quien no puede iluminar su vivienda adecuadamente, conservar alimentos, mantener una temperatura habitable o acceder a internet en igualdad de condiciones, se encuentra en desventaja frente al resto de la sociedad.</p>
+    <p>En los paises empobrecidos, la falta de acceso electrico limita la escolarizacion efectiva, la atencion sanitaria y la actividad economica local. En los paises desarrollados, el problema adopta con frecuencia la forma de pobreza energetica: hogares que, aun estando conectados a la red, no pueden pagar los suministros necesarios o habitan viviendas ineficientes que disparan el gasto. Esto demuestra que el acceso fisico y el acceso economico son dimensiones inseparables.</p>
+    <p>Tambien existe una clara dimension de genero. Cuando no hay soluciones limpias para cocinar, las mujeres suelen soportar una mayor exposicion a humos toxicos y dedican mas tiempo a tareas relacionadas con el combustible domestico. En consecuencia, la mejora del acceso energetico puede traducirse en mayor autonomia, mejor salud y mas tiempo disponible para formacion, empleo y participacion social.</p>
+
+    <div class="page-break"></div>
+
+    <h2>7. Energia y salud publica</h2>
+    <p>La relacion entre energia y salud es profunda. En primer lugar, porque cocinar con combustibles contaminantes genera contaminacion del aire en interiores, asociada a enfermedades respiratorias y cardiovasculares. En segundo lugar, porque los sistemas sanitarios dependen de un suministro electrico continuo para refrigerar medicamentos, alimentar equipos medicos, esterilizar material y garantizar servicios de emergencia.</p>
+    <p>La pandemia de COVID-19 recordo con claridad que la resiliencia sanitaria no depende solo de personal medico o medicamentos, sino tambien de infraestructuras energeticas fiables. Una clinica sin electricidad estable no puede garantizar una cadena de frio adecuada ni sostener procedimientos basicos. De este modo, el ODS 7 se conecta directamente con el ODS 3 sobre salud y bienestar.</p>
+
+    <h2>8. Energia y cambio climatico</h2>
+    <p>El sistema energetico tradicional es una de las principales fuentes de emisiones de gases de efecto invernadero. Por ello, la descarbonizacion de la economia exige reducir de manera progresiva el peso del carbon, el petroleo y el gas en el mix energetico, mientras se impulsa la generacion renovable, el almacenamiento, las redes inteligentes y la eficiencia.</p>
+    <p>La transicion energetica no consiste unicamente en sustituir una tecnologia por otra. Supone una reorganizacion del modelo productivo y del consumo. Implica electrificar procesos industriales, mejorar la envolvente termica de los edificios, fomentar el transporte publico, promover la movilidad electrica cuando sea adecuada y cambiar habitos cotidianos que hoy se basan en un uso intensivo de energia fosil.</p>
+    <p>Desde esta perspectiva, el ODS 7 mantiene una relacion evidente con el ODS 13 de accion por el clima. Si no se transforma el sistema energetico, resultara practicamente imposible limitar el aumento de la temperatura media global y reducir los impactos del cambio climatico sobre ecosistemas, economias y poblaciones vulnerables.</p>
+
+    <h2>9. El papel de las energias renovables</h2>
+    <p>Las energias renovables representan una de las palancas mas visibles del ODS 7. La solar, la eolica, la hidraulica, la geotermica y determinadas formas de biomasa sostenible permiten generar energia con menores emisiones que los combustibles fosiles. Su desarrollo, ademas, ha experimentado una aceleracion notable gracias a la innovacion tecnica y a la reduccion de costes en los ultimos anos.</p>
+    <p>No obstante, conviene evitar una vision simplista. Las renovables no son automaticamente sostenibles en cualquier contexto. Su despliegue debe planificarse con criterios ambientales, territoriales y sociales. La ocupacion del suelo, el impacto paisajistico, el uso de materiales criticos o la aceptacion local de los proyectos son cuestiones reales que requieren gobernanza y participacion publica.</p>
+    <p>Por tanto, el exito del ODS 7 no depende solo del volumen de renovables instalado, sino de la calidad del proceso de transicion. Una transicion justa exige que los beneficios y los costes se distribuyan de manera equilibrada, que se proteja a los consumidores vulnerables y que se acompane a los sectores economicos y territorios mas afectados por el cambio de modelo.</p>
+
+    <h2>10. Eficiencia energetica: la dimension menos visible y mas decisiva</h2>
+    <p>En muchas ocasiones, el debate social sobre energia se centra exclusivamente en como producir mas electricidad limpia. Sin embargo, la eficiencia energetica es igual o incluso mas importante. Reducir perdidas, aprovechar mejor la energia disponible y disminuir consumos innecesarios permite abaratar costes, recortar emisiones y aliviar la presion sobre infraestructuras y recursos.</p>
+    <p>La eficiencia afecta a edificios, electrodomesticos, procesos industriales, alumbrado publico, transporte y habitos de consumo. Mejorar el aislamiento de una vivienda o sustituir equipos obsoletos puede tener un impacto mas inmediato y socialmente inclusivo que algunas grandes inversiones de generacion. En este sentido, la eficiencia conecta el ODS 7 con el ODS 11 sobre ciudades sostenibles y con el ODS 12 sobre produccion y consumo responsables.</p>
+
+    <div class="box">
+      <h3>Medidas de eficiencia con alto impacto</h3>
+      <ul>
+        <li>Rehabilitacion energetica de edificios y viviendas.</li>
+        <li>Sustitucion de iluminacion y maquinaria ineficientes.</li>
+        <li>Digitalizacion y redes inteligentes para ajustar la demanda.</li>
+        <li>Impulso del transporte colectivo y de la movilidad activa.</li>
+        <li>Educacion ciudadana para modificar habitos de consumo.</li>
+      </ul>
+    </div>
+
+    <h2>11. Retos para alcanzar el ODS 7 en 2030</h2>
+    <p>Aunque el horizonte del ODS 7 es ambicioso y tecnicamente posible, existen obstaculos importantes. El primero es la desigualdad entre paises. Muchos Estados carecen de recursos suficientes para invertir en redes, renovables o tecnologia. El segundo es la inestabilidad geopolitica, que puede alterar precios, cadenas de suministro y seguridad energetica. El tercero es la lentitud de algunos marcos regulatorios y administrativos.</p>
+    <p>Ademas, la transicion energetica puede generar tensiones sociales si se percibe como costosa o injusta. El aumento del precio de la energia, la falta de informacion o la imposicion de proyectos sin participacion local pueden provocar rechazo. De ahi que la dimension social del ODS 7 sea tan importante como la tecnologica.</p>
+    <p>Otro reto central es la financiacion. Naciones Unidas ha insistido en que el acceso universal a la energia requiere inversiones sostenidas, especialmente en paises en desarrollo. Sin mecanismos financieros estables y sin cooperacion internacional, el avance seguira siendo demasiado lento para cumplir plenamente la Agenda 2030.</p>
+
+    <div class="page-break"></div>
+
+    <h2>12. Oportunidades de la transicion energetica</h2>
+    <p>Junto a los desafios, la transformacion energetica tambien abre oportunidades de gran relevancia. En el plano economico, impulsa nuevos sectores productivos vinculados a renovables, almacenamiento, movilidad electrica, redes inteligentes, rehabilitacion y gestion digital de la energia. En el plano social, puede reducir desigualdades si se orienta a mejorar el acceso y la eficiencia en hogares vulnerables. En el plano ambiental, ofrece una via indispensable para disminuir emisiones y contaminacion.</p>
+    <p>Tambien refuerza la autonomia estrategica de los territorios. Reducir la dependencia de combustibles fosiles importados puede mejorar la seguridad energetica y la estabilidad economica. Esto resulta especialmente importante en contextos de volatilidad internacional, donde los precios del gas o del petroleo pueden afectar de forma inmediata al coste de vida y a la competitividad empresarial.</p>
+
+    <h2>13. Propuestas de actuacion</h2>
+    <p>Para avanzar de forma realista hacia el cumplimiento del ODS 7, pueden plantearse varias lineas de accion complementarias:</p>
+    <ol>
+      <li>Reforzar la inversion publica y privada en renovables y redes modernas.</li>
+      <li>Priorizar programas contra la pobreza energetica y la exclusion territorial.</li>
+      <li>Impulsar la rehabilitacion energetica del parque de viviendas.</li>
+      <li>Aumentar la cooperacion internacional con transferencia tecnologica y apoyo financiero.</li>
+      <li>Desarrollar marcos regulatorios estables, claros y socialmente justos.</li>
+      <li>Mejorar la educacion energetica de la ciudadania y del tejido empresarial.</li>
+      <li>Integrar la transicion energetica con politicas de empleo, movilidad y salud.</li>
+    </ol>
+
+    <p>Estas propuestas tienen en comun una idea de fondo: el ODS 7 no puede lograrse desde una unica institucion ni a traves de una sola medida. Requiere coordinacion multinivel entre gobiernos, empresas, universidades, organismos internacionales y sociedad civil.</p>
+
+    <h2>14. Reflexion personal</h2>
+    <p>Desde mi punto de vista, el ODS 7 es uno de los objetivos mas estrategicos de toda la Agenda 2030 porque actua como base material de muchos otros derechos y oportunidades. Hablar de energia es hablar de salud, de igualdad, de educacion, de empleo y de clima. Por eso considero que tratarla solo como una cuestion tecnica o economica es un error. La energia es tambien una cuestion etica y politica.</p>
+    <p>Me parece especialmente importante insistir en la idea de justicia energetica. No basta con que aumente la capacidad de generacion renovable si siguen existiendo hogares que no pueden mantener una temperatura adecuada en invierno o si regiones enteras quedan al margen de las inversiones. Una transicion energetica realmente sostenible debe ser inclusiva, y eso exige poner en el centro a las personas mas vulnerables.</p>
+    <p>Tambien considero que existe una responsabilidad compartida. Los gobiernos deben legislar e invertir; las empresas deben innovar y asumir compromisos reales; y la ciudadania debe revisar habitos de consumo y exigir politicas coherentes. El cambio no depende exclusivamente de decisiones individuales, pero tampoco puede sostenerse sin una transformacion cultural que entienda la energia como un bien esencial que debe gestionarse con criterios de responsabilidad colectiva.</p>
+
+    <h2>15. Conclusion</h2>
+    <p>El ODS 7 resume uno de los grandes desafios del siglo XXI: hacer compatible el acceso universal a la energia con la sostenibilidad ambiental y la justicia social. El progreso alcanzado en los ultimos anos demuestra que la transformacion es posible, pero tambien que el ritmo actual no basta para garantizar el cumplimiento pleno del objetivo en 2030.</p>
+    <p>La energia asequible y no contaminante no es un objetivo aislado, sino una condicion estructural del desarrollo humano. Sin ella, la lucha contra la pobreza, la mejora de la salud publica, la igualdad de oportunidades y la accion climatica quedan seriamente limitadas. Por ello, avanzar en el ODS 7 significa avanzar al mismo tiempo en una vision de sociedad mas equitativa, mas resiliente y mas preparada para el futuro.</p>
+    <p>En definitiva, el reto no es solo producir energia, sino decidir que modelo de desarrollo queremos sostener con ella. Si la Agenda 2030 aspira a no dejar a nadie atras, el cumplimiento del ODS 7 debe convertirse en una prioridad transversal, sostenida e inaplazable.</p>
+
+    <h2>16. Bibliografia</h2>
+    <ul>
+      <li>Naciones Unidas. Objetivo 7: garantizar el acceso a una energia asequible, segura, sostenible y moderna.</li>
+      <li>United Nations Department of Economic and Social Affairs. Goal 7: Ensure access to affordable, reliable, sustainable and modern energy for all.</li>
+      <li>Naciones Unidas. Informe sobre los Objetivos de Desarrollo Sostenible 2023.</li>
+      <li>Banco Mundial. Indicadores de acceso a la electricidad.</li>
+      <li>PNUD. Energy access and sustainable development resources.</li>
+    </ul>
+  </main>
+</body>
+</html>
