@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Actividad AJAX - DWEC</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="page-shell">
+        <header class="header-box">
+            <h1>Actividad AJAX de DWEC</h1>
+            <p class="intro-text">
+                He hecho esta pagina para probar las operaciones CRUD usando la API publica de
+                restful-api.dev. Todo esta hecho con HTML, CSS y JavaScript usando fetch y async/await.
+            </p>
+            <p class="intro-text">
+                La idea es poder hacer pruebas de consultar, crear, modificar y borrar elementos,
+                mostrando siempre el resultado en pantalla.
+            </p>
+            <p class="intro-text intro-text--small">
+                API usada: https://restful-api.dev/
+            </p>
+            <div class="top-actions">
+                <button id="loadAllBtn" class="btn btn--primary" type="button">Obtener todos los elementos</button>
+                <button id="clearViewBtn" class="btn btn--ghost" type="button">Limpiar vista</button>
+            </div>
+        </header>
+
+        <section id="statusBox" class="status status--info" aria-live="polite">
+            La aplicacion esta lista. Pulsa "Obtener todos los elementos" para cargar datos iniciales.
+        </section>
+
+        <main class="layout">
+            <section class="workspace">
+                <article class="panel">
+                    <div class="panel__heading">
+                        <h2>Buscar elemento por ID</h2>
+                        <p>Introduce un ID para consultar un recurso concreto.</p>
+                    </div>
+
+                    <form id="getByIdForm" class="form-grid">
+                        <label>
+                            ID del elemento
+                            <input id="searchId" name="searchId" type="text" placeholder="Ejemplo: 7" required>
+                        </label>
+                        <button class="btn btn--primary" type="submit">Buscar elemento</button>
+                    </form>
+                </article>
+
+                <article class="panel">
+                    <div class="panel__heading">
+                        <h2>Anadir nuevo elemento</h2>
+                        <p>Formulario para crear un objeto nuevo con unos datos basicos.</p>
+                    </div>
+
+                    <form id="createForm" class="form-grid form-grid--two-columns">
+                        <label>
+                            Nombre
+                            <input id="createName" name="createName" type="text" placeholder="Ejemplo: Portatil Lenovo" required>
+                        </label>
+                        <label>
+                            Anio
+                            <input id="createYear" name="createYear" type="number" min="2000" max="2100" placeholder="2026">
+                        </label>
+                        <label>
+                            Precio
+                            <input id="createPrice" name="createPrice" type="number" min="0" step="0.01" placeholder="899.99">
+                        </label>
+                        <label>
+                            Categoria
+                            <input id="createCategory" name="createCategory" type="text" placeholder="informatica">
+                        </label>
+                        <button class="btn btn--accent form-grid__full" type="submit">Crear elemento</button>
+                    </form>
+                </article>
+
+                <article class="panel">
+                    <div class="panel__heading">
+                        <h2>Modificar elemento existente</h2>
+                        <p>Carga un elemento por ID y despues actualiza sus datos.</p>
+                    </div>
+
+                    <form id="updateForm" class="form-grid form-grid--two-columns">
+                        <label class="form-grid__full">
+                            ID del elemento a modificar
+                            <input id="updateId" name="updateId" type="text" placeholder="Introduce el ID para editar" required>
+                        </label>
+                        <div class="inline-actions form-grid__full">
+                            <button id="loadForEditBtn" class="btn btn--ghost" type="button">Cargar datos actuales</button>
+                        </div>
+                        <label>
+                            Nuevo nombre
+                            <input id="updateName" name="updateName" type="text" placeholder="Nombre actualizado" required>
+                        </label>
+                        <label>
+                            Anio
+                            <input id="updateYear" name="updateYear" type="number" min="2000" max="2100" placeholder="2026">
+                        </label>
+                        <label>
+                            Precio
+                            <input id="updatePrice" name="updatePrice" type="number" min="0" step="0.01" placeholder="749.99">
+                        </label>
+                        <label>
+                            Categoria
+                            <input id="updateCategory" name="updateCategory" type="text" placeholder="actualizado">
+                        </label>
+                        <button class="btn btn--primary form-grid__full" type="submit">Actualizar elemento</button>
+                    </form>
+                </article>
+
+                <article class="panel">
+                    <div class="panel__heading">
+                        <h2>Eliminar elemento</h2>
+                        <p>Introduce el ID del elemento que quieres borrar.</p>
+                    </div>
+
+                    <form id="deleteForm" class="form-grid">
+                        <label>
+                            ID del elemento
+                            <input id="deleteId" name="deleteId" type="text" placeholder="ID del recurso" required>
+                        </label>
+                        <button class="btn btn--danger" type="submit">Eliminar elemento</button>
+                    </form>
+                </article>
+            </section>
+
+            <aside class="results">
+                <article class="panel">
+                    <div class="panel__heading">
+                        <h2>Lista de resultados</h2>
+                        <p id="resultsCounter">Sin elementos cargados.</p>
+                    </div>
+                    <div id="objectsList" class="objects-list empty-state">
+                        Aun no hay resultados que mostrar.
+                    </div>
+                </article>
+
+                <article class="panel">
+                    <div class="panel__heading">
+                        <h2>Ultima respuesta del servidor</h2>
+                        <p>Aqui voy mostrando la respuesta de la ultima peticion realizada.</p>
+                    </div>
+                    <pre id="responseViewer" class="response-viewer">Esperando una operacion...</pre>
+                </article>
+            </aside>
+        </main>
+
+        <footer class="footer-note">
+            Actividad hecha con HTML, CSS y JavaScript. Las peticiones se realizan con fetch.
+        </footer>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
