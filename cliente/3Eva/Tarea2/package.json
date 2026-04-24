@@ -1,0 +1,16 @@
+{
+  "name": "dwec-scraping",
+  "version": "1.0.0",
+  "description": "Actividad DWEC: scraping con Puppeteer y Express",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.21.2",
+    "puppeteer": "^24.7.1"
+  }
+}
