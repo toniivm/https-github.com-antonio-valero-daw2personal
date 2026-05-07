@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Ejemplo API</title>
+    <link rel="icon" href="data:," />
+    <style>
+      body {
+        margin: 0;
+        font-family: Arial, sans-serif;
+        background: #f4f7fb;
+        color: #1b1f24;
+      }
+
+      main {
+        max-width: 640px;
+        margin: 80px auto;
+        padding: 32px;
+        background: #ffffff;
+        border-radius: 16px;
+        box-shadow: 0 16px 40px rgba(15, 23, 42, 0.12);
+      }
+
+      h1 {
+        margin-top: 0;
+      }
+
+      button {
+        padding: 12px 18px;
+        border: 0;
+        border-radius: 10px;
+        background: #0f766e;
+        color: #ffffff;
+        cursor: pointer;
+        font-size: 16px;
+      }
+
+      #resultado {
+        margin-top: 24px;
+        padding: 16px;
+        border-radius: 10px;
+        background: #ecfeff;
+        min-height: 56px;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Mensaje desde una API</h1>
+      <p>Este ejemplo hace una petición a <strong>/api/mensaje</strong> y pinta la respuesta en pantalla.</p>
+      <button id="cargar-mensaje" type="button">Cargar mensaje</button>
+      <div id="resultado">Pulsa el botón para cargar el mensaje.</div>
+    </main>
+
+    <script src="./app.js"></script>
+  </body>
+</html>
