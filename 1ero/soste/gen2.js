@@ -1,11 +1,12 @@
 // ================================================================
 //  Ciclo de Vida del Smartphone  —  Presentacion v2
-//  Canvas: 10" x 7.5"  (LAYOUT_16x9)
+//  Canvas: 10" x 7.5"  (custom layout)
 //  Safe content area:  x 0.35-9.65  |  y 1.50-7.15
 // ================================================================
 const PptxGenJS = require("pptxgenjs");
 const pptx = new PptxGenJS();
-pptx.layout = "LAYOUT_16x9";
+pptx.defineLayout({ name: "SMARTPHONE_4_3", width: 10, height: 7.5 });
+pptx.layout = "SMARTPHONE_4_3";
 pptx.title  = "Ciclo de Vida del Smartphone";
 
 const C = {

@@ -1,11 +1,12 @@
 // ============================================================
 //  Ciclo de Vida del Smartphone — Generador de presentación v2
-//  Slide canvas: 10" wide x 7.5" tall  (LAYOUT_16x9)
+//  Slide canvas: 10" wide x 7.5" tall  (custom layout)
 //  Safe content zone: x 0.35–9.65 | y 1.5–7.15
 // ============================================================
 const PptxGenJS = require('pptxgenjs');
 const pptx = new PptxGenJS();
-pptx.layout = 'LAYOUT_16x9';
+pptx.defineLayout({ name: 'SMARTPHONE_4_3', width: 10, height: 7.5 });
+pptx.layout = 'SMARTPHONE_4_3';
 pptx.title = 'Ciclo de Vida del Smartphone';
 pptx.author = 'Alumno DAW';
 
